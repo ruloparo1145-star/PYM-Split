@@ -1,7 +1,5 @@
-<script type="importmap">
-{
-  "imports": {
-    "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
-  }
-}
-</script>
+// js/supabase.js
+import { createClient } from '@supabase/supabase-js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
