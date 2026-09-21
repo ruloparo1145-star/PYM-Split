@@ -1,7 +1,9 @@
+// sw.js - PYM Split
 const CACHE_NAME = 'pym-split-v1';
 const APP_ASSETS = [
   './',
   './index.html',
+  './app.html', // Lo dejamos preparado para el siguiente paso
   './css/style.css',
   './js/config.js',
   './js/supabase.js',
@@ -11,6 +13,7 @@ const APP_ASSETS = [
   './icon-512.png'
 ];
 
+// InstalaciÃ³n
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -20,6 +23,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+// ActivaciÃ³n
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -29,22 +33,23 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Network-first para los archivos de la app (así siempre ves la última versión).
-// Nunca tocamos Supabase ni CDNs: solo mismo origen y solo GET.
+// Fetch
 self.addEventListener('fetch', event => {
-  const req = event.request;
-  if (req.method !== 'GET') return;
-  if (new URL(req.url).origin !== self.location.origin) return;
+  if (event.request.method !== 'GET') return;
 
   event.respondWith(
-    fetch(req)
-      .then(res => {
-        if (res.ok) {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+    caches.match(event.request).then(cached => {
+      if (cached) return cached;
+
+      return fetch(event.request).then(response => {
+        if (response.ok && new URL(event.request.url).origin === self.location.origin) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         }
-        return res;
-      })
-      .catch(() => caches.match(req))
+        return response;
+      }).catch(() => {
+        return caches.match('./index.html');
+      });
+    })
   );
 });
