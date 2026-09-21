@@ -54,7 +54,7 @@ formLogin.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Login exitoso → redirigir a app.html
+  // Login exitoso â†’ redirigir a app.html
   window.location.href = 'app.html';
 });
 
@@ -87,27 +87,27 @@ formRegister.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Registro exitoso → redirigir a app.html
+  // Registro exitoso â†’ redirigir a app.html
   window.location.href = 'app.html';
 });
 
 // ==========================================
-// TRADUCCIÓN DE ERRORES DE SUPABASE
+// TRADUCCIÃ“N DE ERRORES DE SUPABASE
 // ==========================================
 function traducirError(msg) {
   const errores = {
-    'Invalid login credentials': 'Email o contraseña incorrectos.',
+    'Invalid login credentials': 'Email o contraseÃ±a incorrectos.',
     'Email not confirmed': 'Debes confirmar tu email antes de entrar.',
-    'User already registered': 'Este email ya está registrado.',
-    'Password should be at least 6 characters': 'La contraseña debe tener al menos 6 caracteres.',
-    'Unable to validate email address: invalid format': 'El formato del email no es válido.',
-    'Failed to fetch': 'No se pudo conectar con el servidor. Revisa tu conexión a internet o la URL de Supabase en js/config.js.',
+    'User already registered': 'Este email ya estÃ¡ registrado.',
+    'Password should be at least 6 characters': 'La contraseÃ±a debe tener al menos 6 caracteres.',
+    'Unable to validate email address: invalid format': 'El formato del email no es vÃ¡lido.',
+    'Failed to fetch': 'No se pudo conectar con el servidor. Revisa tu conexiÃ³n a internet o la URL de Supabase en js/config.js.',
   };
   return errores[msg] || msg;
 }
 
 // ==========================================
-// VERIFICAR SI YA HAY SESIÓN ACTIVA
+// VERIFICAR SI YA HAY SESIÃ“N ACTIVA
 // ==========================================
 (async () => {
   const { data: { session } } = await supabase.auth.getSession();
