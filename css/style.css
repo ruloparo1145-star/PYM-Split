@@ -1,191 +1,132 @@
 /* ==========================================
-   RESET Y BASE
+   ESTILOS DEL DASHBOARD (app.html)
    ========================================== */
-* {
-  margin: 0;
+.app-body {
+  background: #f7fafc; /* Fondo gris claro para el dashboard */
+  display: block; /* Quitamos el flex del login */
   padding: 0;
-  box-sizing: border-box;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.app-container {
   min-height: 100vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  color: #333;
+  flex-direction: column;
 }
 
-/* ==========================================
-   CONTENEDOR DE AUTENTICACIÓN
-   ========================================== */
-.auth-container {
-  width: 100%;
-  max-width: 420px;
-}
-
-.auth-card {
+.app-header {
   background: #ffffff;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 40px 30px;
-  animation: slideUp 0.4s ease-out;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
-/* ==========================================
-   HEADER
-   ========================================== */
-.auth-header {
-  text-align: center;
-  margin-bottom: 30px;
+.header-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
 }
 
-.auth-logo {
-  width: 70px;
-  height: 70px;
-  border-radius: 16px;
-  margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-}
-
-.auth-header h1 {
-  font-size: 1.8rem;
+.app-header h1 {
+  font-size: 1.2rem;
   font-weight: 700;
   color: #2d3748;
-  margin-bottom: 4px;
 }
 
-.auth-subtitle {
+.btn-logout {
+  background: #fed7d7;
+  color: #e53e3e;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
   font-size: 0.9rem;
-  color: #718096;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-/* ==========================================
-   TABS
-   ========================================== */
-.auth-tabs {
-  display: flex;
-  background: #f7fafc;
-  border-radius: 12px;
-  padding: 4px;
+.btn-logout:hover {
+  background: #e53e3e;
+  color: white;
+}
+
+.app-main {
+  flex: 1;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.welcome-section {
   margin-bottom: 25px;
 }
 
-.tab-btn {
-  flex: 1;
-  padding: 10px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
+.welcome-section h2 {
+  font-size: 1.5rem;
+  color: #2d3748;
+  margin-bottom: 5px;
+}
+
+.welcome-section p {
   color: #718096;
-  cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.tab-btn.active {
-  background: #ffffff;
-  color: #667eea;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+.section-card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-/* ==========================================
-   FORMULARIOS
-   ========================================== */
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.auth-form.hidden {
-  display: none;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  font-size: 0.85rem;
-  font-weight: 600;
+.section-card h3 {
+  font-size: 1.1rem;
   color: #4a5568;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 10px;
 }
 
-.form-group input {
-  padding: 12px 14px;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  outline: none;
+.placeholder-text {
+  color: #a0aec0;
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
 }
 
-.form-group input:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
-}
-
-/* ==========================================
-   BOTONES
-   ========================================== */
-.btn-primary {
-  padding: 14px;
+/* BotÃ³n Flotante */
+.fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
+  color: white;
+  font-size: 2rem;
   border: none;
-  border-radius: 10px;
-  font-size: 1rem;
-  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  z-index: 100;
 }
 
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* ==========================================
-   MENSAJES DE ERROR
-   ========================================== */
-.error-msg {
-  font-size: 0.85rem;
-  color: #e53e3e;
-  text-align: center;
-  min-height: 20px;
-}
-
-.success-msg {
-  font-size: 0.85rem;
-  color: #38a169;
-  text-align: center;
-  min-height: 20px;
+.fab:hover {
+  transform: scale(1.1);
 }
