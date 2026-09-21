@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYM Split - Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+  
+  <script type="importmap">
+  {
+    "imports": {
+      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+    }
+  }
+  </script>
+</head>
+<body class="app-body">
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <img src="icon-192.png" alt="PYM Split" class="header-logo">
+        <h1>PYM Split</h1>
+      </div>
+      <button id="btn-logout" class="btn-logout">Salir</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      <div class="welcome-section">
+        <h2 id="welcome-message">Hola, ...</h2>
+        <p>Bienvenido a tu gestor de gastos</p>
+      </div>
+
+      <!-- Secciones temporales (se llenarÃ¡n en el prÃ³ximo paso) -->
+      <div class="dashboard-sections">
+        <div class="section-card">
+          <h3>Mis Grupos</h3>
+          <p class="placeholder-text">AÃºn no tienes grupos. Â¡Crea uno nuevo!</p>
+        </div>
+        <div class="section-card">
+          <h3>Ãšltimos Gastos</h3>
+          <p class="placeholder-text">No hay gastos recientes.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- BotÃ³n Flotante para aÃ±adir gasto -->
+    <button class="fab" title="AÃ±adir Gasto">+</button>
+  </div>
+
+  <script type="module" src="js/ui.js"></script>
+</body>
+</html>
