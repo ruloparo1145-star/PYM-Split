@@ -1,6 +1,6 @@
 // js/config.js
-export const SUPABASE_URL = 'https://gwqyzubncmvfxnnqyqfs.supabase.co';
-export const SUPABASE_ANON_KEY = 'sb_publishable_9IFxrFf4qrqEwT0nArNLzg_PixbxgYt';
+export const SUPABASE_URL = 'https://gwqyzubncmvfxxnnyqfs.supabase.co';
+export const SUPABASE_ANON_KEY = 'sb_publishable_9IFxrFf4qrqEwTOnArNLzg_PixbxgYt';
 
 // Configuración general de la app
 export const APP_NAME = 'PYM Split';
