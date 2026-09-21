@@ -28,17 +28,22 @@
     </header>
 
     <!-- Main Content -->
+   <!-- Main Content -->
     <main class="app-main">
       <div class="welcome-section">
         <h2 id="welcome-message">Hola, ...</h2>
         <p>Bienvenido a tu gestor de gastos</p>
       </div>
 
-      <!-- Secciones temporales (se llenarÃ¡n en el prÃ³ximo paso) -->
       <div class="dashboard-sections">
         <div class="section-card">
-          <h3>Mis Grupos</h3>
-          <p class="placeholder-text">AÃºn no tienes grupos. Â¡Crea uno nuevo!</p>
+          <div class="section-header">
+            <h3>Mis Grupos</h3>
+            <button id="btn-new-group" class="btn-small">+ Nuevo</button>
+          </div>
+          <div id="groups-list">
+            <p class="placeholder-text">Cargando grupos...</p>
+          </div>
         </div>
         <div class="section-card">
           <h3>Ãšltimos Gastos</h3>
@@ -46,6 +51,77 @@
         </div>
       </div>
     </main>
+
+    <!-- BotÃ³n Flotante para aÃ±adir gasto (por ahora abre lo mismo que + Nuevo) -->
+    <button id="fab-add" class="fab" title="AÃ±adir Gasto">+</button>
+  </div>
+
+  <!-- MODAL: Crear Grupo -->
+<!-- Main Content -->
+    <main class="app-main">
+      <div class="welcome-section">
+        <h2 id="welcome-message">Hola, ...</h2>
+        <p>Bienvenido a tu gestor de gastos</p>
+      </div>
+
+      <div class="dashboard-sections">
+        <div class="section-card">
+          <div class="section-header">
+            <h3>Mis Grupos</h3>
+            <button id="btn-new-group" class="btn-small">+ Nuevo</button>
+          </div>
+          <div id="groups-list">
+            <p class="placeholder-text">Cargando grupos...</p>
+          </div>
+        </div>
+        <div class="section-card">
+          <h3>Ãšltimos Gastos</h3>
+          <p class="placeholder-text">No hay gastos recientes.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- BotÃ³n Flotante para aÃ±adir gasto (por ahora abre lo mismo que + Nuevo) -->
+    <button id="fab-add" class="fab" title="AÃ±adir Gasto">+</button>
+  </div>
+
+  <!-- MODAL: Crear Grupo -->
+  <div id="modal-group" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Crear Nuevo Grupo</h3>
+      <form id="form-group">
+        <div class="form-group">
+          <label for="group-name">Nombre del Grupo</label>
+          <input type="text" id="group-name" placeholder="Ej: Viaje a Bariloche" required>
+        </div>
+        <div class="form-group">
+          <label for="group-type">Tipo</label>
+          <select id="group-type" required>
+            <option value="viaje">Viaje</option>
+            <option value="depto">Departamento</option>
+            <option value="salidas">Salidas</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="group-currency">Moneda</label>
+          <select id="group-currency" required>
+            <option value="EUR">Euro (â‚¬)</option>
+            <option value="USD">DÃ³lar ($)</option>
+            <option value="ARS">Peso Argentino ($)</option>
+          </select>
+        </div>
+        <p id="group-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Crear Grupo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/ui.js"></script>
+          
 
     <!-- BotÃ³n Flotante para aÃ±adir gasto -->
     <button class="fab" title="AÃ±adir Gasto">+</button>
