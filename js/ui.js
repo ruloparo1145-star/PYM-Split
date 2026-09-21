@@ -1,5 +1,6 @@
 // js/ui.js
 import { supabase } from './supabase.js';
+import { cargarGrupos, initGroupModal } from './groups.js';
 
 // ==========================================
 // 1. PROTEGER LA RUTA (Verificar sesiÃ³n)
@@ -32,7 +33,7 @@ function mostrarDatosUsuario(user) {
 // ==========================================
 document.getElementById('btn-logout').addEventListener('click', async () => {
   const { error } = await supabase.auth.signOut();
-  
+
   if (!error) {
     window.location.href = 'index.html';
   } else {
@@ -41,8 +42,9 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
 });
 
 // ==========================================
-// 4. BOTÃ“N FLOTANTE (Placeholder)
+// 4. INICIALIZAR GRUPOS Y MODAL
 // ==========================================
-document.querySelector('.fab').addEventListener('click', () => {
-  alert('AquÃ­ abriremos el modal para crear un gasto (Paso 5).');
-});
+// El botÃ³n flotante (#fab-add) y el botÃ³n "+ Nuevo" (#btn-new-group)
+// abren el modal de crear grupo desde groups.js
+initGroupModal();
+cargarGrupos();
