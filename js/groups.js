@@ -6,7 +6,7 @@ import { supabase } from './supabase.js';
 // ==========================================
 export async function cargarGrupos() {
   const groupsList = document.getElementById('groups-list');
-  
+
   // Obtenemos el usuario actual
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
