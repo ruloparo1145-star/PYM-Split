@@ -1,6 +1,23 @@
 // js/ui.js
 import { supabase } from './supabase.js';
 import { cargarGrupos, initGroupModal } from './groups.js';
+import { initFriendsModal } from './friends.js'; // <-- AÃ±adir
+
+(async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error || !session) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const welcomeMessage = document.getElementById('welcome-message');
+  const fullName = session.user.user_metadata?.full_name || 'Usuario';
+  welcomeMessage.textContent = `Hola, ${fullName}`;
+
+  await cargarGrupos();
+  initGroupModal();
+  initFriendsModal(); // <-- AÃ±adir
+})();
 
 <!-- MODAL: Amigos -->
   <div id="modal-friends" class="modal-overlay hidden">
