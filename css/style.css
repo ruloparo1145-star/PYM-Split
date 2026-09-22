@@ -694,3 +694,16 @@ body {
 #split-summary p {
   margin: 3px 0;
 }
+/* ==========================================
+   12. DETALLE DEL GASTO
+   ========================================== */
+.clickable-expense {
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clickable-expense:hover {
+  border-color: #2ecc87;
+  background: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.15);
+}
