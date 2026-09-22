@@ -84,5 +84,25 @@
   </div>
 
   <script type="module" src="js/ui.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // 1. Seleccionamos el botÃ³n flotante y el modal
+        const btnAdd = document.getElementById('fab-add');
+        const modalGroup = document.getElementById('modal-group');
+
+        // 2. Escuchamos el clic en el botÃ³n
+        btnAdd.addEventListener('click', () => {
+            // Quitamos la clase 'hidden' para que el modal se haga visible
+            modalGroup.classList.remove('hidden');
+        });
+
+        // 3. (Opcional pero recomendado) Cerrar el modal al hacer clic fuera de Ã©l
+        modalGroup.addEventListener('click', (e) => {
+            if (e.target === modalGroup) {
+                modalGroup.classList.add('hidden');
+            }
+        });
+    });
+</script>
 </body>
 </html>
