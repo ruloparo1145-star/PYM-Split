@@ -7,14 +7,6 @@
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="css/style.css">
-
-  <script type="importmap">
-  {
-    "imports": {
-      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
-    }
-  }
-  </script>
 </head>
 <body class="app-body">
   <div class="app-container">
@@ -46,14 +38,14 @@
         </div>
 
         <div class="section-card">
-          <h3>Ãšltimos Gastos</h3>
+          <h3>Ultimos Gastos</h3>
           <p class="placeholder-text">No hay gastos recientes.</p>
         </div>
       </div>
     </main>
 
-    <!-- BotÃ³n Flotante -->
-    <button id="fab-add" class="fab" title="AÃ±adir Gasto">+</button>
+    <!-- Boton Flotante -->
+    <button id="fab-add" class="fab" title="Anadir Gasto">+</button>
   </div>
 
   <!-- MODAL: Crear Grupo -->
@@ -77,9 +69,9 @@
         <div class="form-group">
           <label for="group-currency">Moneda</label>
           <select id="group-currency" required>
-            <option value="EUR">Euro (â‚¬)</option>
-            <option value="USD">DÃ³lar ($)</option>
-            <option value="ARS">Peso Argentino ($)</option>
+            <option value="EUR">Euro (EUR)</option>
+            <option value="USD">Dolar (USD)</option>
+            <option value="ARS">Peso Argentino (ARS)</option>
           </select>
         </div>
         <p id="group-error" class="error-msg"></p>
