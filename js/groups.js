@@ -132,31 +132,34 @@ export function initGroupModal() {
 }
 
 // ==========================================
-// 4. ABRIR DETALLE DEL GRUPO
+// 4. ABRIR DETALLE DEL GRUPO (con historial)
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
-   { mostrarBalance } = await import('./debtSolver.js');
+  const { cargarGastosDelGrupo } = await import('./expenses.js');
+  const { mostrarBalance } = await import('./debtSolver.js');
   const { cargarMiembrosDelGrupo } = await import('./members.js');
-  const { cargarHistorial } = await import('./history.js'); // <-- NUEVO
+  const { cargarHistorial } = await import('./history.js');
 
-  const modal = docuconst { cargarGastosDelGrupo } = await import('./expenses.js');
-  constment.getElementById('modal-group-detail'); 
+  const modal = document.getElementById('modal-group-detail');
+  
   const { data: grupo } = await supabase
     .from('groups')
     .select('name')
     .eq('id', groupId)
     .single();
+
   document.getElementById('detail-group-name').textContent = grupo?.name || 'Detalle';
   modal.dataset.groupId = groupId;
+
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
   await cargarMiembrosDelGrupo(groupId);
-  await cargarHistorial(groupId); // <-- NUEVO
+  await cargarHistorial(groupId);
 }
 
 // ==========================================
-// 5. LISTENERS GLOBALES (detalle grupo, detalle gasto, editar, eliminar)
+// 5. LISTENERS GLOBALES
 // ==========================================
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
@@ -188,9 +191,7 @@ if (!window.__groupDetailListenersAttached) {
     }, 300);
   });
 
-  // ============ LISTENERS DEL DETALLE DEL GASTO ============
-  
-  // Cerrar detalle del gasto
+  // ============ DETALLE DEL GASTO ============
   document.getElementById('btn-close-expense-detail')?.addEventListener('click', () => {
     document.getElementById('modal-expense-detail').classList.add('hidden');
   });
@@ -205,9 +206,15 @@ if (!window.__groupDetailListenersAttached) {
   document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
     const { eliminarGasto } = await import('./expenses.js');
     await eliminarGasto();
+    // Recargar el historial después de eliminar
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (groupId) {
+      const { cargarHistorial } = await import('./history.js');
+      await cargarHistorial(groupId);
+    }
   });
 
-  // Editar gasto (cargar datos en el modal)
+  // Editar gasto
   document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
     const { cargarGastoParaEditar } = await import('./expenses.js');
     await cargarGastoParaEditar();
@@ -224,7 +231,7 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
-  // Guardar cambios de edición
+  // Guardar edición
   document.getElementById('form-expense-edit')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const { guardarEdicionGasto } = await import('./expenses.js');
