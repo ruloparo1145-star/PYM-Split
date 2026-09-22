@@ -21,19 +21,19 @@ export async function cargarGrupos() {
     if (error) throw error;
 
     if (!grupos || grupos.length === 0) {
-      groupsList.innerHTML = '<p class="placeholder-text">Aún no tienes grupos. ¡Crea uno nuevo!</p>';
+      groupsList.innerHTML = '<p class="placeholder-text">Aun no tienes grupos. Crea uno nuevo!</p>';
       return;
     }
 
-    groupsList.innerHTML = grupos.map(grupo => `
-      <div class="group-card" data-id="${grupo.id}">
-        <div class="group-info">
-          <h4>${grupo.name}</h4>
-          <span>${grupo.type.toUpperCase()} · ${grupo.currency}</span>
-        </div>
-        <div>▶</div>
-      </div>
-    `).join('');
+    groupsList.innerHTML = grupos.map(grupo => 
+      '<div class="group-card" data-id="' + grupo.id + '">' +
+        '<div class="group-info">' +
+          '<h4>' + grupo.name + '</h4>' +
+          '<span>' + grupo.type.toUpperCase() + ' / ' + grupo.currency + '</span>' +
+        '</div>' +
+        '<div>></div>' +
+      '</div>'
+    ).join('');
 
     document.querySelectorAll('.group-card').forEach(card => {
       card.addEventListener('click', () => {
@@ -44,7 +44,7 @@ export async function cargarGrupos() {
 
   } catch (error) {
     console.error('Error detallado:', error);
-    groupsList.innerHTML = `<p class="error-msg">Error: ${error.message || 'No se pudo conectar con Supabase'}</p>`;
+    groupsList.innerHTML = '<p class="error-msg">Error: ' + (error.message || 'No se pudo conectar con Supabase') + '</p>';
   }
 }
 
@@ -132,7 +132,7 @@ export function initGroupModal() {
 }
 
 // ==========================================
-// 4. ABRIR DETALLE DEL GRUPO (con historial)
+// 4. ABRIR DETALLE DEL GRUPO
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
   const { cargarGastosDelGrupo } = await import('./expenses.js');
@@ -148,7 +148,7 @@ async function abrirDetalleGrupo(groupId) {
     .eq('id', groupId)
     .single();
 
-  document.getElementById('detail-group-name').textContent = grupo?.name || 'Detalle';
+  document.getElementById('detail-group-name').textContent = grupo ? grupo.name : 'Detalle';
   modal.dataset.groupId = groupId;
 
   modal.classList.remove('hidden');
@@ -175,7 +175,7 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
-  // Añadir gasto desde el detalle
+  // Anadir gasto desde el detalle
   document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     document.getElementById('modal-group-detail').classList.add('hidden');
@@ -206,7 +206,6 @@ if (!window.__groupDetailListenersAttached) {
   document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
     const { eliminarGasto } = await import('./expenses.js');
     await eliminarGasto();
-    // Recargar el historial después de eliminar
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     if (groupId) {
       const { cargarHistorial } = await import('./history.js');
@@ -220,7 +219,7 @@ if (!window.__groupDetailListenersAttached) {
     await cargarGastoParaEditar();
   });
 
-  // Cancelar edición
+  // Cancelar edicion
   document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
     document.getElementById('modal-expense-edit').classList.add('hidden');
   });
@@ -231,7 +230,7 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
-  // Guardar edición
+  // Guardar edicion
   document.getElementById('form-expense-edit')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const { guardarEdicionGasto } = await import('./expenses.js');
