@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYM Split - Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <img src="icon-192.png" alt="PYM Split" class="header-logo">
+        <h1>PYM Split</h1>
+      </div>
+      <button id="btn-logout" class="btn-logout">Salir</button>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      <div class="welcome-section">
+        <h2 id="welcome-message">Hola, ...</h2>
+        <p>Bienvenido a tu gestor de gastos</p>
+      </div>
+
+      <div class="dashboard-sections">
+        <div class="section-card">
+          <div class="section-header">
+            <h3>Mis Grupos</h3>
+            <button id="btn-new-group" class="btn-small">+ Nuevo</button>
+          </div>
+          <div id="groups-list">
+            <p class="placeholder-text">Cargando grupos...</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Ultimos Gastos</h3>
+          <p class="placeholder-text">No hay gastos recientes.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Boton Flotante -->
+    <button id="fab-add" class="fab" title="Anadir Gasto">+</button>
+  </div>
+
+  <!-- MODAL: Crear Grupo -->
+  <div id="modal-group" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Crear Nuevo Grupo</h3>
+      <form id="form-group">
+        <div class="form-group">
+          <label for="group-name">Nombre del Grupo</label>
+          <input type="text" id="group-name" placeholder="Ej: Viaje a Bariloche" required>
+        </div>
+        <div class="form-group">
+          <label for="group-type">Tipo</label>
+          <select id="group-type" required>
+            <option value="viaje">Viaje</option>
+            <option value="depto">Departamento</option>
+            <option value="salidas">Salidas</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="group-currency">Moneda</label>
+          <select id="group-currency" required>
+            <option value="EUR">Euro (EUR)</option>
+            <option value="USD">Dolar (USD)</option>
+            <option value="ARS">Peso Argentino (ARS)</option>
+          </select>
+        </div>
+        <p id="group-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Crear Grupo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="js/ui.js"></script>
+</body>
+</html>
