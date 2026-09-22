@@ -129,7 +129,45 @@
       </div>
     </div>
   </div>
-
+<!-- MODAL: AÃ±adir Gasto -->
+  <div id="modal-expense" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Nuevo Gasto</h3>
+      <form id="form-expense">
+        <div class="form-group">
+          <label for="expense-description">Â¿QuÃ© fue?</label>
+          <input type="text" id="expense-description" placeholder="Ej: Cena en el restaurante" required>
+        </div>
+        <div class="form-group">
+          <label for="expense-amount">Monto</label>
+          <input type="number" id="expense-amount" placeholder="0.00" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="expense-group">Grupo</label>
+          <select id="expense-group" required>
+            <option value="">Seleccionar grupo...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="expense-paid-by">Â¿QuiÃ©n pagÃ³?</label>
+          <select id="expense-paid-by" required>
+            <option value="">Seleccionar quiÃ©n pagÃ³...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dividir entre:</label>
+          <div id="expense-split-members" class="split-members-list">
+            <p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>
+          </div>
+        </div>
+        <p id="expense-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-expense" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Gasto</button>
+        </div>
+      </form>
+    </div>
+  </div>
   <script type="module" src="js/ui.js"></script>
 </body>
 </html>
