@@ -657,3 +657,40 @@ body {
   background: #27ae60;
   transform: scale(1.05);
 }
+/* ==========================================
+   11. DIVISORES AVANZADOS
+   ========================================== */
+.split-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.split-member:last-child {
+  border-bottom: none;
+}
+
+.split-member input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #2ecc87;
+  cursor: pointer;
+}
+
+.split-member input[type="number"] {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.split-member input[type="number"]:focus {
+  border-color: #2ecc87;
+}
+
+#split-summary p {
+  margin: 3px 0;
+}
