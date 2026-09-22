@@ -760,3 +760,24 @@ body {
   font-size: 0.7rem;
   color: #a0aec0;
 }
+/* ==========================================
+   14. GRAFICOS
+   ========================================== */
+.charts-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #edf2f7;
+}
+
+.charts-section h4 {
+  font-size: 1rem;
+  color: #4a5568;
+  margin-bottom: 12px;
+}
+
+.chart-container {
+  position: relative;
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
