@@ -609,3 +609,31 @@ body {
   color: #2ecc87;
   font-size: 1rem;
 }
+/* ==========================================
+   9. MIEMBROS DEL GRUPO
+   ========================================== */
+.members-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #edf2f7;
+}
+
+.member-chip {
+  display: inline-block;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin: 4px 4px 4px 0;
+  font-weight: 500;
+}
+
+.friend-card.clickable {
+  cursor: pointer;
+}
+
+.friend-card.clickable:hover {
+  border-color: #2ecc87;
+  background: #f0fdf4;
+}
