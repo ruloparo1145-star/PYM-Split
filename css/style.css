@@ -4,7 +4,7 @@
    2. ESTILOS DE AUTENTICACION (Login/Registro)
    ========================================== */
 body {
-  background: linear-gradient(135deg, #56ab91 0%, #1e5631 100%);
+  background: linear-gradient(135deg, #c9f56b 0%, #4caf50 100%);
   min-height: 100vh;
   display: flex;
   align-items: center;
