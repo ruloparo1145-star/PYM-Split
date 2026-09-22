@@ -56,7 +56,6 @@ export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario no autenticado');
 
-  // 1. Insertar el grupo
   const { data: groupData, error: groupError } = await supabase
     .from('groups')
     .insert([{
@@ -71,7 +70,6 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   const nuevoGrupoId = groupData[0].id;
 
-  // 2. AÃ±adir al creador como miembro del grupo
   const { error: memberError } = await supabase
     .from('group_members')
     .insert([{
@@ -95,7 +93,6 @@ export function initGroupModal() {
   const errorMsg = document.getElementById('group-error');
 
   // Solo el botÃ³n "+ Nuevo" abre el modal de crear grupo
-  // El botÃ³n flotante "+" ya NO abre este modal (ahora es para gastos)
   btnNew.addEventListener('click', () => {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
@@ -106,14 +103,12 @@ export function initGroupModal() {
     modal.classList.add('hidden');
   });
 
-  // Cerrar al hacer clic fuera del modal
   modal.addEventListener('click', (e) => {
     if (e.target === modal) {
       modal.classList.add('hidden');
     }
   });
 
-  // Enviar formulario
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorMsg.textContent = '';
@@ -146,7 +141,6 @@ async function abrirDetalleGrupo(groupId) {
   const { mostrarBalance } = await import('./debtSolver.js');
   const modal = document.getElementById('modal-group-detail');
   
-  // Obtener nombre del grupo
   const { data: grupo } = await supabase
     .from('groups')
     .select('name')
@@ -154,8 +148,6 @@ async function abrirDetalleGrupo(groupId) {
     .single();
 
   document.getElementById('detail-group-name').textContent = grupo?.name || 'Detalle';
-
-  // Guardar el groupId para usarlo en el botÃ³n de aÃ±adir gasto
   modal.dataset.groupId = groupId;
 
   modal.classList.remove('hidden');
@@ -166,31 +158,25 @@ async function abrirDetalleGrupo(groupId) {
 // ==========================================
 // 5. CERRAR DETALLE DEL GRUPO
 // ==========================================
-// Se ejecuta una sola vez al cargar el script
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
 
-  // BotÃ³n cerrar
   document.getElementById('btn-close-detail')?.addEventListener('click', () => {
     document.getElementById('modal-group-detail').classList.add('hidden');
   });
 
-  // Cerrar al hacer clic fuera del modal
   document.getElementById('modal-group-detail')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-group-detail') {
       e.target.classList.add('hidden');
     }
   });
 
-  // BotÃ³n de aÃ±adir gasto desde el detalle
   document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     document.getElementById('modal-group-detail').classList.add('hidden');
     
-    // Abrir modal de gasto con ese grupo preseleccionado
     document.getElementById('fab-add').click();
     
-    // Preseleccionar el grupo (con un pequeÃ±o delay para que cargue el select)
     setTimeout(() => {
       const select = document.getElementById('expense-group');
       if (select) {
