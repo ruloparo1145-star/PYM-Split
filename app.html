@@ -149,5 +149,31 @@
         });
     });
 </script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('modal-group');
+        const btnAbrir = document.getElementById('fab-add'); // Tu botÃ³n flotante de +
+        
+        // Busca el botÃ³n de cancelar de varias formas para asegurar que lo encuentre
+        const btnCerrar = document.getElementById('btn-cancel-group') || 
+                          document.querySelector('#modal-group .btn-secondary') || 
+                          Array.from(document.querySelectorAll('#modal-group button')).find(b => b.textContent.includes('Cancelar'));
+
+        // Abrir modal
+        if (btnAbrir && modal) {
+            btnAbrir.addEventListener('click', () => {
+                modal.classList.remove('hidden');
+            });
+        }
+
+        // Cerrar modal con Cancelar
+        if (btnCerrar && modal) {
+            btnCerrar.addEventListener('click', (e) => {
+                e.preventDefault(); // Evita que el formulario se envÃ­e
+                modal.classList.add('hidden'); // Oculta la ventana
+            });
+        }
+    });
+</script>
 </body>
 </html>
