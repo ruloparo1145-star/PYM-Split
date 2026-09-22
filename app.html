@@ -197,6 +197,33 @@
       </div>
     </div>
   </div>
+  <!-- MODAL: Detalle del Grupo -->
+  <div id="modal-group-detail" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 600px;">
+      <h3 id="detail-group-name">Detalle del Grupo</h3>
+      
+      <div class="balance-section">
+        <h4>💰 Balance</h4>
+        <div id="group-balance">
+          <p class="placeholder-text">Calculando balances...</p>
+        </div>
+      </div>
+
+      <div class="expenses-section">
+        <div class="section-header">
+          <h4>📝 Gastos</h4>
+          <button id="btn-add-expense-from-detail" class="btn-small">+ Añadir</button>
+        </div>
+        <div id="group-expenses-list">
+          <p class="placeholder-text">Cargando gastos...</p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-close-detail" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
   <script type="module" src="js/ui.js"></script>
 </body>
 </html>
