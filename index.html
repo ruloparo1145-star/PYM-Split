@@ -3,21 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PYM Split - Iniciar sesión</title>
+  <title>PYM Split - Iniciar sesion</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
-
-  <!-- Hoja de estilos -->
   <link rel="stylesheet" href="css/style.css">
-
-  <!-- Import Map para Supabase -->
-  <script type="importmap">
-  {
-    "imports": {
-      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
-    }
-  }
-  </script>
 </head>
 <body>
   <div class="auth-container">
@@ -29,19 +18,19 @@
       </div>
 
       <div class="auth-tabs">
-        <button id="tab-login" class="tab-btn active">Iniciar sesión</button>
-        <button id="tab-register" class="tab-btn">Crear cuenta</button>
+        <button id="tab-login" class="tab-btn active" type="button">Iniciar sesion</button>
+        <button id="tab-register" class="tab-btn" type="button">Crear cuenta</button>
       </div>
 
       <!-- Formulario de Login -->
       <form id="form-login" class="auth-form">
         <div class="form-group">
           <label for="login-email">Email</label>
-          <input type="email" id="login-email" placeholder="tu@email.com" required>
+          <input type="email" id="login-email" placeholder="tu@email.com" required autocomplete="email">
         </div>
         <div class="form-group">
-          <label for="login-password">Contraseña</label>
-          <input type="password" id="login-password" placeholder="••••••••" required>
+          <label for="login-password">Contrasena</label>
+          <input type="password" id="login-password" placeholder="........" required autocomplete="current-password">
         </div>
         <button type="submit" class="btn-primary">Entrar</button>
         <p id="login-error" class="error-msg"></p>
@@ -51,15 +40,15 @@
       <form id="form-register" class="auth-form hidden">
         <div class="form-group">
           <label for="register-name">Nombre completo</label>
-          <input type="text" id="register-name" placeholder="Juan Pérez" required>
+          <input type="text" id="register-name" placeholder="Juan Perez" required autocomplete="name">
         </div>
         <div class="form-group">
           <label for="register-email">Email</label>
-          <input type="email" id="register-email" placeholder="tu@email.com" required>
+          <input type="email" id="register-email" placeholder="tu@email.com" required autocomplete="email">
         </div>
         <div class="form-group">
-          <label for="register-password">Contraseña</label>
-          <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" required minlength="6">
+          <label for="register-password">Contrasena</label>
+          <input type="password" id="register-password" placeholder="Minimo 6 caracteres" required minlength="6" autocomplete="new-password">
         </div>
         <button type="submit" class="btn-primary">Crear cuenta</button>
         <p id="register-error" class="error-msg"></p>
