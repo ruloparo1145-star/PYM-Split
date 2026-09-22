@@ -2,7 +2,8 @@
 import { supabase } from './supabase.js';
 import { cargarGrupos, initGroupModal } from './groups.js';
 import { initFriendsModal } from './friends.js';
-import { initExpenseModal } from './expenses.js'; // <-- NUEVO
+import { initExpenseModal } from './expenses.js';
+import { initAddMemberModal } from './members.js';
 
 // ==========================================
 // 1. PROTEGER LA RUTA Y CARGAR DATOS
@@ -20,21 +21,22 @@ import { initExpenseModal } from './expenses.js'; // <-- NUEVO
   const fullName = session.user.user_metadata?.full_name || 'Usuario';
   welcomeMessage.textContent = `Hola, ${fullName}`;
 
-  // Inicializar la app
+  // Inicializar todos los modales y funcionalidades
   await cargarGrupos();
   initGroupModal();
   initFriendsModal();
-  initExpenseModal(); // <-- NUEVO
+  initExpenseModal();
+  initAddMemberModal();
 })();
 
 // ==========================================
-// 2. CERRAR SESIÃ“N (Logout)
+// 2. CERRAR SESIÓN (Logout)
 // ==========================================
 document.getElementById('btn-logout').addEventListener('click', async () => {
   const { error } = await supabase.auth.signOut();
   if (!error) {
     window.location.href = 'index.html';
   } else {
-    alert('Error al cerrar sesiÃ³n: ' + error.message);
+    alert('Error al cerrar sesión: ' + error.message);
   }
 });
