@@ -1,0 +1,402 @@
+}
+
+/* ==========================================
+   2. ESTILOS DE AUTENTICACION (Login/Registro)
+   ========================================== */
+body {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  color: #333;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  padding: 40px 30px;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.auth-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  margin-bottom: 12px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.auth-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.auth-subtitle {
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.auth-tabs {
+  display: flex;
+  background: #f7fafc;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 25px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background: #ffffff;
+  color: #667eea;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.form-group input,
+.form-group select {
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  outline: none;
+  background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+}
+
+.btn-primary {
+  padding: 14px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 5px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  padding: 12px;
+  background: #edf2f7;
+  color: #4a5568;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+.error-msg {
+  font-size: 0.85rem;
+  color: #e53e3e;
+  text-align: center;
+  min-height: 20px;
+}
+
+/* ==========================================
+   3. ESTILOS DEL DASHBOARD (app.html)
+   ========================================== */
+.app-body {
+  background: #f7fafc;
+  display: block;
+  padding: 0;
+}
+
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: #ffffff;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+}
+
+.app-header h1 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.btn-logout {
+  background: #fed7d7;
+  color: #e53e3e;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-logout:hover {
+  background: #e53e3e;
+  color: white;
+}
+
+.app-main {
+  flex: 1;
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.welcome-section {
+  margin-bottom: 25px;
+}
+
+.welcome-section h2 {
+  font-size: 1.5rem;
+  color: #2d3748;
+  margin-bottom: 5px;
+}
+
+.welcome-section p {
+  color: #718096;
+}
+
+.section-card {
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid #edf2f7;
+  padding-bottom: 10px;
+}
+
+.section-header h3 {
+  font-size: 1.1rem;
+  color: #4a5568;
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.btn-small {
+  background: #ebf4ff;
+  color: #3182ce;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-small:hover {
+  background: #3182ce;
+  color: white;
+}
+
+.placeholder-text {
+  color: #a0aec0;
+  font-size: 0.9rem;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* ==========================================
+   4. COMPONENTES: MODALES Y GRUPOS
+   ========================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-content h3 {
+  margin-bottom: 20px;
+  color: #2d3748;
+  text-align: center;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  flex: 1;
+}
+
+.group-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.group-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.group-info h4 {
+  color: #2d3748;
+  font-size: 1rem;
+  margin-bottom: 4px;
+}
+
+.group-info span {
+  font-size: 0.8rem;
+  color: #718096;
+  background: #edf2f7;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* ==========================================
+   5. BOTON FLOTANTE (FAB)
+   ========================================== */
+.fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 2rem;
+  border: none;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+  z-index: 100;
+}
+
+.fab:hover {
+  transform: scale(1.1);
+}
