@@ -461,3 +461,33 @@ body {
   border-radius: 10px;
   font-weight: 600;
 }
+/* ==========================================
+   7. LISTA DE MIEMBROS (SPLIT)
+   ========================================== */
+.split-members-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 10px;
+  background: #f8fafc;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+
+.split-member {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  color: #4a5568;
+  cursor: pointer;
+}
+
+.split-member input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #2ecc87;
+  cursor: pointer;
+}
