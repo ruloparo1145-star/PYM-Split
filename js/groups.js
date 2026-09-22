@@ -49,13 +49,19 @@ export async function crearGrupo(nombre, tipo, moneda) {
   if (!user) throw new Error('Usuario no autenticado');
 
   // 1. Insertar el grupo
+  // IMPORTANTE: mandamos owner_id ADEMÃS de created_by.
+  // Las polÃ­ticas RLS de INSERT/SELECT/UPDATE/DELETE de "groups"
+  // estÃ¡n basadas en owner_id (auth.uid() = owner_id), asÃ­ que si
+  // no se envÃ­a, la fila queda con owner_id = null y el INSERT
+  // es rechazado por RLS aunque el resto de los datos sea correcto.
   const { data: groupData, error: groupError } = await supabase
     .from('groups')
     .insert([{
       name: nombre,
       type: tipo,
       currency: moneda,
-      created_by: user.id
+      created_by: user.id,
+      owner_id: user.id
     }])
     .select();
 
