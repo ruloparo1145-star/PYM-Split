@@ -96,7 +96,6 @@ export function initGroupModal() {
   };
 
   btnNew.addEventListener('click', abrirModal);
-  btnFab.addEventListener('click', abrirModal);
 
   // Cerrar modal
   btnCancel.addEventListener('click', () => {
