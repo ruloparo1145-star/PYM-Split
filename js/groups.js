@@ -135,25 +135,24 @@ export function initGroupModal() {
 // 4. ABRIR DETALLE DEL GRUPO
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
-  const { cargarGastosDelGrupo } = await import('./expenses.js');
-  const { mostrarBalance } = await import('./debtSolver.js');
+   { mostrarBalance } = await import('./debtSolver.js');
   const { cargarMiembrosDelGrupo } = await import('./members.js');
+  const { cargarHistorial } = await import('./history.js'); // <-- NUEVO
 
-  const modal = document.getElementById('modal-group-detail');
-  
+  const modal = docuconst { cargarGastosDelGrupo } = await import('./expenses.js');
+  constment.getElementById('modal-group-detail'); 
   const { data: grupo } = await supabase
     .from('groups')
     .select('name')
     .eq('id', groupId)
     .single();
-
   document.getElementById('detail-group-name').textContent = grupo?.name || 'Detalle';
   modal.dataset.groupId = groupId;
-
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
   await cargarMiembrosDelGrupo(groupId);
+  await cargarHistorial(groupId); // <-- NUEVO
 }
 
 // ==========================================
