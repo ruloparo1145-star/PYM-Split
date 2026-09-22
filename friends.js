@@ -16,7 +16,7 @@ export async function enviarSolicitudAmistad(email) {
     .single();
 
   if (findError || !perfil) {
-    throw new Error('No se encontró ningún usuario con ese email.');
+    throw new Error('No se encontrÃ³ ningÃºn usuario con ese email.');
   }
 
   if (perfil.id === user.id) {
@@ -57,7 +57,7 @@ export async function cargarAmigos() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Traemos todas las amistades donde el usuario esté involucrado
+  // Traemos todas las amistades donde el usuario estÃ© involucrado
   const { data: amistades, error } = await supabase
     .from('friendships')
     .select(`
@@ -82,7 +82,6 @@ export async function cargarAmigos() {
     requestsList.innerHTML = '<p class="placeholder-text">No hay solicitudes pendientes.</p>';
   } else {
     requestsList.innerHTML = pendientes.map(solicitud => {
-      // Identificar quién es el otro usuario y si la solicitud es entrante o saliente
       const esEntrante = solicitud.friend_id === user.id;
       const otroUsuario = esEntrante ? solicitud.user : solicitud.friend;
       
@@ -90,7 +89,7 @@ export async function cargarAmigos() {
         <div class="friend-card">
           <div class="friend-info">
             <h4>${otroUsuario.full_name || otroUsuario.email}</h4>
-            <span>${esEntrante ? 'Te envió solicitud' : 'Solicitud enviada'}</span>
+            <span>${esEntrante ? 'Te enviÃ³ solicitud' : 'Solicitud enviada'}</span>
           </div>
           ${esEntrante ? `
             <div class="friend-actions">
@@ -102,7 +101,6 @@ export async function cargarAmigos() {
       `;
     }).join('');
     
-    // Añadir listeners a los botones de aceptar/rechazar
     document.querySelectorAll('.btn-accept').forEach(btn => {
       btn.addEventListener('click', () => aceptarSolicitud(btn.dataset.id));
     });
@@ -113,7 +111,7 @@ export async function cargarAmigos() {
 
   // Renderizar amigos aceptados
   if (aceptadas.length === 0) {
-    friendsList.innerHTML = '<p class="placeholder-text">Aún no tienes amigos agregados.</p>';
+    friendsList.innerHTML = '<p class="placeholder-text">AÃºn no tienes amigos agregados.</p>';
   } else {
     friendsList.innerHTML = aceptadas.map(amistad => {
       const otroUsuario = amistad.user_id === user.id ? amistad.friend : amistad.user;
@@ -139,7 +137,7 @@ async function aceptarSolicitud(id) {
     .eq('id', id);
   
   if (error) alert('Error al aceptar: ' + error.message);
-  else cargarAmigos(); // Recargar la lista
+  else cargarAmigos();
 }
 
 async function rechazarSolicitud(id) {
@@ -149,7 +147,7 @@ async function rechazarSolicitud(id) {
     .eq('id', id);
 
   if (error) alert('Error al rechazar: ' + error.message);
-  else cargarAmigos(); // Recargar la lista
+  else cargarAmigos();
 }
 
 // ==========================================
@@ -166,7 +164,7 @@ export function initFriendsModal() {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
     form.reset();
-    await cargarAmigos(); // Cargar datos al abrir
+    await cargarAmigos();
   });
 
   btnClose.addEventListener('click', () => {
@@ -184,12 +182,12 @@ export function initFriendsModal() {
 
     try {
       const nombre = await enviarSolicitudAmistad(email);
-      errorMsg.style.color = '#38a169'; // Verde
-      errorMsg.textContent = `¡Solicitud enviada a ${nombre}!`;
+      errorMsg.style.color = '#38a169';
+      errorMsg.textContent = `Â¡Solicitud enviada a ${nombre}!`;
       form.reset();
-      await cargarAmigos(); // Recargar la lista
+      await cargarAmigos();
     } catch (error) {
-      errorMsg.style.color = '#e53e3e'; // Rojo
+      errorMsg.style.color = '#e53e3e';
       errorMsg.textContent = error.message;
     } finally {
       btnSubmit.disabled = false;
