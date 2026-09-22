@@ -35,7 +35,6 @@ export async function cargarGrupos() {
       </div>
     `).join('');
 
-    // Hacer clicables los grupos para ver el detalle
     document.querySelectorAll('.group-card').forEach(card => {
       card.addEventListener('click', () => {
         const groupId = card.dataset.id;
@@ -158,11 +157,12 @@ async function abrirDetalleGrupo(groupId) {
 }
 
 // ==========================================
-// 5. CERRAR DETALLE DEL GRUPO
+// 5. LISTENERS GLOBALES (detalle grupo, detalle gasto, editar, eliminar)
 // ==========================================
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
 
+  // Cerrar detalle del grupo
   document.getElementById('btn-close-detail')?.addEventListener('click', () => {
     document.getElementById('modal-group-detail').classList.add('hidden');
   });
@@ -173,6 +173,7 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
+  // Añadir gasto desde el detalle
   document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     document.getElementById('modal-group-detail').classList.add('hidden');
@@ -186,5 +187,48 @@ if (!window.__groupDetailListenersAttached) {
         select.dispatchEvent(new Event('change'));
       }
     }, 300);
+  });
+
+  // ============ LISTENERS DEL DETALLE DEL GASTO ============
+  
+  // Cerrar detalle del gasto
+  document.getElementById('btn-close-expense-detail')?.addEventListener('click', () => {
+    document.getElementById('modal-expense-detail').classList.add('hidden');
+  });
+
+  document.getElementById('modal-expense-detail')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-expense-detail') {
+      e.target.classList.add('hidden');
+    }
+  });
+
+  // Eliminar gasto
+  document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
+    const { eliminarGasto } = await import('./expenses.js');
+    await eliminarGasto();
+  });
+
+  // Editar gasto (cargar datos en el modal)
+  document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
+    const { cargarGastoParaEditar } = await import('./expenses.js');
+    await cargarGastoParaEditar();
+  });
+
+  // Cancelar edición
+  document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
+    document.getElementById('modal-expense-edit').classList.add('hidden');
+  });
+
+  document.getElementById('modal-expense-edit')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-expense-edit') {
+      e.target.classList.add('hidden');
+    }
+  });
+
+  // Guardar cambios de edición
+  document.getElementById('form-expense-edit')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { guardarEdicionGasto } = await import('./expenses.js');
+    await guardarEdicionGasto();
   });
 }
