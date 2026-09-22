@@ -253,3 +253,62 @@ export async function mostrarBalance(groupId) {
     </div>
   `).join('');
 }
+/* ==========================================
+   8. DETALLE DEL GRUPO: BALANCE Y GASTOS
+   ========================================== */
+.balance-section, .expenses-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #edf2f7;
+}
+
+.balance-section h4, .expenses-section h4 {
+  font-size: 1rem;
+  color: #4a5568;
+  margin-bottom: 12px;
+}
+
+.debt-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+}
+
+.debt-from { color: #e53e3e; font-weight: 600; }
+.debt-arrow { color: #a0aec0; }
+.debt-to { color: #38a169; font-weight: 600; }
+.debt-amount { margin-left: auto; font-weight: 700; color: #2d3748; }
+
+.expense-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.expense-info h5 {
+  font-size: 0.9rem;
+  color: #2d3748;
+  margin-bottom: 2px;
+}
+
+.expense-info span {
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+.expense-amount {
+  font-weight: 700;
+  color: #2ecc87;
+  font-size: 1rem;
+}
