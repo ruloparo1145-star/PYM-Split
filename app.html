@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PYM Split - Dashboard</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="css/style.css">
+
+  <script type="importmap">
+  {
+    "imports": {
+      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+    }
+  }
+  </script>
+</head>
+<body class="app-body">
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-left">
+        <img src="icon-192.png" alt="PYM Split" class="header-logo">
+        <h1>PYM Split</h1>
+      </div>
+      <div class="header-right">
+        <button id="btn-friends" class="btn-small">Amigos</button>
+        <button id="btn-logout" class="btn-logout">Salir</button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+      <div class="welcome-section">
+        <h2 id="welcome-message">Hola, ...</h2>
+        <p>Bienvenido a tu gestor de gastos</p>
+      </div>
+
+      <div class="dashboard-sections">
+        <div class="section-card">
+          <div class="section-header">
+            <h3>Mis Grupos</h3>
+            <button id="btn-new-group" class="btn-small">+ Nuevo</button>
+          </div>
+          <div id="groups-list">
+            <p class="placeholder-text">Cargando grupos...</p>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <h3>Últimos Gastos</h3>
+          <p class="placeholder-text">No hay gastos recientes.</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Botón Flotante -->
+    <button id="fab-add" class="fab" title="Añadir Gasto">+</button>
+  </div>
+
+  <!-- MODAL: Crear Grupo -->
+  <div id="modal-group" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Crear Nuevo Grupo</h3>
+      <form id="form-group">
+        <div class="form-group">
+          <label for="group-name">Nombre del Grupo</label>
+          <input type="text" id="group-name" placeholder="Ej: Viaje a Bariloche" required>
+        </div>
+        <div class="form-group">
+          <label for="group-type">Tipo</label>
+          <select id="group-type" required>
+            <option value="viaje">Viaje</option>
+            <option value="depto">Departamento</option>
+            <option value="salidas">Salidas</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="group-currency">Moneda</label>
+          <select id="group-currency" required>
+            <option value="EUR">Euro (€)</option>
+            <option value="USD">Dólar ($)</option>
+            <option value="ARS">Peso Argentino ($)</option>
+          </select>
+        </div>
+        <p id="group-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Crear Grupo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Amigos -->
+  <div id="modal-friends" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <h3>Gestión de Amigos</h3>
+      
+      <form id="form-add-friend" style="margin-bottom: 20px;">
+        <div class="form-group">
+          <label for="friend-email">Agregar amigo por email</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="email" id="friend-email" placeholder="amigo@email.com" required style="flex:1;">
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0 20px;">Enviar</button>
+          </div>
+          <p id="friend-error" class="error-msg" style="text-align: left; margin-top: 5px;"></p>
+        </div>
+      </form>
+
+      <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
+        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Solicitudes Pendientes</h4>
+        <div id="friend-requests-list">
+          <p class="placeholder-text">Cargando...</p>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
+        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Mis Amigos</h4>
+        <div id="friends-list">
+          <p class="placeholder-text">Cargando...</p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-friends" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Añadir Gasto -->
+  <div id="modal-expense" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Nuevo Gasto</h3>
+      <form id="form-expense">
+        <div class="form-group">
+          <label for="expense-description">¿Qué fue?</label>
+          <input type="text" id="expense-description" placeholder="Ej: Cena en el restaurante" required>
+        </div>
+        <div class="form-group">
+          <label for="expense-amount">Monto</label>
+          <input type="number" id="expense-amount" placeholder="0.00" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="expense-group">Grupo</label>
+          <select id="expense-group" required>
+            <option value="">Seleccionar grupo...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="expense-paid-by">¿Quién pagó?</label>
+          <select id="expense-paid-by" required>
+            <option value="">Seleccionar quién pagó...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Dividir entre:</label>
+          <div id="expense-split-members" class="split-members-list">
+            <p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>
+          </div>
+        </div>
+        <p id="expense-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-expense" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Guardar Gasto</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Detalle del Grupo -->
+  <div id="modal-group-detail" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 600px;">
+      <h3 id="detail-group-name">Detalle del Grupo</h3>
+      
+      <div class="balance-section">
+        <h4>💰 Balance</h4>
+        <div id="group-balance">
+          <p class="placeholder-text">Calculando balances...</p>
+        </div>
+      </div>
+
+      <div class="expenses-section">
+        <div class="section-header">
+          <h4>📝 Gastos</h4>
+          <button id="btn-add-expense-from-detail" class="btn-small">+ Añadir</button>
+        </div>
+        <div id="group-expenses-list">
+          <p class="placeholder-text">Cargando gastos...</p>
+        </div>
+      </div>
+
+      <div class="members-section">
+        <div class="section-header">
+          <h4>👥 Miembros</h4>
+          <button id="btn-add-member" class="btn-small">+ Añadir miembro</button>
+        </div>
+        <div id="group-members-list">
+          <p class="placeholder-text">Cargando miembros...</p>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-close-detail" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Elegir amigo para añadir al grupo -->
+  <div id="modal-add-member" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3>Añadir miembro al grupo</h3>
+      <p style="font-size: 0.85rem; color: #718096; text-align: center; margin-bottom: 15px;">
+        Selecciona un amigo para añadirlo a este grupo
+      </p>
+      <div id="available-friends-list">
+        <p class="placeholder-text">Cargando amigos...</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-add-member" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/ui.js"></script>
+</body>
+</html>
