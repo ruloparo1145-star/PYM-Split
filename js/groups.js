@@ -67,17 +67,12 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   if (groupError) throw groupError;
 
-  const nuevoGrupoId = groupData[0].id;
-
-  // 2. AÃ±adir al creador como miembro del grupo
-  const { error: memberError } = await supabase
-    .from('group_members')
-    .insert([{
-      group_id: nuevoGrupoId,
-      user_id: user.id
-    }]);
-
-  if (memberError) throw memberError;
+  // NOTA: ya NO insertamos manualmente en group_members.
+  // El trigger "trg_add_creator_as_member" (AFTER INSERT en groups)
+  // aÃ±ade automÃ¡ticamente al creador como miembro. Si lo hacÃ­amos
+  // tambiÃ©n aquÃ­, chocaba con la primary key (group_id, user_id)
+  // -> error "duplicate key value violates unique constraint
+  // group_members_pkey".
 
   return groupData[0];
 }
