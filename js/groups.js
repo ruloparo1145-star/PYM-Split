@@ -21,7 +21,7 @@ export async function cargarGrupos() {
     if (error) throw error;
 
     if (!grupos || grupos.length === 0) {
-      groupsList.innerHTML = '<p class="placeholder-text">AÃºn no tienes grupos. Â¡Crea uno nuevo!</p>';
+      groupsList.innerHTML = '<p class="placeholder-text">Aún no tienes grupos. ¡Crea uno nuevo!</p>';
       return;
     }
 
@@ -29,9 +29,9 @@ export async function cargarGrupos() {
       <div class="group-card" data-id="${grupo.id}">
         <div class="group-info">
           <h4>${grupo.name}</h4>
-          <span>${grupo.type.toUpperCase()} Â· ${grupo.currency}</span>
+          <span>${grupo.type.toUpperCase()} · ${grupo.currency}</span>
         </div>
-        <div>â–¶</div>
+        <div>▶</div>
       </div>
     `).join('');
 
@@ -92,7 +92,6 @@ export function initGroupModal() {
   const form = document.getElementById('form-group');
   const errorMsg = document.getElementById('group-error');
 
-  // Solo el botÃ³n "+ Nuevo" abre el modal de crear grupo
   btnNew.addEventListener('click', () => {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
@@ -139,6 +138,8 @@ export function initGroupModal() {
 async function abrirDetalleGrupo(groupId) {
   const { cargarGastosDelGrupo } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
+  const { cargarMiembrosDelGrupo } = await import('./members.js');
+
   const modal = document.getElementById('modal-group-detail');
   
   const { data: grupo } = await supabase
@@ -153,6 +154,7 @@ async function abrirDetalleGrupo(groupId) {
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
+  await cargarMiembrosDelGrupo(groupId);
 }
 
 // ==========================================
