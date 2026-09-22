@@ -132,13 +132,14 @@ export function initGroupModal() {
 }
 
 // ==========================================
-// 4. ABRIR DETALLE DEL GRUPO
+// 4. ABRIR DETALLE DEL GRUPO (con todos los modulos)
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
   const { cargarGastosDelGrupo } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
   const { cargarMiembrosDelGrupo } = await import('./members.js');
   const { cargarHistorial } = await import('./history.js');
+  const { cargarGraficos } = await import('./charts.js');
 
   const modal = document.getElementById('modal-group-detail');
   
@@ -156,6 +157,7 @@ async function abrirDetalleGrupo(groupId) {
   await mostrarBalance(groupId);
   await cargarMiembrosDelGrupo(groupId);
   await cargarHistorial(groupId);
+  await cargarGraficos(groupId);
 }
 
 // ==========================================
@@ -209,7 +211,9 @@ if (!window.__groupDetailListenersAttached) {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     if (groupId) {
       const { cargarHistorial } = await import('./history.js');
+      const { cargarGraficos } = await import('./charts.js');
       await cargarHistorial(groupId);
+      await cargarGraficos(groupId);
     }
   });
 
