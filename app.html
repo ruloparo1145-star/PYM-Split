@@ -155,12 +155,31 @@
             <option value="">Seleccionar quién pagó...</option>
           </select>
         </div>
+
+        <div class="form-group">
+          <label for="split-type">Tipo de división:</label>
+          <select id="split-type" required>
+            <option value="equal">Partes iguales</option>
+            <option value="percentage">Por porcentaje (%)</option>
+            <option value="exact">Montos exactos</option>
+            <option value="shares">Por partes (shares)</option>
+          </select>
+        </div>
+
         <div class="form-group">
           <label>Dividir entre:</label>
           <div id="expense-split-members" class="split-members-list">
             <p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>
           </div>
         </div>
+
+        <div class="form-group">
+          <label>Resumen de la división:</label>
+          <div id="split-summary" style="padding: 10px; background: #f8fafc; border-radius: 10px; font-size: 0.85rem; color: #4a5568;">
+            <p>Selecciona un grupo y ajusta los valores.</p>
+          </div>
+        </div>
+
         <p id="expense-error" class="error-msg"></p>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-expense" class="btn-secondary">Cancelar</button>
