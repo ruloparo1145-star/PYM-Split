@@ -1,21 +1,26 @@
 // sw.js - PYM Split
-const CACHE_NAME = 'pym-split-v18'; // â¬…ï¸ subido de v1 a v2 por los cambios
+const CACHE_NAME = 'pym-split-v18';
 const APP_ASSETS = [
   './',
   './index.html',
   './app.html',
+  './manifest.json',
   './css/style.css',
+  './icon-192.png',
+  './icon-512.png',
   './js/config.js',
   './js/supabase.js',
   './js/auth.js',
   './js/ui.js',
   './js/groups.js',
-  './manifest.json',
-  './icon-192.png',
-  './icon-512.png'
+  './js/expenses.js',
+  './js/debtSolver.js',
+  './js/friends.js',
+  './js/members.js',
+  './js/history.js',
+  './js/charts.js'
 ];
 
-// InstalaciÃ³n
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -25,7 +30,6 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
-// ActivaciÃ³n
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -35,9 +39,9 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+  if (event.request.url.includes('supabase.co')) return;
 
   event.respondWith(
     caches.match(event.request).then(cached => {
@@ -49,9 +53,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         }
         return response;
-      }).catch(() => {
-        return caches.match('./index.html');
-      });
+      }).catch(() => caches.match('./index.html'));
     })
   );
 });
