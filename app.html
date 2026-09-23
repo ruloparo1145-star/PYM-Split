@@ -334,6 +334,23 @@
           <label for="edit-expense-amount">Monto</label>
           <input type="number" id="edit-expense-amount" step="0.01" min="0.01" required>
         </div>
+
+<div class="form-group">
+          <label for="edit-expense-category">Categoria</label>
+          <select id="edit-expense-category">
+            <option value="otros">&#128176; Otros</option>
+            <option value="comida">&#127829; Comida</option>
+            <option value="transporte">&#128663; Transporte</option>
+            <option value="alojamiento">&#127968; Alojamiento</option>
+            <option value="supermercado">&#128722; Supermercado</option>
+            <option value="ocio">&#127881; Ocio</option>
+            <option value="salud">&#128138; Salud</option>
+            <option value="servicios">&#128241; Servicios</option>
+            <option value="compras">&#128717; Compras</option>
+            <option value="viajes">&#9992; Viajes</option>
+          </select>
+        </div>
+        
         <div class="form-group">
           <label for="edit-expense-paid-by">Quien pago?</label>
           <select id="edit-expense-paid-by" required></select>
