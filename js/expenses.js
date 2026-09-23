@@ -325,18 +325,22 @@ export async function cargarGastosDelGrupo(groupId) {
   const nombres = {};
   (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
 
-  listContainer.innerHTML = gastos.map(g => `
-    <div class="expense-card clickable-expense" data-expense-id="${g.id}">
-      <div class="expense-info">
-        <h5>${g.description}</h5>
-        <span>Pago: ${nombres[g.paid_by] || 'Desconocido'} - ${g.date}</span>
+listContainer.innerHTML = gastos.map(g => {
+    const cat = getCategoria(g.category);
+    return `
+      <div class="expense-card clickable-expense" data-expense-id="${g.id}">
+        <div class="expense-category-icon" title="${cat.label}">${cat.icono}</div>
+        <div class="expense-info">
+          <h5>${g.description}</h5>
+          <span>Pago: ${nombres[g.paid_by] || 'Desconocido'} - ${g.date}</span>
+        </div>
+        <div class="expense-amount">
+          ${parseFloat(g.amount).toFixed(2)} ${g.currency}
+        </div>
       </div>
-      <div class="expense-amount">
-        ${parseFloat(g.amount).toFixed(2)} ${g.currency}
-      </div>
-    </div>
-  `).join('');
-
+    `;
+  }).join('');
+  
   listContainer.querySelectorAll('.clickable-expense').forEach(card => {
     card.addEventListener('click', () => {
       abrirDetalleGasto(card.dataset.expenseId, groupId);
