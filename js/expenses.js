@@ -27,7 +27,7 @@ export async function cargarMiembrosDelGrupo(groupId) {
   
   if (!groupId) {
     splitList.innerHTML = '<p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>';
-    selectPaidBy.innerHTML = '<option value="">Seleccionar quién pagó...</option>';
+    selectPaidBy.innerHTML = '<option value="">Seleccionar quiÃ©n pagÃ³...</option>';
     document.getElementById('split-summary').innerHTML = '<p>Selecciona un grupo y ajusta los valores.</p>';
     return;
   }
@@ -42,14 +42,14 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
-  selectPaidBy.innerHTML = '<option value="">Seleccionar quién pagó...</option>' +
+  selectPaidBy.innerHTML = '<option value="">Seleccionar quiÃ©n pagÃ³...</option>' +
     miembros.map(m => `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`).join('');
 
   renderizarSplitInputs(miembros);
 }
 
 // ==========================================
-// 3. RENDERIZAR INPUTS SEGÚN TIPO DE DIVISIÓN
+// 3. RENDERIZAR INPUTS SEGÃšN TIPO DE DIVISIÃ“N
 // ==========================================
 function renderizarSplitInputs(miembros, preserveValues = {}) {
   const splitList = document.getElementById('expense-split-members');
@@ -64,7 +64,7 @@ function renderizarSplitInputs(miembros, preserveValues = {}) {
     if (splitType === 'percentage') {
       extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="%" step="0.01" min="0" max="100" value="${valorActual}" style="width: 80px;">`;
     } else if (splitType === 'exact') {
-      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="€" step="0.01" min="0" value="${valorActual}" style="width: 90px;">`;
+      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="â‚¬" step="0.01" min="0" value="${valorActual}" style="width: 90px;">`;
     } else if (splitType === 'shares') {
       extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="partes" step="1" min="0" value="${valorActual}" style="width: 80px;">`;
     }
@@ -104,7 +104,7 @@ function actualizarResumenSplit() {
 
   if (splitType === 'equal') {
     const montoPorPersona = (monto / checkboxes.length).toFixed(2);
-    summary.innerHTML = `<p><strong>${montoPorPersona} €</strong> por persona (${checkboxes.length} personas)</p>`;
+    summary.innerHTML = `<p><strong>${montoPorPersona} â‚¬</strong> por persona (${checkboxes.length} personas)</p>`;
     return;
   }
 
@@ -116,11 +116,11 @@ function actualizarResumenSplit() {
       const pct = parseFloat(input?.value) || 0;
       total += pct;
       const montoPct = (monto * pct / 100).toFixed(2);
-      lineas.push(`<p>${pct}% → <strong>${montoPct} €</strong></p>`);
+      lineas.push(`<p>${pct}% â†’ <strong>${montoPct} â‚¬</strong></p>`);
     });
     const aviso = Math.abs(total - 100) > 0.01 
-      ? `<p style="color: #e53e3e; margin-top: 5px;">⚠️ Los porcentajes suman ${total.toFixed(2)}%, deberían sumar 100%.</p>` 
-      : '<p style="color: #38a169; margin-top: 5px;">✅ Suma 100%.</p>';
+      ? `<p style="color: #e53e3e; margin-top: 5px;">âš ï¸� Los porcentajes suman ${total.toFixed(2)}%, deberÃ­an sumar 100%.</p>` 
+      : '<p style="color: #38a169; margin-top: 5px;">âœ… Suma 100%.</p>';
     summary.innerHTML = lineas.join('') + aviso;
     return;
   }
@@ -132,11 +132,11 @@ function actualizarResumenSplit() {
       const input = document.querySelector(`.split-value[data-user="${cb.value}"]`);
       const val = parseFloat(input?.value) || 0;
       total += val;
-      lineas.push(`<p>${val.toFixed(2)} €</p>`);
+      lineas.push(`<p>${val.toFixed(2)} â‚¬</p>`);
     });
     const aviso = Math.abs(total - monto) > 0.01 
-      ? `<p style="color: #e53e3e; margin-top: 5px;">⚠️ Suma ${total.toFixed(2)} €, debería sumar ${monto.toFixed(2)} €.</p>` 
-      : '<p style="color: #38a169; margin-top: 5px;">✅ Suma correcta.</p>';
+      ? `<p style="color: #e53e3e; margin-top: 5px;">âš ï¸� Suma ${total.toFixed(2)} â‚¬, deberÃ­a sumar ${monto.toFixed(2)} â‚¬.</p>` 
+      : '<p style="color: #38a169; margin-top: 5px;">âœ… Suma correcta.</p>';
     summary.innerHTML = lineas.join('') + aviso;
     return;
   }
@@ -158,14 +158,14 @@ function actualizarResumenSplit() {
 
     const lineas = inputs.map(i => {
       const montoParte = (monto * i.shares / totalShares).toFixed(2);
-      return `<p>${i.shares} partes → <strong>${montoParte} €</strong></p>`;
+      return `<p>${i.shares} partes â†’ <strong>${montoParte} â‚¬</strong></p>`;
     });
-    summary.innerHTML = lineas.join('') + `<p style="color: #38a169; margin-top: 5px;">✅ Total: ${totalShares} partes.</p>`;
+    summary.innerHTML = lineas.join('') + `<p style="color: #38a169; margin-top: 5px;">âœ… Total: ${totalShares} partes.</p>`;
   }
 }
 
 // ==========================================
-// 5. GUARDAR GASTO CON DIVISIÓN AVANZADA
+// 5. GUARDAR GASTO CON DIVISIÃ“N AVANZADA
 // ==========================================
 export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -218,7 +218,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       };
     });
     if (Math.abs(totalExacto - monto) > 0.01) {
-      throw new Error(`Los montos suman ${totalExacto.toFixed(2)} €, deben sumar ${monto.toFixed(2)} €.`);
+      throw new Error(`Los montos suman ${totalExacto.toFixed(2)} â‚¬, deben sumar ${monto.toFixed(2)} â‚¬.`);
     }
   } 
   else if (splitType === 'shares') {
@@ -289,7 +289,7 @@ export async function cargarGastosDelGrupo(groupId) {
   }
 
   if (!gastos || gastos.length === 0) {
-    listContainer.innerHTML = '<p class="placeholder-text">No hay gastos aún. ¡Añade el primero!</p>';
+    listContainer.innerHTML = '<p class="placeholder-text">No hay gastos aÃºn. Â¡AÃ±ade el primero!</p>';
     return;
   }
 
@@ -297,7 +297,7 @@ export async function cargarGastosDelGrupo(groupId) {
     <div class="expense-card clickable-expense" data-expense-id="${g.id}">
       <div class="expense-info">
         <h5>${g.description}</h5>
-        <span>Pagó: ${g.payer?.full_name || g.payer?.email || 'Desconocido'} · ${g.date}</span>
+        <span>PagÃ³: ${g.payer?.full_name || g.payer?.email || 'Desconocido'} Â· ${g.date}</span>
       </div>
       <div class="expense-amount">
         ${parseFloat(g.amount).toFixed(2)} ${g.currency}
@@ -333,7 +333,7 @@ export function initExpenseModal() {
     await cargarGruposParaGasto();
     document.getElementById('expense-split-members').innerHTML = 
       '<p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>';
-    document.getElementById('expense-paid-by').innerHTML = '<option value="">Seleccionar quién pagó...</option>';
+    document.getElementById('expense-paid-by').innerHTML = '<option value="">Seleccionar quiÃ©n pagÃ³...</option>';
   });
 
   btnCancel.addEventListener('click', () => {
@@ -379,7 +379,7 @@ export function initExpenseModal() {
     try {
       await guardarGasto(descripcion, monto, groupId, paidBy);
       modal.classList.add('hidden');
-      alert('¡Gasto guardado con éxito!');
+      alert('Â¡Gasto guardado con Ã©xito!');
     } catch (error) {
       errorMsg.textContent = 'Error: ' + error.message;
     } finally {
@@ -431,12 +431,12 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
       <p style="font-size: 0.85rem; color: #4a5568;">
-        <strong>Pagó:</strong> ${gasto.payer?.full_name || gasto.payer?.email || 'Desconocido'}
+        <strong>PagÃ³:</strong> ${gasto.payer?.full_name || gasto.payer?.email || 'Desconocido'}
       </p>
     </div>
 
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
-      <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;"><strong>División:</strong></p>
+      <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;"><strong>DivisiÃ³n:</strong></p>
       ${splits && splits.length > 0 ? splits.map(s => `
         <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.9rem;">
           <span>${s.user?.full_name || s.user?.email}</span>
@@ -457,7 +457,7 @@ export async function eliminarGasto() {
   const expenseId = modal.dataset.expenseId;
   const groupId = modal.dataset.groupId;
 
-  if (!confirm('¿Seguro que quieres eliminar este gasto? Esta acción no se puede deshacer.')) return;
+  if (!confirm('Â¿Seguro que quieres eliminar este gasto? Esta acciÃ³n no se puede deshacer.')) return;
 
   const { error } = await supabase
     .from('expenses')
@@ -513,7 +513,7 @@ export async function cargarGastoParaEditar() {
 }
 
 // ==========================================
-// 11. GUARDAR EDICIÓN DEL GASTO
+// 11. GUARDAR EDICIÃ“N DEL GASTO
 // ==========================================
 export async function guardarEdicionGasto() {
   const form = document.getElementById('form-expense-edit');
