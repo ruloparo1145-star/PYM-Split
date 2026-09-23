@@ -364,6 +364,22 @@ export async function cargarGastosDelGrupo(groupId) {
 }
 
 // ==========================================
+// FILTRO POR CATEGORIA
+// ==========================================
+export function initFiltroCategoria() {
+  const select = document.getElementById('filter-category');
+  if (!select) return;
+
+  select.addEventListener('change', () => {
+    filtroCategoriaActual = select.value;
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (groupId) {
+      cargarGastosDelGrupo(groupId);
+    }
+  });
+}
+
+// ==========================================
 // 7. INICIALIZAR MODAL DE GASTO
 // ==========================================
 export function initExpenseModal() {
