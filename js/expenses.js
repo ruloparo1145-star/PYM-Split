@@ -363,68 +363,6 @@ export async function cargarGastosDelGrupo(groupId) {
   });
 }
 
-
-
-
-
-
-
-
-
-
-
-export async function cargarGastosDelGrupo(groupId) {
-  const listContainer = document.getElementById('group-expenses-list');
-  
-  const { data: gastos, error } = await supabase
-    .from('expenses')
-.select('id, description, amount, currency, date, paid_by, category')
-    .eq('group_id', groupId)
-    .order('created_at', { ascending: false });
-
-  if (error) {
-    console.error('Error gastos:', error);
-    listContainer.innerHTML = '<p class="error-msg">Error al cargar gastos.</p>';
-    return;
-  }
-
-  if (!gastos || gastos.length === 0) {
-    listContainer.innerHTML = '<p class="placeholder-text">No hay gastos aun. Anade el primero!</p>';
-    return;
-  }
-
-  const paidByIds = [...new Set(gastos.map(g => g.paid_by))];
-  const { data: perfiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, email')
-    .in('id', paidByIds);
-
-  const nombres = {};
-  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
-
-listContainer.innerHTML = gastos.map(g => {
-    const cat = getCategoria(g.category);
-    return `
-      <div class="expense-card clickable-expense" data-expense-id="${g.id}">
-        <div class="expense-category-icon" title="${cat.label}">${cat.icono}</div>
-        <div class="expense-info">
-          <h5>${g.description}</h5>
-          <span>Pago: ${nombres[g.paid_by] || 'Desconocido'} - ${g.date}</span>
-        </div>
-        <div class="expense-amount">
-          ${parseFloat(g.amount).toFixed(2)} ${g.currency}
-        </div>
-      </div>
-    `;
-  }).join('');
-  
-  listContainer.querySelectorAll('.clickable-expense').forEach(card => {
-    card.addEventListener('click', () => {
-      abrirDetalleGasto(card.dataset.expenseId, groupId);
-    });
-  });
-}
-
 // ==========================================
 // 7. INICIALIZAR MODAL DE GASTO
 // ==========================================
