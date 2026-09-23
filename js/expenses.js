@@ -278,7 +278,7 @@ export async function cargarGastosDelGrupo(groupId) {
     .from('expenses')
     .select(`
       id, description, amount, currency, date,
-      payer:profiles!expenses_paid_by_fkey(id, full_name, email)
+      files!paid_by(id, full_name, email)
     `)
     .eq('group_id', groupId)
     .order('date', { ascending: false });
@@ -404,7 +404,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
     .from('expenses')
     .select(`
       id, description, amount, currency, date, category, notes,
-      payer:profiles!expenses_paid_by_fkey(id, full_name, email)
+      files!paid_by(id, full_name, email)
     `)
     .eq('id', expenseId)
     .single();
