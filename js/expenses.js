@@ -301,7 +301,7 @@ export async function cargarGastosDelGrupo(groupId) {
   
   const { data: gastos, error } = await supabase
     .from('expenses')
-    .select('id, description, amount, currency, date, paid_by')
+.select('id, description, amount, currency, date, paid_by, category')
     .eq('group_id', groupId)
     .order('created_at', { ascending: false });
 
