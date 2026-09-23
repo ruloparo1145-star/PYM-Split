@@ -4,6 +4,7 @@ import { cargarGrupos, initGroupModal, initArchivedToggle } from './groups.js';
 import { initFriendsModal } from './friends.js';
 import { initExpenseModal, initFiltroCategoria } from './expenses.js';
 import { initAddMemberModal } from './members.js';
+import { cargarDashboard } from './dashboard.js';
 
 // ==========================================
 // 1. PROTEGER LA RUTA Y CARGAR DATOS
