@@ -124,6 +124,57 @@ export function toggleArchivados() {
 }
 
 // ==========================================
+// ELIMINAR GRUPO Y TODOS SUS DATOS
+// ==========================================
+export async function eliminarGrupo(groupId) {
+  try {
+    // 1. Borrar splits (dependen de expenses)
+    const { data: gastos } = await supabase
+      .from('expenses')
+      .select('id')
+      .eq('group_id', groupId);
+
+    if (gastos && gastos.length > 0) {
+      const expenseIds = gastos.map(g => g.id);
+      await supabase
+        .from('expense_splits')
+        .delete()
+        .in('expense_id', expenseIds);
+    }
+
+    // 2. Borrar settlements
+    await supabase
+      .from('settlements')
+      .delete()
+      .eq('group_id', groupId);
+
+    // 3. Borrar expenses
+    await supabase
+      .from('expenses')
+      .delete()
+      .eq('group_id', groupId);
+
+    // 4. Borrar group_members
+    await supabase
+      .from('group_members')
+      .delete()
+      .eq('group_id', groupId);
+
+    // 5. Borrar el grupo
+    const { error } = await supabase
+      .from('groups')
+      .delete()
+      .eq('id', groupId);
+
+    if (error) throw error;
+
+  } catch (error) {
+    alert('Error al eliminar el grupo: ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
 // 4. CREAR GRUPO
 // ==========================================
 export async function crearGrupo(nombre, tipo, moneda) {
