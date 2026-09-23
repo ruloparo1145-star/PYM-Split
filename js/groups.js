@@ -1,55 +1,117 @@
 // js/groups.js
 import { supabase } from './supabase.js';
 
+let mostrarArchivados = false;
+
 // ==========================================
 // 1. CARGAR GRUPOS
 // ==========================================
 export async function cargarGrupos() {
   const groupsList = document.getElementById('groups-list');
-  
+  const headerTitle = document.querySelector('#groups-section h3');
+  const btnToggle = document.getElementById('btn-toggle-archived');
+
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      throw new Error('Usuario no autenticado');
-    }
+    if (authError || !user) throw new Error('Usuario no autenticado');
 
     const { data: grupos, error } = await supabase
       .from('groups')
       .select('*')
+      .eq('archived', mostrarArchivados)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
 
+    if (headerTitle) {
+      headerTitle.textContent = mostrarArchivados ? 'Grupos Archivados' : 'Mis Grupos';
+    }
+    if (btnToggle) {
+      btnToggle.textContent = mostrarArchivados ? 'Ver activos' : 'Archivados';
+    }
+
     if (!grupos || grupos.length === 0) {
-      groupsList.innerHTML = '<p class="placeholder-text">Aun no tienes grupos. Crea uno nuevo!</p>';
+      groupsList.innerHTML = mostrarArchivados
+        ? '<p class="placeholder-text">No tienes grupos archivados.</p>'
+        : '<p class="placeholder-text">Aun no tienes grupos. Crea uno nuevo!</p>';
       return;
     }
 
-    groupsList.innerHTML = grupos.map(grupo => 
-      '<div class="group-card" data-id="' + grupo.id + '">' +
-        '<div class="group-info">' +
-          '<h4>' + grupo.name + '</h4>' +
-          '<span>' + grupo.type.toUpperCase() + ' / ' + grupo.currency + '</span>' +
-        '</div>' +
-        '<div>></div>' +
-      '</div>'
-    ).join('');
+    groupsList.innerHTML = grupos.map(grupo => `
+      <div class="group-card ${grupo.archived ? 'archived' : ''}" data-id="${grupo.id}">
+        <div class="group-info">
+          <h4>${grupo.name}</h4>
+          <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.currency || 'EUR'}</span>
+          ${grupo.archived ? '<span class="badge-archived">Archivado</span>' : ''}
+        </div>
+        <div class="group-actions">
+          ${grupo.archived 
+            ? `<button class="btn-small btn-restore" data-id="${grupo.id}" title="Restaurar">&#8634;</button>` 
+            : `<button class="btn-small btn-archive" data-id="${grupo.id}" title="Archivar">&#128230;</button>`
+          }
+          <span class="group-arrow">></span>
+        </div>
+      </div>
+    `).join('');
 
-    document.querySelectorAll('.group-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const groupId = card.dataset.id;
-        abrirDetalleGrupo(groupId);
+    // Listener: abrir detalle
+    groupsList.querySelectorAll('.group-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-archive') || e.target.closest('.btn-restore')) return;
+        abrirDetalleGrupo(card.dataset.id);
+      });
+    });
+
+    // Listener: archivar
+    groupsList.querySelectorAll('.btn-archive').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm('Archivar este grupo? No se mostrara en la lista principal.')) return;
+        await archivarGrupo(btn.dataset.id, true);
+        await cargarGrupos();
+      });
+    });
+
+    // Listener: restaurar
+    groupsList.querySelectorAll('.btn-restore').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await archivarGrupo(btn.dataset.id, false);
+        await cargarGrupos();
       });
     });
 
   } catch (error) {
     console.error('Error detallado:', error);
-    groupsList.innerHTML = '<p class="error-msg">Error: ' + (error.message || 'No se pudo conectar con Supabase') + '</p>';
+    groupsList.innerHTML = `<p class="error-msg">Error: ${error.message || 'No se pudo conectar con Supabase'}</p>`;
   }
 }
 
 // ==========================================
-// 2. CREAR GRUPO
+// 2. ARCHIVAR / DESARCHIVAR GRUPO
+// ==========================================
+export async function archivarGrupo(groupId, archivar) {
+  const { error } = await supabase
+    .from('groups')
+    .update({ archived: archivar })
+    .eq('id', groupId);
+
+  if (error) {
+    alert('Error al ' + (archivar ? 'archivar' : 'restaurar') + ': ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 3. TOGGLE ARCHIVADOS
+// ==========================================
+export function toggleArchivados() {
+  mostrarArchivados = !mostrarArchivados;
+  cargarGrupos();
+}
+
+// ==========================================
+// 4. CREAR GRUPO
 // ==========================================
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -61,28 +123,19 @@ export async function crearGrupo(nombre, tipo, moneda) {
       name: nombre,
       type: tipo,
       currency: moneda,
-      created_by: user.id
+      created_by: user.id,
+      owner_id: user.id
     }])
-    .select();
+    .select()
+    .single();
 
   if (groupError) throw groupError;
 
-  const nuevoGrupoId = groupData[0].id;
-
-  const { error: memberError } = await supabase
-    .from('group_members')
-    .insert([{
-      group_id: nuevoGrupoId,
-      user_id: user.id
-    }]);
-
-  if (memberError) throw memberError;
-
-  return groupData[0];
+  return groupData;
 }
 
 // ==========================================
-// 3. MANEJO DEL MODAL DE CREAR GRUPO
+// 5. MODAL CREAR GRUPO
 // ==========================================
 export function initGroupModal() {
   const modal = document.getElementById('modal-group');
@@ -91,23 +144,21 @@ export function initGroupModal() {
   const form = document.getElementById('form-group');
   const errorMsg = document.getElementById('group-error');
 
-  btnNew.addEventListener('click', () => {
+  btnNew?.addEventListener('click', () => {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
     form.reset();
   });
 
-  btnCancel.addEventListener('click', () => {
+  btnCancel?.addEventListener('click', () => {
     modal.classList.add('hidden');
   });
 
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
-    }
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.add('hidden');
   });
 
-  form.addEventListener('submit', async (e) => {
+  form?.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorMsg.textContent = '';
     const btnSubmit = form.querySelector('button[type="submit"]');
@@ -132,7 +183,17 @@ export function initGroupModal() {
 }
 
 // ==========================================
-// 4. ABRIR DETALLE DEL GRUPO (con todos los modulos)
+// 6. INICIALIZAR BOTON "ARCHIVADOS"
+// ==========================================
+export function initArchivedToggle() {
+  const btn = document.getElementById('btn-toggle-archived');
+  btn?.addEventListener('click', () => {
+    toggleArchivados();
+  });
+}
+
+// ==========================================
+// 7. ABRIR DETALLE DEL GRUPO
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
   const { cargarGastosDelGrupo } = await import('./expenses.js');
@@ -142,10 +203,10 @@ async function abrirDetalleGrupo(groupId) {
   const { cargarGraficos } = await import('./charts.js');
 
   const modal = document.getElementById('modal-group-detail');
-  
+
   const { data: grupo } = await supabase
     .from('groups')
-    .select('name')
+    .select('name, archived')
     .eq('id', groupId)
     .single();
 
@@ -161,29 +222,23 @@ async function abrirDetalleGrupo(groupId) {
 }
 
 // ==========================================
-// 5. LISTENERS GLOBALES
+// 8. LISTENERS GLOBALES DEL DETALLE
 // ==========================================
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
 
-  // Cerrar detalle del grupo
   document.getElementById('btn-close-detail')?.addEventListener('click', () => {
     document.getElementById('modal-group-detail').classList.add('hidden');
   });
 
   document.getElementById('modal-group-detail')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modal-group-detail') {
-      e.target.classList.add('hidden');
-    }
+    if (e.target.id === 'modal-group-detail') e.target.classList.add('hidden');
   });
 
-  // Anadir gasto desde el detalle
   document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     document.getElementById('modal-group-detail').classList.add('hidden');
-    
     document.getElementById('fab-add').click();
-    
     setTimeout(() => {
       const select = document.getElementById('expense-group');
       if (select) {
@@ -193,18 +248,14 @@ if (!window.__groupDetailListenersAttached) {
     }, 300);
   });
 
-  // ============ DETALLE DEL GASTO ============
   document.getElementById('btn-close-expense-detail')?.addEventListener('click', () => {
     document.getElementById('modal-expense-detail').classList.add('hidden');
   });
 
   document.getElementById('modal-expense-detail')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modal-expense-detail') {
-      e.target.classList.add('hidden');
-    }
+    if (e.target.id === 'modal-expense-detail') e.target.classList.add('hidden');
   });
 
-  // Eliminar gasto
   document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
     const { eliminarGasto } = await import('./expenses.js');
     await eliminarGasto();
@@ -217,24 +268,19 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
-  // Editar gasto
   document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
     const { cargarGastoParaEditar } = await import('./expenses.js');
     await cargarGastoParaEditar();
   });
 
-  // Cancelar edicion
   document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
     document.getElementById('modal-expense-edit').classList.add('hidden');
   });
 
   document.getElementById('modal-expense-edit')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modal-expense-edit') {
-      e.target.classList.add('hidden');
-    }
+    if (e.target.id === 'modal-expense-edit') e.target.classList.add('hidden');
   });
 
-  // Guardar edicion
   document.getElementById('form-expense-edit')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const { guardarEdicionGasto } = await import('./expenses.js');
