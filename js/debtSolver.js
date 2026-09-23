@@ -16,7 +16,7 @@ export async function calcularBalance(groupId) {
     .eq('group_id', groupId);
 
   if (gastos) {
-    // Sumar lo que pagó cada persona
+    // Sumar lo que pagÃ³ cada persona
     gastos.forEach(g => {
       balance[g.paid_by] = (balance[g.paid_by] || 0) + parseFloat(g.amount);
     });
@@ -43,9 +43,9 @@ export async function calcularBalance(groupId) {
 
   if (pagos) {
     pagos.forEach(p => {
-      // El que pagó recupera su deuda
+      // El que pagÃ³ recupera su deuda
       balance[p.from_user] = (balance[p.from_user] || 0) + parseFloat(p.amount);
-      // El que recibió le resta el crédito
+      // El que recibiÃ³ le resta el crÃ©dito
       balance[p.to_user] = (balance[p.to_user] || 0) - parseFloat(p.amount);
     });
   }
@@ -62,7 +62,7 @@ export function simplificarDeudas(balance) {
   const deudores = [];
   const acreedores = [];
 
-  // Separar en quién debe (negativo) y quién le deben (positivo)
+  // Separar en quiÃ©n debe (negativo) y quiÃ©n le deben (positivo)
   Object.entries(balance).forEach(([userId, monto]) => {
     if (monto < -0.01) deudores.push({ userId, monto: Math.abs(monto) });
     else if (monto > 0.01) acreedores.push({ userId, monto });
@@ -97,7 +97,7 @@ export function simplificarDeudas(balance) {
 }
 
 // ==========================================
-// 3. RENDERIZAR BALANCE CON BOTÓN DE SALDAR
+// 3. RENDERIZAR BALANCE CON BOTÃ“N DE SALDAR
 // ==========================================
 export async function mostrarBalance(groupId) {
   const container = document.getElementById('group-balance');
@@ -108,7 +108,7 @@ export async function mostrarBalance(groupId) {
   
   const userIds = Object.keys(balance);
   if (userIds.length === 0) {
-    container.innerHTML = '<p class="placeholder-text">Sin movimientos todavía.</p>';
+    container.innerHTML = '<p class="placeholder-text">Sin movimientos todavÃ­a.</p>';
     return;
   }
 
@@ -126,16 +126,16 @@ export async function mostrarBalance(groupId) {
 
   // 4. Renderizar
   if (transacciones.length === 0) {
-    container.innerHTML = '<p class="success-msg" style="text-align: center;">✅ ¡Todo saldado!</p>';
+    container.innerHTML = '<p class="success-msg" style="text-align: center;">âœ… Â¡Todo saldado!</p>';
     return;
   }
 
   container.innerHTML = transacciones.map(t => `
     <div class="debt-card">
       <span class="debt-from">${nombres[t.from]}</span>
-      <span class="debt-arrow">→</span>
+      <span class="debt-arrow">â†’</span>
       <span class="debt-to">${nombres[t.to]}</span>
-      <span class="debt-amount">${t.amount} €</span>
+      <span class="debt-amount">${t.amount} â‚¬</span>
       <button class="btn-small btn-settle" 
               data-group="${groupId}"
               data-from="${t.from}" 
@@ -146,7 +146,7 @@ export async function mostrarBalance(groupId) {
     </div>
   `).join('');
 
-  // 5. Añadir listeners a los botones de saldar
+  // 5. AÃ±adir listeners a los botones de saldar
   container.querySelectorAll('.btn-settle').forEach(btn => {
     btn.addEventListener('click', async () => {
       const groupId = btn.dataset.group;
@@ -154,7 +154,7 @@ export async function mostrarBalance(groupId) {
       const toId = btn.dataset.to;
       const amount = parseFloat(btn.dataset.amount);
 
-      if (!confirm(`¿Confirmas que se pagaron ${amount.toFixed(2)} €?`)) return;
+      if (!confirm(`Â¿Confirmas que se pagaron ${amount.toFixed(2)} â‚¬?`)) return;
 
       try {
         await saldarDeuda(groupId, fromId, toId, amount);
