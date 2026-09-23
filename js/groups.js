@@ -82,6 +82,18 @@ export async function cargarGrupos() {
       });
     });
 
+// Listener: eliminar
+    groupsList.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const groupId = btn.dataset.id;
+        const groupName = btn.dataset.name;
+        if (!confirm(`Eliminar el grupo "${groupName}" y TODOS sus datos? Esta accion no se puede deshacer.`)) return;
+        await eliminarGrupo(groupId);
+        await cargarGrupos();
+      });
+    });
+    
   } catch (error) {
     console.error('Error detallado:', error);
     groupsList.innerHTML = `<p class="error-msg">Error: ${error.message || 'No se pudo conectar con Supabase'}</p>`;
