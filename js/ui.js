@@ -41,3 +41,19 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     alert('Error al cerrar sesion: ' + error.message);
   }
 });
+// ==========================================
+// 3. MANUAL DE USO
+// ==========================================
+document.getElementById('btn-manual').addEventListener('click', () => {
+  document.getElementById('modal-manual').classList.remove('hidden');
+});
+
+document.getElementById('btn-close-manual').addEventListener('click', () => {
+  document.getElementById('modal-manual').classList.add('hidden');
+});
+
+document.getElementById('modal-manual').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-manual') {
+    e.target.classList.add('hidden');
+  }
+});
