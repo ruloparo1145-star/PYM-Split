@@ -258,6 +258,8 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
     }));
   }
 
+const categoria = document.getElementById('expense-category').value || 'otros';
+
   const { data: gasto, error: gastoError } = await supabase
     .from('expenses')
     .insert([{
@@ -266,8 +268,10 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       amount: monto,
       paid_by: paidBy,
       currency: 'EUR',
+      category: categoria,
       date: new Date().toISOString().split('T')[0]
     }])
+
     .select()
     .single();
 
