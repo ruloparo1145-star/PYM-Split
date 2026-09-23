@@ -14,7 +14,7 @@ export async function cargarHistorial(groupId) {
       .from('expenses')
       .select(`
         id, description, amount, currency, date, created_at,
-        payer:profiles!expenses_paid_by_fkey(id, full_name, email)
+       .select('amount, paid_by, profiles(full_name, email)')
       `)
       .eq('group_id', groupId),
     supabase
