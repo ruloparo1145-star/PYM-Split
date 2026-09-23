@@ -1,7 +1,23 @@
+/* ==========================================
+   0. RESET Y BASE
+   ========================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.hidden { display: none !important; }
+button { font-family: inherit; }
+input, select, textarea { font-family: inherit; }
+
 /* ==========================================
-   2. ESTILOS DE AUTENTICACION (Login/Registro)
+   1. AUTENTICACIÃ“N
    ========================================== */
 body {
   background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
@@ -13,10 +29,7 @@ body {
   color: #333;
 }
 
-.auth-container {
-  width: 100%;
-  max-width: 420px;
-}
+.auth-container { width: 100%; max-width: 420px; }
 
 .auth-card {
   background: #ffffff;
@@ -31,17 +44,14 @@ body {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.auth-header {
-  text-align: center;
-  margin-bottom: 30px;
-}
+.auth-header { text-align: center; margin-bottom: 30px; }
 
 .auth-logo {
   width: 70px;
   height: 70px;
   border-radius: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.3);
 }
 
 .auth-header h1 {
@@ -51,10 +61,7 @@ body {
   margin-bottom: 4px;
 }
 
-.auth-subtitle {
-  font-size: 0.9rem;
-  color: #718096;
-}
+.auth-subtitle { font-size: 0.9rem; color: #718096; }
 
 .auth-tabs {
   display: flex;
@@ -79,21 +86,13 @@ body {
 
 .tab-btn.active {
   background: #ffffff;
-  color: #667eea;
+  color: #2ecc87;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
+.auth-form { display: flex; flex-direction: column; gap: 18px; }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
+.form-group { display: flex; flex-direction: column; gap: 6px; }
 
 .form-group label {
   font-size: 0.85rem;
@@ -114,13 +113,13 @@ body {
 
 .form-group input:focus,
 .form-group select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  border-color: #2ecc87;
+  box-shadow: 0 0 0 3px rgba(46, 204, 135, 0.15);
 }
 
 .btn-primary {
   padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
   color: #ffffff;
   border: none;
   border-radius: 10px;
@@ -133,11 +132,7 @@ body {
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
+  box-shadow: 0 8px 20px rgba(46, 204, 135, 0.4);
 }
 
 .btn-primary:disabled {
@@ -157,9 +152,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-secondary:hover {
-  background: #e2e8f0;
-}
+.btn-secondary:hover { background: #e2e8f0; }
 
 .error-msg {
   font-size: 0.85rem;
@@ -169,12 +162,13 @@ body {
 }
 
 /* ==========================================
-   3. ESTILOS DEL DASHBOARD (app.html)
+   2. DASHBOARD
    ========================================== */
 .app-body {
   background: #f7fafc;
   display: block;
   padding: 0;
+  min-height: 100vh;
 }
 
 .app-container {
@@ -195,22 +189,15 @@ body {
   z-index: 10;
 }
 
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+.header-left { display: flex; align-items: center; gap: 10px; }
 
-.header-logo {
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
-}
+.header-logo { width: 30px; height: 30px; border-radius: 8px; }
 
 .app-header h1 {
   font-size: 1.2rem;
   font-weight: 700;
   color: #2d3748;
+  margin: 0;
 }
 
 .btn-logout {
@@ -225,10 +212,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-logout:hover {
-  background: #e53e3e;
-  color: white;
-}
+.btn-logout:hover { background: #e53e3e; color: white; }
 
 .app-main {
   flex: 1;
@@ -238,9 +222,7 @@ body {
   width: 100%;
 }
 
-.welcome-section {
-  margin-bottom: 25px;
-}
+.welcome-section { margin-bottom: 25px; }
 
 .welcome-section h2 {
   font-size: 1.5rem;
@@ -248,9 +230,7 @@ body {
   margin-bottom: 5px;
 }
 
-.welcome-section p {
-  color: #718096;
-}
+.welcome-section p { color: #718096; }
 
 .section-card {
   background: white;
@@ -273,8 +253,6 @@ body {
   font-size: 1.1rem;
   color: #4a5568;
   margin-bottom: 0;
-  border-bottom: none;
-  padding-bottom: 0;
 }
 
 .btn-small {
@@ -289,10 +267,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-small:hover {
-  background: #3182ce;
-  color: white;
-}
+.btn-small:hover { background: #3182ce; color: white; }
 
 .placeholder-text {
   color: #a0aec0;
@@ -303,7 +278,7 @@ body {
 }
 
 /* ==========================================
-   4. COMPONENTES: MODALES Y GRUPOS
+   3. MODALES
    ========================================== */
 .modal-overlay {
   position: fixed;
@@ -314,6 +289,7 @@ body {
   justify-content: center;
   z-index: 1000;
   padding: 20px;
+  overflow-y: auto;
 }
 
 .modal-content {
@@ -322,6 +298,8 @@ body {
   padding: 30px;
   width: 100%;
   max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: 0 10px 25px rgba(0,0,0,0.2);
   animation: slideUp 0.3s ease-out;
 }
@@ -338,10 +316,11 @@ body {
   margin-top: 20px;
 }
 
-.modal-actions button {
-  flex: 1;
-}
+.modal-actions button { flex: 1; }
 
+/* ==========================================
+   4. GRUPOS
+   ========================================== */
 .group-card {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -356,8 +335,8 @@ body {
 }
 
 .group-card:hover {
-  border-color: #667eea;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+  border-color: #2ecc87;
+  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.1);
 }
 
 .group-info h4 {
@@ -375,7 +354,7 @@ body {
 }
 
 /* ==========================================
-   5. BOTON FLOTANTE (FAB)
+   5. FAB
    ========================================== */
 .fab {
   position: fixed;
@@ -384,11 +363,11 @@ body {
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
   color: white;
   font-size: 2rem;
   border: none;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 15px rgba(46, 204, 135, 0.4);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -397,14 +376,10 @@ body {
   z-index: 100;
 }
 
-.fab:hover {
-  transform: scale(1.1);
-}
-.hidden {
-    display: none !important;
-}
+.fab:hover { transform: scale(1.1); }
+
 /* ==========================================
-   6. TARJETAS DE AMIGOS
+   6. AMIGOS
    ========================================== */
 .friend-card {
   background: #f8fafc;
@@ -417,41 +392,37 @@ body {
   align-items: center;
 }
 
-.friend-info h4 {
-  font-size: 0.9rem;
-  color: #2d3748;
-  margin-bottom: 2px;
-}
-
-.friend-info span {
-  font-size: 0.75rem;
-  color: #718096;
-}
-
-.friend-actions {
-  display: flex;
-  gap: 5px;
-}
+.friend-info h4 { font-size: 0.9rem; color: #2d3748; margin-bottom: 2px; }
+.friend-info span { font-size: 0.75rem; color: #718096; }
+.friend-actions { display: flex; gap: 5px; }
 
 .btn-accept {
   background: #c6f6d5;
   color: #38a169;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.btn-accept:hover {
-  background: #38a169;
-  color: white;
-}
+.btn-accept:hover { background: #38a169; color: white; }
 
 .btn-reject {
   background: #fed7d7;
   color: #e53e3e;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.btn-reject:hover {
-  background: #e53e3e;
-  color: white;
-}
+.btn-reject:hover { background: #e53e3e; color: white; }
 
 .badge-pending {
   font-size: 0.7rem;
@@ -461,14 +432,15 @@ body {
   border-radius: 10px;
   font-weight: 600;
 }
+
 /* ==========================================
-   7. LISTA DE MIEMBROS (SPLIT)
+   7. SPLIT
    ========================================== */
 .split-members-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 150px;
+  max-height: 200px;
   overflow-y: auto;
   padding: 10px;
   background: #f8fafc;
@@ -480,197 +452,13 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 0.9rem;
-  color: #4a5568;
-  cursor: pointer;
-}
-
-.split-member input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  accent-color: #2ecc87;
-  cursor: pointer;
-}
-/* ==========================================
-   8. DETALLE DEL GRUPO: BALANCE Y GASTOS
-   ========================================== */
-.balance-section, .expenses-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #edf2f7;
-}
-
-.balance-section h4, .expenses-section h4 {
-  font-size: 1rem;
-  color: #4a5568;
-  margin-bottom: 12px;
-}
-
-.debt-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fffaf0;
-  border: 1px solid #fbd38d;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  font-size: 0.9rem;
-}
-
-.debt-from { color: #e53e3e; font-weight: 600; }
-.debt-arrow { color: #a0aec0; }
-.debt-to { color: #38a169; font-weight: 600; }
-.debt-amount { margin-left: auto; font-weight: 700; color: #2d3748; }
-
-.expense-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.expense-info h5 {
-  font-size: 0.9rem;
-  color: #2d3748;
-  margin-bottom: 2px;
-}
-
-.expense-info span {
-  font-size: 0.75rem;
-  color: #718096;
-}
-
-.expense-amount {
-  font-weight: 700;
-  color: #2ecc87;
-  font-size: 1rem;
-}
-/* ==========================================
-   8. DETALLE DEL GRUPO: BALANCE Y GASTOS
-   ========================================== */
-.balance-section, .expenses-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #edf2f7;
-}
-
-.balance-section h4, .expenses-section h4 {
-  font-size: 1rem;
-  color: #4a5568;
-  margin-bottom: 12px;
-}
-
-.debt-card {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: #fffaf0;
-  border: 1px solid #fbd38d;
-  border-radius: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  font-size: 0.9rem;
-}
-
-.debt-from { color: #e53e3e; font-weight: 600; }
-.debt-arrow { color: #a0aec0; }
-.debt-to { color: #38a169; font-weight: 600; }
-.debt-amount { margin-left: auto; font-weight: 700; color: #2d3748; }
-
-.expense-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #f8fafc;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.expense-info h5 {
-  font-size: 0.9rem;
-  color: #2d3748;
-  margin-bottom: 2px;
-}
-
-.expense-info span {
-  font-size: 0.75rem;
-  color: #718096;
-}
-
-.expense-amount {
-  font-weight: 700;
-  color: #2ecc87;
-  font-size: 1rem;
-}
-/* ==========================================
-   9. MIEMBROS DEL GRUPO
-   ========================================== */
-.members-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #edf2f7;
-}
-
-.member-chip {
-  display: inline-block;
-  background: #ebf8ff;
-  color: #2b6cb0;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  margin: 4px 4px 4px 0;
-  font-weight: 500;
-}
-
-.friend-card.clickable {
-  cursor: pointer;
-}
-
-.friend-card.clickable:hover {
-  border-color: #2ecc87;
-  background: #f0fdf4;
-}
-/* ==========================================
-   10. BOTÃ“N DE SALDAR
-   ========================================== */
-.btn-settle {
-  background: #2ecc87;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  margin-left: 8px;
-  transition: all 0.2s ease;
-}
-
-.btn-settle:hover {
-  background: #27ae60;
-  transform: scale(1.05);
-}
-/* ==========================================
-   11. DIVISORES AVANZADOS
-   ========================================== */
-.split-member {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   padding: 6px 0;
   border-bottom: 1px solid #f1f5f9;
+  font-size: 0.9rem;
+  color: #4a5568;
 }
 
-.split-member:last-child {
-  border-bottom: none;
-}
+.split-member:last-child { border-bottom: none; }
 
 .split-member input[type="checkbox"] {
   width: 18px;
@@ -687,15 +475,112 @@ body {
   outline: none;
 }
 
-.split-member input[type="number"]:focus {
-  border-color: #2ecc87;
+.split-member input[type="number"]:focus { border-color: #2ecc87; }
+
+#split-summary p { margin: 3px 0; }
+
+/* ==========================================
+   8. DETALLE DEL GRUPO
+   ========================================== */
+.balance-section,
+.expenses-section,
+.members-section,
+.charts-section,
+.history-section {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #edf2f7;
 }
 
-#split-summary p {
-  margin: 3px 0;
+.balance-section h4,
+.expenses-section h4,
+.members-section h4,
+.charts-section h4,
+.history-section h4 {
+  font-size: 1rem;
+  color: #4a5568;
+  margin-bottom: 12px;
 }
+
+.debt-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.debt-from { color: #e53e3e; font-weight: 600; }
+.debt-arrow { color: #a0aec0; }
+.debt-to { color: #38a169; font-weight: 600; }
+.debt-amount { margin-left: auto; font-weight: 700; color: #2d3748; }
+
+.expense-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.expense-info h5 { font-size: 0.9rem; color: #2d3748; margin-bottom: 2px; }
+.expense-info span { font-size: 0.75rem; color: #718096; }
+
+.expense-amount {
+  font-weight: 700;
+  color: #2ecc87;
+  font-size: 1rem;
+}
+
 /* ==========================================
-   12. DETALLE DEL GASTO
+   9. MIEMBROS
+   ========================================== */
+.member-chip {
+  display: inline-block;
+  background: #ebf8ff;
+  color: #2b6cb0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  margin: 4px 4px 4px 0;
+  font-weight: 500;
+}
+
+.friend-card.clickable { cursor: pointer; }
+
+.friend-card.clickable:hover {
+  border-color: #2ecc87;
+  background: #f0fdf4;
+}
+
+/* ==========================================
+   10. SALDAR
+   ========================================== */
+.btn-settle {
+  background: #2ecc87;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s ease;
+}
+
+.btn-settle:hover { background: #27ae60; transform: scale(1.05); }
+
+/* ==========================================
+   11. DETALLE GASTO
    ========================================== */
 .clickable-expense {
   cursor: pointer;
@@ -707,21 +592,10 @@ body {
   background: #f0fdf4;
   box-shadow: 0 4px 12px rgba(46, 204, 135, 0.15);
 }
+
 /* ==========================================
-   13. HISTORIAL
+   12. HISTORIAL
    ========================================== */
-.history-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #edf2f7;
-}
-
-.history-section h4 {
-  font-size: 1rem;
-  color: #4a5568;
-  margin-bottom: 12px;
-}
-
 .history-item {
   display: flex;
   gap: 12px;
@@ -729,9 +603,7 @@ body {
   border-bottom: 1px solid #f7fafc;
 }
 
-.history-item:last-child {
-  border-bottom: none;
-}
+.history-item:last-child { border-bottom: none; }
 
 .history-icon {
   width: 40px;
@@ -744,40 +616,58 @@ body {
   flex-shrink: 0;
 }
 
-.history-info h5 {
-  font-size: 0.9rem;
-  color: #2d3748;
-  margin-bottom: 2px;
-}
+.history-info h5 { font-size: 0.9rem; color: #2d3748; margin-bottom: 2px; }
+.history-info p { font-size: 0.8rem; color: #718096; margin-bottom: 3px; }
+.history-info small { font-size: 0.7rem; color: #a0aec0; }
 
-.history-info p {
-  font-size: 0.8rem;
-  color: #718096;
-  margin-bottom: 3px;
-}
-
-.history-info small {
-  font-size: 0.7rem;
-  color: #a0aec0;
-}
 /* ==========================================
-   14. GRAFICOS
+   13. GRÃ�FICOS
    ========================================== */
-.charts-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #edf2f7;
-}
-
-.charts-section h4 {
-  font-size: 1rem;
-  color: #4a5568;
-  margin-bottom: 12px;
-}
-
 .chart-container {
   position: relative;
   width: 100%;
   max-width: 300px;
+  height: 300px;
   margin: 0 auto;
+}
+
+/* ==========================================
+   14. GRUPOS ARCHIVADOS
+   ========================================== */
+.group-card.archived { opacity: 0.75; background: #f7fafc; }
+.group-card.archived .group-info h4 { color: #718096; }
+
+.badge-archived {
+  font-size: 0.7rem;
+  background: #fed7d7;
+  color: #c53030;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-left: 6px;
+  display: inline-block;
+}
+
+.group-actions { display: flex; align-items: center; gap: 6px; }
+
+.group-arrow {
+  color: #a0aec0;
+  font-size: 1.3rem;
+  font-weight: 300;
+}
+
+.btn-archive { background: #fefcbf; color: #b7791f; }
+.btn-archive:hover { background: #b7791f; color: white; }
+
+.btn-restore { background: #c6f6d5; color: #38a169; }
+.btn-restore:hover { background: #38a169; color: white; }
+
+/* ==========================================
+   15. RESPONSIVE
+   ========================================== */
+@media (max-width: 480px) {
+  .auth-card { padding: 30px 20px; }
+  .modal-content { padding: 20px; }
+  .fab { bottom: 20px; right: 20px; width: 55px; height: 55px; }
+  .debt-card { font-size: 0.8rem; }
 }
