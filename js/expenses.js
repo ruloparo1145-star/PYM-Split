@@ -4,7 +4,6 @@ import { supabase } from './supabase.js';
 // ==========================================
 // CATEGORIAS E ICONOS
 // ==========================================
-
 const CATEGORIAS = {
   comida:       { label: 'Comida',       icono: '&#127829;' },
   transporte:   { label: 'Transporte',   icono: '&#128663;' },
@@ -22,6 +21,7 @@ function getCategoria(cat) {
   return CATEGORIAS[cat] || CATEGORIAS.otros;
 }
 
+// Variable global del filtro
 let filtroCategoriaActual = '';
 
 // ==========================================
@@ -261,7 +261,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
     }));
   }
 
-const categoria = document.getElementById('expense-category').value || 'otros';
+  const categoria = document.getElementById('expense-category')?.value || 'otros';
 
   const { data: gasto, error: gastoError } = await supabase
     .from('expenses')
@@ -274,7 +274,6 @@ const categoria = document.getElementById('expense-category').value || 'otros';
       category: categoria,
       date: new Date().toISOString().split('T')[0]
     }])
-
     .select()
     .single();
 
@@ -297,13 +296,11 @@ const categoria = document.getElementById('expense-category').value || 'otros';
 }
 
 // ==========================================
-// 6. CARGAR GASTOS DE UN GRUPO (SIN JOIN)
+// 6. CARGAR GASTOS DE UN GRUPO (CON FILTRO)
 // ==========================================
-
 export async function cargarGastosDelGrupo(groupId) {
   const listContainer = document.getElementById('group-expenses-list');
   
-  // Traer TODOS los gastos del grupo (para que el filtro funcione sin re-consultar)
   const { data: gastos, error } = await supabase
     .from('expenses')
     .select('id, description, amount, currency, date, paid_by, category')
@@ -321,7 +318,6 @@ export async function cargarGastosDelGrupo(groupId) {
     return;
   }
 
-  // Filtrar por categorÃ­a si hay filtro activo
   const gastosFiltrados = filtroCategoriaActual
     ? gastos.filter(g => (g.category || 'otros') === filtroCategoriaActual)
     : gastos;
@@ -468,7 +464,7 @@ export function initExpenseModal() {
 }
 
 // ==========================================
-// 8. DETALLE DEL GASTO (SIN JOIN)
+// 8. DETALLE DEL GASTO
 // ==========================================
 export async function abrirDetalleGasto(expenseId, groupId) {
   const modal = document.getElementById('modal-expense-detail');
@@ -509,6 +505,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
       .in('id', userIds);
     (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
   }
+
   const cat = getCategoria(gasto.category);
 
   container.innerHTML = `
@@ -524,6 +521,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
         <strong>Pago:</strong> ${pagador?.full_name || pagador?.email || 'Desconocido'}
       </p>
     </div>
+
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
       <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;"><strong>Division:</strong></p>
       ${splits && splits.length > 0 ? splits.map(s => `
@@ -581,7 +579,7 @@ export async function cargarGastoParaEditar() {
 
   const { data: gasto } = await supabase
     .from('expenses')
-    .select('id, description, amount, paid_by, group_id')
+    .select('id, description, amount, paid_by, group_id, category')
     .eq('id', expenseId)
     .single();
 
@@ -600,6 +598,12 @@ export async function cargarGastoParaEditar() {
   document.getElementById('edit-expense-id').value = gasto.id;
   document.getElementById('edit-expense-description').value = gasto.description;
   document.getElementById('edit-expense-amount').value = gasto.amount;
+
+  const selectCat = document.getElementById('edit-expense-category');
+  if (selectCat) {
+    selectCat.value = gasto.category || 'otros';
+  }
+
   document.getElementById('edit-expense-error').textContent = '';
 
   detailModal.classList.add('hidden');
@@ -618,14 +622,13 @@ export async function guardarEdicionGasto() {
   const descripcion = document.getElementById('edit-expense-description').value.trim();
   const monto = parseFloat(document.getElementById('edit-expense-amount').value);
   const paidBy = document.getElementById('edit-expense-paid-by').value;
+  const categoria = document.getElementById('edit-expense-category')?.value || 'otros';
 
   btnSubmit.disabled = true;
   btnSubmit.textContent = 'Guardando...';
   errorMsg.textContent = '';
 
   try {
-const categoria = document.getElementById('edit-expense-category')?.value || 'otros';
-
     const { error: updateError } = await supabase
       .from('expenses')
       .update({
@@ -634,7 +637,6 @@ const categoria = document.getElementById('edit-expense-category')?.value || 'ot
         paid_by: paidBy,
         category: categoria
       })
-      
       .eq('id', expenseId);
 
     if (updateError) throw updateError;
