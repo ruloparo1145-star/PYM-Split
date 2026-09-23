@@ -313,5 +313,144 @@
   </div>
 
   <script type="module" src="js/ui.js"></script>
+
+<!-- MODAL: Manual de uso -->
+  <div id="modal-manual" class="modal-overlay hidden">
+    <div class="modal-content manual-content">
+      <h3>Manual de uso</h3>
+
+      <div class="manual-body">
+
+        <section class="manual-section">
+          <h4>PYM Split?</h4>
+          <p>PYM Split es una app para <strong>dividir gastos</strong> entre amigos, familia o compaÃ±eros de piso. Cargós quién pagá qué, y la app calcula automáticamente <strong>quién le debe a quién</strong>. Además, <strong>simplifica las deudas</strong> para que se hagan la menor cantidad de transferencias posible.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>1. Crear una cuenta</h4>
+          <p>En la pantalla de inicio, tocá <strong>"Crear cuenta"</strong>, completá¡ tu nombre, email y una contraseÃ±a (mínimo 6 caracteres). Listo, ya estás dentro.</p>
+          <p>Después de registrarte, revisá tu email: puede que Supabase te pida confirmar la cuenta.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>2. Agregar amigos</h4>
+          <p>Tocá el botón <strong>"Amigos"</strong> arriba a la derecha.</p>
+          <ul>
+            <li>Escribí­ el <strong>email</strong> de tu amigo y tocÃ¡ <strong>"Enviar"</strong>.</li>
+            <li>Tu amigo recibirá una solicitud. Cuando la acepte, aparecerÃ¡n en tu lista.</li>
+            <li>También podés aceptar o rechazar solicitudes que te lleguen.</li>
+          </ul>
+          <p><strong>Ojo:</strong> tu amigo tiene que estar registrado con el mismo email que le pusiste.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>3. Crear un grupo</h4>
+          <p>En la pantalla principal, tocá <strong>"+ Nuevo"</strong> arriba de "Mis Grupos".</p>
+          <ul>
+            <li><strong>Nombre:</strong> ej. "Viaje a Bariloche", "Depto", "Cena del viernes".</li>
+            <li><strong>Tipo:</strong> viaje, depto, salidas u otro.</li>
+            <li><strong>Moneda:</strong> EUR, USD o ARS.</li>
+          </ul>
+          <p>Tocá <strong>"Crear Grupo"</strong> y listo. Vos quedÃ¡s como miembro automÃ¡ticamente.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>4. Agregar amigos al grupo</h4>
+          <p>Abré el grupo (tocándolo en la lista) y tocá <strong>"+ Añadir miembro"</strong>.</p>
+          <p>Seleccioná uno de tus amigos de la lista. Ya está dentro del grupo.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>5. Cargar un gasto</h4>
+          <p>Tocá el botón <strong>"+"</strong> (abajo a la derecha).</p>
+          <ul>
+            <li><strong>Qué fue:</strong> ej. "Cena", "Taxi", "Supermercado".</li>
+            <li><strong>Monto:</strong> cuánto costá.</li>
+            <li><strong>Grupo:</strong> a quÃ© grupo pertenece.</li>
+            <li><strong>Quién pagó:</strong> quién puso la plata.</li>
+            <li><strong>Tipo de divisiÃ³n:</strong> cómo se reparte (ver siguiente sección).</li>
+          </ul>
+        </section>
+
+        <section class="manual-section">
+          <h4>6. Tipos de división</h4>
+          <ul>
+            <li><strong>Partes iguales:</strong> se divide el total en partes iguales entre los seleccionados.</li>
+            <li><strong>Por porcentaje:</strong> a cada uno le asignás un %. Debe sumar 100%.</li>
+            <li><strong>Montos exactos:</strong> a cada uno le ponés el monto exacto. Debe sumar el total.</li>
+            <li><strong>Por partes (shares):</strong> ej. uno tiene 2 partes y otro 1 â†’ paga el doble.</li>
+          </ul>
+          <p>Podés <strong>tildar o destildar</strong> personas en la lista para incluir/excluir del reparto.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>7. Ver el balance del grupo</h4>
+          <p>Al abrir un grupo, arriba de todo aparece el <strong>Balance</strong>. AhÃ­ se muestra <strong>quiÃ©n le debe a quiÃ©n</strong> y cuánto.</p>
+          <p>La app <strong>simplifica las deudas</strong>: si A le debe a B y B le debe a C, se muestra directamente que A le pague a C. AsÃ­ se hacen menos transferencias.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>8. Saldar deudas</h4>
+          <p>Cuando alguien ya pagÃ³ por fuera (efectivo, transferencia, etc.), tocÃ¡ el botÃ³n <strong>"Saldar"</strong> al lado de la deuda.</p>
+          <p>ConfirmÃ¡s y el balance se actualiza automÃ¡ticamente.</p>
+          <p><strong>AclaraciÃ³n:</strong> la app NO mueve plata. Solo registra que la deuda ya fue saldada.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>9. Historial y grÃ¡ficos</h4>
+          <p>Dentro de cada grupo, mÃ¡s abajo, vas a ver:</p>
+          <ul>
+            <li><strong>GrÃ¡ficos:</strong> cuÃ¡nto pagÃ³ cada persona.</li>
+            <li><strong>Historial:</strong> todos los movimientos (gastos + pagos) ordenados por fecha.</li>
+          </ul>
+        </section>
+
+        <section class="manual-section">
+          <h4>10. Archivar y restaurar grupos</h4>
+          <p>Cada grupo tiene un botÃ³n <strong>ðŸ“¦ (archivar)</strong>. Al tocarlo, el grupo desaparece de la lista principal pero <strong>NO se borra</strong>.</p>
+          <p>Para ver los grupos archivados, tocá el botón <strong>"Archivados"</strong> arriba de la lista.</p>
+          <p>AhÃ­ podés <strong>restaurarlos</strong> con el botón â†º.</p>
+          <p><strong>Ideal para:</strong> viajes terminados, departamentos que dejaste, etc.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>11. Eliminar un grupo</h4>
+          <p>Cada grupo tiene un botÃ³n <strong>ðŸ—‘ï¸ (eliminar)</strong>. Al tocarlo, se borra el grupo y <strong>TODOS sus datos</strong> (gastos, miembros, pagos).</p>
+          <p><strong>âš ï¸ Esta acciÃ³n es irreversible.</strong> Si querÃ©s conservar el histÃ³rico, mejor usÃ¡ <strong>archivar</strong> en vez de eliminar.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>12. Instalar como app en el celular</h4>
+          <p><strong>iPhone (Safari):</strong></p>
+          <ul>
+            <li>AbrÃ­ la app.</li>
+            <li>TocÃ¡ el botÃ³n Compartir (â†‘).</li>
+            <li>ElegÃ­ "AÃ±adir a pantalla de inicio".</li>
+          </ul>
+          <p><strong>Android (Chrome):</strong></p>
+          <ul>
+            <li>AbrÃ­ la app.</li>
+            <li>MenÃº (3 puntos) â†’ "Instalar app".</li>
+          </ul>
+          <p>Se va a ver como una app normal, con su Ã­cono.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>Preguntas frecuentes</h4>
+          <p><strong>Â¿La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quiÃ©n debe a quiÃ©n. Las transferencias las hacÃ©s por fuera.</p>
+          <p><strong>Â¿Puedo usar varias monedas?</strong><br>SÃ­, cada grupo tiene su moneda (EUR, USD, ARS).</p>
+          <p><strong>Â¿QuÃ© pasa si me equivoco al cargar un gasto?</strong><br>PodÃ©s editarlo o eliminarlo tocando el gasto en la lista.</p>
+          <p><strong>Â¿Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexiÃ³n para cargar y guardar datos en Supabase.</p>
+          <p><strong>Â¿QuiÃ©n puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mÃ¡s.</p>
+        </section>
+
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-close-manual" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+  
 </body>
 </html>
