@@ -509,12 +509,14 @@ export async function abrirDetalleGasto(expenseId, groupId) {
       .in('id', userIds);
     (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
   }
+  const cat = getCategoria(gasto.category);
 
   container.innerHTML = `
     <div style="text-align: center; margin-bottom: 20px;">
+      <div style="font-size: 3rem; margin-bottom: 8px;">${cat.icono}</div>
       <h2 style="color: #2ecc87; font-size: 2rem;">${parseFloat(gasto.amount).toFixed(2)} ${gasto.currency}</h2>
       <p style="color: #4a5568; font-size: 1.1rem;">${gasto.description}</p>
-      <p style="color: #718096; font-size: 0.85rem;">${gasto.date}</p>
+      <p style="color: #718096; font-size: 0.85rem;">${cat.label} - ${gasto.date}</p>
     </div>
 
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
@@ -522,7 +524,6 @@ export async function abrirDetalleGasto(expenseId, groupId) {
         <strong>Pago:</strong> ${pagador?.full_name || pagador?.email || 'Desconocido'}
       </p>
     </div>
-
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
       <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;"><strong>Division:</strong></p>
       ${splits && splits.length > 0 ? splits.map(s => `
