@@ -66,7 +66,7 @@ export async function cargarGrupos() {
     groupsList.querySelectorAll('.btn-archive').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!confirm('Archivar este grupo? No se mostrara en la lista principal.')) return;
+        // if (!confirm('Archivar este grupo? No se mostrara en la lista principal.')) return;
         await archivarGrupo(btn.dataset.id, true);
         await cargarGrupos();
       });
