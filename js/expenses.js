@@ -624,13 +624,17 @@ export async function guardarEdicionGasto() {
   errorMsg.textContent = '';
 
   try {
+const categoria = document.getElementById('edit-expense-category')?.value || 'otros';
+
     const { error: updateError } = await supabase
       .from('expenses')
       .update({
         description: descripcion,
         amount: monto,
-        paid_by: paidBy
+        paid_by: paidBy,
+        category: categoria
       })
+      
       .eq('id', expenseId);
 
     if (updateError) throw updateError;
