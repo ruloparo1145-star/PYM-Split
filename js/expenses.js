@@ -4,17 +4,18 @@ import { supabase } from './supabase.js';
 // ==========================================
 // CATEGORIAS E ICONOS
 // ==========================================
+
 const CATEGORIAS = {
-  comida:       { label: 'Comida',       icono: 'ðŸ•' },
-  transporte:   { label: 'Transporte',   icono: 'ðŸš—' },
-  alojamiento:  { label: 'Alojamiento',  icono: 'ðŸ ' },
-  supermercado: { label: 'Supermercado', icono: 'ðŸ›’' },
-  ocio:         { label: 'Ocio',         icono: 'ðŸŽ‰' },
-  salud:        { label: 'Salud',        icono: 'ðŸ’Š' },
-  servicios:    { label: 'Servicios',    icono: 'ðŸ“±' },
-  compras:      { label: 'Compras',      icono: 'ðŸ›ï¸' },
-  viajes:       { label: 'Viajes',       icono: 'âœˆï¸' },
-  otros:        { label: 'Otros',        icono: 'ðŸ’°' }
+  comida:       { label: 'Comida',       icono: '&#127829;' },
+  transporte:   { label: 'Transporte',   icono: '&#128663;' },
+  alojamiento:  { label: 'Alojamiento',  icono: '&#127968;' },
+  supermercado: { label: 'Supermercado', icono: '&#128722;' },
+  ocio:         { label: 'Ocio',         icono: '&#127881;' },
+  salud:        { label: 'Salud',        icono: '&#128138;' },
+  servicios:    { label: 'Servicios',    icono: '&#128241;' },
+  compras:      { label: 'Compras',      icono: '&#128717;' },
+  viajes:       { label: 'Viajes',       icono: '&#9992;' },
+  otros:        { label: 'Otros',        icono: '&#128176;' }
 };
 
 function getCategoria(cat) {
