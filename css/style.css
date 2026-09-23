@@ -178,12 +178,12 @@ body {
 }
 
 .app-header {
-  background: #ffffff;
+  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
   position: sticky;
   top: 0;
   z-index: 10;
