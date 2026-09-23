@@ -71,27 +71,23 @@
     <div class="modal-content">
       <h3>Crear Nuevo Grupo</h3>
       <form id="form-group">
-        <div class="form-group">
-          <label for="group-name">Nombre del Grupo</label>
-          <input type="text" id="group-name" placeholder="Ej: Viaje a Bariloche" required>
-        </div>
-        <div class="form-group">
-          <label for="group-type">Tipo</label>
-          <select id="group-type" required>
-            <option value="viaje">Viaje</option>
-            <option value="depto">Departamento</option>
-            <option value="salidas">Salidas</option>
-            <option value="otro">Otro</option>
+
+<div class="form-group">
+          <label for="expense-category">Categoria</label>
+          <select id="expense-category">
+            <option value="otros">&#128176; Otros</option>
+            <option value="comida">&#127829; Comida</option>
+            <option value="transporte">&#128663; Transporte</option>
+            <option value="alojamiento">&#127968; Alojamiento</option>
+            <option value="supermercado">&#128722; Supermercado</option>
+            <option value="ocio">&#127881; Ocio</option>
+            <option value="salud">&#128138; Salud</option>
+            <option value="servicios">&#128241; Servicios</option>
+            <option value="compras">&#128717; Compras</option>
+            <option value="viajes">&#9992; Viajes</option>
           </select>
         </div>
-        <div class="form-group">
-          <label for="group-currency">Moneda</label>
-          <select id="group-currency" required>
-            <option value="EUR">Euro (EUR)</option>
-            <option value="USD">Dolar (USD)</option>
-            <option value="ARS">Peso Argentino (ARS)</option>
-          </select>
-        </div>
+        
         <p id="group-error" class="error-msg"></p>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
