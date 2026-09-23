@@ -165,7 +165,7 @@ body {
    2. DASHBOARD
    ========================================== */
 .app-body {
-  background: linear-gradient( 180deg, #d4f5e3 0%; #a8e6c1 100%);
+  background: linear-gradient(180deg, #d4f5e3 0%, #a8e6c1 100%);
   display: block;
   padding: 0;
   min-height: 100vh;
@@ -191,7 +191,13 @@ body {
 
 .header-left { display: flex; align-items: center; gap: 10px; }
 
-.header-logo { width: 30px; height: 30px; border-radius: 8px; }
+.header-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 2px;
+}
 
 .app-header h1 {
   font-size: 1.2rem;
@@ -228,18 +234,19 @@ body {
 
 .welcome-section h2 {
   font-size: 1.5rem;
-  color: #2d3748;
+  color: #14532d;
   margin-bottom: 5px;
+  font-weight: 700;
 }
 
-.welcome-section p { color: #718096; }
+.welcome-section p { color: #2d3748; }
 
 .section-card {
-  background: white;
+  background: #ffffff;
   border-radius: 15px;
   padding: 20px;
   margin-bottom: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .section-header {
@@ -253,7 +260,7 @@ body {
 
 .section-header h3 {
   font-size: 1.1rem;
-  color: #4a5568;
+  color: #2d3748;
   margin-bottom: 0;
 }
 
@@ -271,8 +278,20 @@ body {
 
 .btn-small:hover { background: #3182ce; color: white; }
 
+/* Botones dentro del header verde */
+.app-header .btn-small {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.app-header .btn-small:hover {
+  background: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+}
+
 .placeholder-text {
-  color: #a0aec0;
+  color: #718096;
   font-size: 0.9rem;
   font-style: italic;
   text-align: center;
@@ -295,7 +314,7 @@ body {
 }
 
 .modal-content {
-  background: white;
+  background: #ffffff;
   border-radius: 20px;
   padding: 30px;
   width: 100%;
@@ -310,6 +329,10 @@ body {
   margin-bottom: 20px;
   color: #2d3748;
   text-align: center;
+}
+
+.modal-content h4 {
+  color: #4a5568;
 }
 
 .modal-actions {
@@ -338,7 +361,8 @@ body {
 
 .group-card:hover {
   border-color: #2ecc87;
-  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.1);
+  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.15);
+  background: #f0fdf4;
 }
 
 .group-info h4 {
@@ -369,7 +393,7 @@ body {
   color: white;
   font-size: 2rem;
   border: none;
-  box-shadow: 0 4px 15px rgba(46, 204, 135, 0.4);
+  box-shadow: 0 4px 15px rgba(46, 204, 135, 0.5);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -623,7 +647,7 @@ body {
 .history-info small { font-size: 0.7rem; color: #a0aec0; }
 
 /* ==========================================
-   13. GRÃ�FICOS
+   13. GRÃFICOS
    ========================================== */
 .chart-container {
   position: relative;
