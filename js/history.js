@@ -29,26 +29,26 @@ export async function cargarHistorial(groupId) {
 
   const eventos = [];
 
-  // Añadir gastos como eventos
+  // AÃ±adir gastos como eventos
   (gastosRes.data || []).forEach(g => {
     eventos.push({
       tipo: 'gasto',
       fecha: g.created_at || g.date,
-      icono: '🍕',
+      icono: 'ðŸ�•',
       titulo: g.description,
-      detalle: `${g.payer?.full_name || g.payer?.email || 'Alguien'} pagó ${parseFloat(g.amount).toFixed(2)} ${g.currency}`,
+      detalle: `${g.payer?.full_name || g.payer?.email || 'Alguien'} pagÃ³ ${parseFloat(g.amount).toFixed(2)} ${g.currency}`,
       color: '#3182ce'
     });
   });
 
-  // Añadir pagos como eventos
+  // AÃ±adir pagos como eventos
   (pagosRes.data || []).forEach(p => {
     eventos.push({
       tipo: 'pago',
       fecha: p.created_at || p.date,
-      icono: '💸',
+      icono: 'ðŸ’¸',
       titulo: 'Deuda saldada',
-      detalle: `${p.from_profile?.full_name || p.from_profile?.email || 'Alguien'} pagó a ${p.to_profile?.full_name || p.to_profile?.email || 'alguien'} ${parseFloat(p.amount).toFixed(2)} ${p.currency}`,
+      detalle: `${p.from_profile?.full_name || p.from_profile?.email || 'Alguien'} pagÃ³ a ${p.to_profile?.full_name || p.to_profile?.email || 'alguien'} ${parseFloat(p.amount).toFixed(2)} ${p.currency}`,
       color: '#38a169'
     });
   });
@@ -57,7 +57,7 @@ export async function cargarHistorial(groupId) {
   eventos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
   if (eventos.length === 0) {
-    listContainer.innerHTML = '<p class="placeholder-text">Sin actividad aún.</p>';
+    listContainer.innerHTML = '<p class="placeholder-text">Sin actividad aÃºn.</p>';
     return;
   }
 
