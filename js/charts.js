@@ -10,7 +10,7 @@ export async function cargarGraficos(groupId) {
   // Traer gastos del grupo
   const { data: gastos, error } = await supabase
     .from('expenses')
-    .select('amount, paid_by, profiles!expenses_paid_by_fkey(full_name, email)')
+   .select('amount, paid_by, profiles!paid_by(full_name, email)')
     .eq('group_id', groupId);
 
   if (error) {
