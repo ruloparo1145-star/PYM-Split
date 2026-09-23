@@ -77,10 +77,9 @@ export async function cargarDashboard() {
     const debes = miBalance < 0 ? Math.abs(miBalance) : 0;
 
     // 4. Renderizar tarjetas
-    document.getElementById('stat-total-mes').textContent = `${totalMes.toFixed(2)} â‚¬`;
-    document.getElementById('stat-te-deben').textContent = `${teDeben.toFixed(2)} â‚¬`;
-    document.getElementById('stat-debes').textContent = `${debes.toFixed(2)} â‚¬`;
-
+    document.getElementById('stat-total-mes').textContent = `${totalMes.toFixed(2)} EUR`;
+    document.getElementById('stat-te-deben').textContent = `${teDeben.toFixed(2)} EUR`;
+    document.getElementById('stat-debes').textContent = `${debes.toFixed(2)} EUR`;
     // 5. Ãšltimos movimientos
     const ultimos = (gastosMes || []).slice(0, 5);
     renderizarUltimos(ultimos, groupIds);
