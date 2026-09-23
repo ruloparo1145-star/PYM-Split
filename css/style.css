@@ -717,3 +717,36 @@ body {
 .group-actions {
   gap: 12px;
 }
+/* ==========================================
+   17. CATEGORIAS DE GASTOS
+   ========================================== */
+.expense-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.expense-category-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  border: 1px solid #c6f6d5;
+}
+
+.expense-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.expense-amount {
+  font-weight: 700;
+  color: #2ecc87;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
