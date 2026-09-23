@@ -2,6 +2,26 @@
 import { supabase } from './supabase.js';
 
 // ==========================================
+// CATEGORIAS E ICONOS
+// ==========================================
+const CATEGORIAS = {
+  comida:       { label: 'Comida',       icono: 'ðŸ•' },
+  transporte:   { label: 'Transporte',   icono: 'ðŸš—' },
+  alojamiento:  { label: 'Alojamiento',  icono: 'ðŸ ' },
+  supermercado: { label: 'Supermercado', icono: 'ðŸ›’' },
+  ocio:         { label: 'Ocio',         icono: 'ðŸŽ‰' },
+  salud:        { label: 'Salud',        icono: 'ðŸ’Š' },
+  servicios:    { label: 'Servicios',    icono: 'ðŸ“±' },
+  compras:      { label: 'Compras',      icono: 'ðŸ›ï¸' },
+  viajes:       { label: 'Viajes',       icono: 'âœˆï¸' },
+  otros:        { label: 'Otros',        icono: 'ðŸ’°' }
+};
+
+function getCategoria(cat) {
+  return CATEGORIAS[cat] || CATEGORIAS.otros;
+}
+
+// ==========================================
 // 1. CARGAR GRUPOS PARA EL SELECT
 // ==========================================
 export async function cargarGruposParaGasto() {
