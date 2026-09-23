@@ -1,5 +1,5 @@
 // sw.js - PYM Split
-const CACHE_NAME = 'pym-split-v16'; // â¬…ï¸ subido de v1 a v2 por los cambios
+const CACHE_NAME = 'pym-split-v18'; // â¬…ï¸ subido de v1 a v2 por los cambios
 const APP_ASSETS = [
   './',
   './index.html',
