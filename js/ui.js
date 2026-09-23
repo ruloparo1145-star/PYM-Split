@@ -30,13 +30,13 @@ import { initAddMemberModal } from './members.js';
 })();
 
 // ==========================================
-// 2. CERRAR SESIÓN (Logout)
+// 2. CERRAR SESIÃ“N (Logout)
 // ==========================================
 document.getElementById('btn-logout').addEventListener('click', async () => {
   const { error } = await supabase.auth.signOut();
   if (!error) {
     window.location.href = 'index.html';
   } else {
-    alert('Error al cerrar sesión: ' + error.message);
+    alert('Error al cerrar sesiÃ³n: ' + error.message);
   }
 });
