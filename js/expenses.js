@@ -22,6 +22,8 @@ function getCategoria(cat) {
   return CATEGORIAS[cat] || CATEGORIAS.otros;
 }
 
+let filtroCategoriaActual = '';
+
 // ==========================================
 // 1. CARGAR GRUPOS PARA EL SELECT
 // ==========================================
