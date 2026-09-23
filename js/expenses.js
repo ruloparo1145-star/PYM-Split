@@ -11,6 +11,7 @@ export async function cargarGruposParaGasto() {
   const { data: grupos } = await supabase
     .from('groups')
     .select('id, name')
+    .eq('archived', false)
     .order('name');
 
   const selectGrupo = document.getElementById('expense-group');
@@ -165,7 +166,7 @@ function actualizarResumenSplit() {
 }
 
 // ==========================================
-// 5. GUARDAR GASTO CON DIVISIÃ“N AVANZADA
+// 5. GUARDAR GASTO
 // ==========================================
 export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -269,21 +270,20 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
 }
 
 // ==========================================
-// 6. CARGAR GASTOS DE UN GRUPO
+// 6. CARGAR GASTOS DE UN GRUPO (SIN JOIN - 2 pasos)
 // ==========================================
 export async function cargarGastosDelGrupo(groupId) {
   const listContainer = document.getElementById('group-expenses-list');
   
+  // 1. Traer gastos sin join
   const { data: gastos, error } = await supabase
     .from('expenses')
-    .select(`
-      id, description, amount, currency, date,
-      files!paid_by(id, full_name, email)
-    `)
+    .select('id, description, amount, currency, date, paid_by')
     .eq('group_id', groupId)
     .order('date', { ascending: false });
 
   if (error) {
+    console.error('Error gastos:', error);
     listContainer.innerHTML = '<p class="error-msg">Error al cargar gastos.</p>';
     return;
   }
@@ -293,11 +293,22 @@ export async function cargarGastosDelGrupo(groupId) {
     return;
   }
 
+  // 2. Traer perfiles por separado
+  const paidByIds = [...new Set(gastos.map(g => g.paid_by))];
+  const { data: perfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', paidByIds);
+
+  const nombres = {};
+  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
+
+  // 3. Renderizar
   listContainer.innerHTML = gastos.map(g => `
     <div class="expense-card clickable-expense" data-expense-id="${g.id}">
       <div class="expense-info">
         <h5>${g.description}</h5>
-        <span>PagÃ³: ${g.payer?.full_name || g.payer?.email || 'Desconocido'} Â· ${g.date}</span>
+        <span>PagÃ³: ${nombres[g.paid_by] || 'Desconocido'} Â· ${g.date}</span>
       </div>
       <div class="expense-amount">
         ${parseFloat(g.amount).toFixed(2)} ${g.currency}
@@ -380,6 +391,17 @@ export function initExpenseModal() {
       await guardarGasto(descripcion, monto, groupId, paidBy);
       modal.classList.add('hidden');
       alert('Â¡Gasto guardado con Ã©xito!');
+      const groupIdDetail = document.getElementById('modal-group-detail').dataset.groupId;
+      if (groupIdDetail && groupIdDetail === groupId) {
+        const { cargarGastosDelGrupo } = await import('./expenses.js');
+        const { mostrarBalance } = await import('./debtSolver.js');
+        const { cargarGraficos } = await import('./charts.js');
+        const { cargarHistorial } = await import('./history.js');
+        await cargarGastosDelGrupo(groupId);
+        await mostrarBalance(groupId);
+        await cargarGraficos(groupId);
+        await cargarHistorial(groupId);
+      }
     } catch (error) {
       errorMsg.textContent = 'Error: ' + error.message;
     } finally {
@@ -390,7 +412,7 @@ export function initExpenseModal() {
 }
 
 // ==========================================
-// 8. DETALLE DEL GASTO
+// 8. DETALLE DEL GASTO (SIN JOIN)
 // ==========================================
 export async function abrirDetalleGasto(expenseId, groupId) {
   const modal = document.getElementById('modal-expense-detail');
@@ -402,10 +424,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
   const { data: gasto, error } = await supabase
     .from('expenses')
-    .select(`
-      id, description, amount, currency, date, category, notes,
-      files!paid_by(id, full_name, email)
-    `)
+    .select('id, description, amount, currency, date, category, notes, paid_by')
     .eq('id', expenseId)
     .single();
 
@@ -414,13 +433,29 @@ export async function abrirDetalleGasto(expenseId, groupId) {
     return;
   }
 
+  // Traer perfil del pagador
+  const { data: pagador } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .eq('id', gasto.paid_by)
+    .single();
+
+  // Traer splits
   const { data: splits } = await supabase
     .from('expense_splits')
-    .select(`
-      amount_owed, split_type,
-      user:profiles!expense_splits_user_id_fkey(id, full_name, email)
-    `)
+    .select('amount_owed, split_type, user_id')
     .eq('expense_id', expenseId);
+
+  // Traer perfiles de los que deben
+  const userIds = (splits || []).map(s => s.user_id);
+  let nombres = {};
+  if (userIds.length > 0) {
+    const { data: perfiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, email')
+      .in('id', userIds);
+    (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
+  }
 
   container.innerHTML = `
     <div style="text-align: center; margin-bottom: 20px;">
@@ -431,7 +466,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
       <p style="font-size: 0.85rem; color: #4a5568;">
-        <strong>PagÃ³:</strong> ${gasto.payer?.full_name || gasto.payer?.email || 'Desconocido'}
+        <strong>PagÃ³:</strong> ${pagador?.full_name || pagador?.email || 'Desconocido'}
       </p>
     </div>
 
@@ -439,7 +474,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
       <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;"><strong>DivisiÃ³n:</strong></p>
       ${splits && splits.length > 0 ? splits.map(s => `
         <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.9rem;">
-          <span>${s.user?.full_name || s.user?.email}</span>
+          <span>${nombres[s.user_id] || 'Desconocido'}</span>
           <span style="font-weight: 600; color: #2d3748;">${parseFloat(s.amount_owed).toFixed(2)} ${gasto.currency}</span>
         </div>
       `).join('') : '<p class="placeholder-text">Sin divisiones.</p>'}
@@ -455,9 +490,9 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 export async function eliminarGasto() {
   const modal = document.getElementById('modal-expense-detail');
   const expenseId = modal.dataset.expenseId;
-  const groupId = modal.dataset.groupId;
+  const groupId = document.getElementById('modal-group-detail').dataset.groupId;
 
-  if (!confirm('Â¿Seguro que quieres eliminar este gasto? Esta acciÃ³n no se puede deshacer.')) return;
+  if (!confirm('Â¿Seguro que quieres eliminar este gasto?')) return;
 
   const { error } = await supabase
     .from('expenses')
@@ -473,12 +508,17 @@ export async function eliminarGasto() {
 
   const { cargarGastosDelGrupo } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
+  const { cargarHistorial } = await import('./history.js');
+  const { cargarGraficos } = await import('./charts.js');
+
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
+  await cargarHistorial(groupId);
+  await cargarGraficos(groupId);
 }
 
 // ==========================================
-// 10. EDITAR GASTO (cargar datos en el modal)
+// 10. CARGAR GASTO PARA EDITAR
 // ==========================================
 export async function cargarGastoParaEditar() {
   const detailModal = document.getElementById('modal-expense-detail');
@@ -513,13 +553,13 @@ export async function cargarGastoParaEditar() {
 }
 
 // ==========================================
-// 11. GUARDAR EDICIÃ“N DEL GASTO
+// 11. GUARDAR EDICIÃ“N
 // ==========================================
 export async function guardarEdicionGasto() {
   const form = document.getElementById('form-expense-edit');
   const errorMsg = document.getElementById('edit-expense-error');
   const btnSubmit = form.querySelector('button[type="submit"]');
-  
+
   const expenseId = document.getElementById('edit-expense-id').value;
   const descripcion = document.getElementById('edit-expense-description').value.trim();
   const monto = parseFloat(document.getElementById('edit-expense-amount').value);
@@ -541,33 +581,36 @@ export async function guardarEdicionGasto() {
 
     if (updateError) throw updateError;
 
-    // Recalcular splits en partes iguales
     const { data: splitsActuales } = await supabase
       .from('expense_splits')
-      .select('user_id')
+      .select('id, user_id, amount_owed, split_type')
       .eq('expense_id', expenseId);
 
     if (splitsActuales && splitsActuales.length > 0) {
-      const montoPorPersona = parseFloat((monto / splitsActuales.length).toFixed(2));
-      
-      await supabase.from('expense_splits').delete().eq('expense_id', expenseId);
-      
-      const nuevosSplits = splitsActuales.map(s => ({
-        expense_id: expenseId,
-        user_id: s.user_id,
-        amount_owed: montoPorPersona,
-        split_type: 'equal'
-      }));
-      await supabase.from('expense_splits').insert(nuevosSplits);
+      const totalAnterior = splitsActuales.reduce((sum, s) => sum + parseFloat(s.amount_owed), 0);
+      const factor = totalAnterior > 0 ? monto / totalAnterior : 1;
+
+      for (const s of splitsActuales) {
+        const nuevoMonto = parseFloat((parseFloat(s.amount_owed) * factor).toFixed(2));
+        await supabase
+          .from('expense_splits')
+          .update({ amount_owed: nuevoMonto })
+          .eq('id', s.id);
+      }
     }
 
     document.getElementById('modal-expense-edit').classList.add('hidden');
-    
-    const groupId = document.getElementById('modal-expense-detail').dataset.groupId;
+
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     const { cargarGastosDelGrupo } = await import('./expenses.js');
     const { mostrarBalance } = await import('./debtSolver.js');
+    const { cargarHistorial } = await import('./history.js');
+    const { cargarGraficos } = await import('./charts.js');
+
     await cargarGastosDelGrupo(groupId);
     await mostrarBalance(groupId);
+    await cargarHistorial(groupId);
+    await cargarGraficos(groupId);
 
   } catch (error) {
     errorMsg.textContent = 'Error: ' + error.message;
