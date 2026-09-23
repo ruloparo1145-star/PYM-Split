@@ -41,15 +41,18 @@
       </div>
 
       <div class="dashboard-sections">
-        <div class="section-card">
-          <div class="section-header">
-            <h3>Mis Grupos</h3>
-            <button id="btn-new-group" class="btn-small">+ Nuevo</button>
-          </div>
-          <div id="groups-list">
-            <p class="placeholder-text">Cargando grupos...</p>
-          </div>
-        </div>
+  <div class="section-card" id="groups-section">
+  <div class="section-header">
+    <h3>Mis Grupos</h3>
+    <div style="display: flex; gap: 6px;">
+      <button id="btn-toggle-archived" class="btn-small" style="background: #fefcbf; color: #b7791f;">Archivados</button>
+      <button id="btn-new-group" class="btn-small">+ Nuevo</button>
+    </div>
+  </div>
+  <div id="groups-list">
+    <p class="placeholder-text">Cargando grupos...</p>
+  </div>
+</div>
 
         <div class="section-card">
           <h3>Ultimos Gastos</h3>
