@@ -44,14 +44,15 @@ export async function cargarGrupos() {
           <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.currency || 'EUR'}</span>
           ${grupo.archived ? '<span class="badge-archived">Archivado</span>' : ''}
         </div>
+        
         <div class="group-actions">
-          <button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${grupo.name}" title="Eliminar">&#128465;</button>
+     //     <button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${grupo.name}" title="Eliminar">&#128465;</button>
           ${grupo.archived 
             ? `<button class="btn-small btn-restore" data-id="${grupo.id}" title="Restaurar">&#8634;</button>` 
             : `<button class="btn-small btn-archive" data-id="${grupo.id}" title="Archivar">&#128230;</button>`
           }
           <span class="group-arrow">></span>
-        </div>
+        </div>        
       </div>
     `).join('');
 
