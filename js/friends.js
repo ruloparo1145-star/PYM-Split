@@ -16,7 +16,7 @@ export async function enviarSolicitudAmistad(email) {
     .single();
 
   if (findError || !perfil) {
-    throw new Error('No se encontrÃ³ ningÃºn usuario con ese email.');
+    throw new Error('No se encontrÃƒÂ³ ningÃƒÂºn usuario con ese email.');
   }
 
   if (perfil.id === user.id) {
@@ -57,7 +57,7 @@ export async function cargarAmigos() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Traemos todas las amistades donde el usuario estÃ© involucrado
+  // Traemos todas las amistades donde el usuario estÃƒÂ© involucrado
   const { data: amistades, error } = await supabase
     .from('friendships')
     .select(`
@@ -89,7 +89,7 @@ export async function cargarAmigos() {
         <div class="friend-card">
           <div class="friend-info">
             <h4>${otroUsuario.full_name || otroUsuario.email}</h4>
-            <span>${esEntrante ? 'Te enviÃ³ solicitud' : 'Solicitud enviada'}</span>
+            <span>${esEntrante ? 'Te enviÃƒÂ³ solicitud' : 'Solicitud enviada'}</span>
           </div>
           ${esEntrante ? `
             <div class="friend-actions">
@@ -111,7 +111,7 @@ export async function cargarAmigos() {
 
   // Renderizar amigos aceptados
   if (aceptadas.length === 0) {
-    friendsList.innerHTML = '<p class="placeholder-text">AÃºn no tienes amigos agregados.</p>';
+    friendsList.innerHTML = '<p class="placeholder-text">AÃƒÂºn no tienes amigos agregados.</p>';
   } else {
     friendsList.innerHTML = aceptadas.map(amistad => {
       const otroUsuario = amistad.user_id === user.id ? amistad.friend : amistad.user;
@@ -183,7 +183,7 @@ export function initFriendsModal() {
     try {
       const nombre = await enviarSolicitudAmistad(email);
       errorMsg.style.color = '#38a169';
-      errorMsg.textContent = `Â¡Solicitud enviada a ${nombre}!`;
+      errorMsg.textContent = `Ã‚Â¡Solicitud enviada a ${nombre}!`;
       form.reset();
       await cargarAmigos();
     } catch (error) {
