@@ -165,7 +165,7 @@ body {
    2. DASHBOARD
    ========================================== */
 .app-body {
-  background: #f7fafc;
+  background: linear-gradient( 180deg, #d4f5e3 0%; #a8e6c1 100%);
   display: block;
   padding: 0;
   min-height: 100vh;
