@@ -24,6 +24,7 @@ import { cargarDashboard } from './dashboard.js';
 
   // Inicializar todos los modales y funcionalidades
   await cargarGrupos();
+  await cargarDashboard();
   initGroupModal();
   initFriendsModal();
   initExpenseModal();
