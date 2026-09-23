@@ -2,7 +2,7 @@
 import { supabase } from './supabase.js';
 import { cargarGrupos, initGroupModal, initArchivedToggle } from './groups.js';
 import { initFriendsModal } from './friends.js';
-import { initExpenseModal } from './expenses.js';
+import { initExpenseModal, initFiltroCategoria } from './expenses.js';
 import { initAddMemberModal } from './members.js';
 
 // ==========================================
