@@ -705,16 +705,15 @@ body {
 /* ==========================================
    16. BOTON ELIMINAR GRUPO
    ========================================== */
-.btn-delete {
-  background: #fed7d7;
-  color: #c53030;
+.group-actions { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
 }
 
-.btn-delete:hover {
-  background: #c53030;
-  color: white;
+.group-actions .btn-delete {
+  margin-right: 8px;
 }
-
 .group-actions {
   gap: 12px;
 }
