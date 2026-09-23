@@ -26,6 +26,7 @@ import { initAddMemberModal } from './members.js';
   initGroupModal();
   initFriendsModal();
   initExpenseModal();
+  initFiltroCategoria();
   initAddMemberModal();
   initArchivedToggle();
 })();
