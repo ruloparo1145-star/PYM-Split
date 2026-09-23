@@ -821,3 +821,122 @@ body {
   padding-top: 15px;
   border-top: 1px solid #edf2f7;
 }
+/* ==========================================
+   19. DASHBOARD - ESTADISTICAS
+   ========================================== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: #ffffff;
+  border-radius: 15px;
+  padding: 18px 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-left: 4px solid #2ecc87;
+}
+
+.stat-card.stat-positive {
+  border-left-color: #38a169;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.stat-card.stat-negative {
+  border-left-color: #e53e3e;
+  background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: #718096;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+.stat-positive .stat-value {
+  color: #38a169;
+}
+
+.stat-negative .stat-value {
+  color: #e53e3e;
+}
+
+/* ==========================================
+   20. ULTIMOS MOVIMIENTOS
+   ========================================== */
+.recent-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f7fafc;
+}
+
+.recent-item:last-child {
+  border-bottom: none;
+}
+
+.recent-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  border: 1px solid #c6f6d5;
+}
+
+.recent-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.recent-info h5 {
+  font-size: 0.9rem;
+  color: #2d3748;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-info span {
+  font-size: 0.75rem;
+  color: #718096;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recent-amount {
+  font-weight: 700;
+  color: #2ecc87;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+/* Grid responsive */
+@media (min-width: 500px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  .stat-value {
+    font-size: 1.4rem;
+  }
+}
