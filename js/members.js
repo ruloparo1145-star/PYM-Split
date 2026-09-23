@@ -44,7 +44,7 @@ export async function cargarAmigosDisponibles(groupId) {
     .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
 
   if (!amistades || amistades.length === 0) {
-    list.innerHTML = '<p class="placeholder-text">No tienes amigos aún. Añade uno desde el botón "Amigos".</p>';
+    list.innerHTML = '<p class="placeholder-text">No tienes amigos aÃºn. AÃ±ade uno desde el botÃ³n "Amigos".</p>';
     return;
   }
 
@@ -56,13 +56,13 @@ export async function cargarAmigosDisponibles(groupId) {
 
   const idsEnGrupo = (miembrosActuales || []).map(m => m.user_id);
 
-  // 3. Filtrar amigos que no estén ya en el grupo
+  // 3. Filtrar amigos que no estÃ©n ya en el grupo
   const amigosDisponibles = amistades
     .map(a => a.user_id === user.id ? a.friend : a.user)
     .filter(a => !idsEnGrupo.includes(a.id));
 
   if (amigosDisponibles.length === 0) {
-    list.innerHTML = '<p class="placeholder-text">Todos tus amigos ya están en este grupo.</p>';
+    list.innerHTML = '<p class="placeholder-text">Todos tus amigos ya estÃ¡n en este grupo.</p>';
     return;
   }
 
@@ -73,7 +73,7 @@ export async function cargarAmigosDisponibles(groupId) {
         <h4>${a.full_name || a.email}</h4>
         <span>${a.email}</span>
       </div>
-      <button class="btn-small btn-accept">Añadir</button>
+      <button class="btn-small btn-accept">AÃ±adir</button>
     </div>
   `).join('');
 
@@ -100,9 +100,9 @@ async function agregarMiembroAlGrupo(groupId, userId) {
 
   if (error) {
     if (error.code === '23505') {
-      alert('Ese amigo ya está en el grupo.');
+      alert('Ese amigo ya estÃ¡ en el grupo.');
     } else {
-      alert('Error al añadir: ' + error.message);
+      alert('Error al aÃ±adir: ' + error.message);
     }
   } else {
     // Recargar la lista de miembros del grupo
@@ -111,7 +111,7 @@ async function agregarMiembroAlGrupo(groupId, userId) {
 }
 
 // ==========================================
-// 4. INICIALIZAR MODAL DE AÑADIR MIEMBRO
+// 4. INICIALIZAR MODAL DE AÃ‘ADIR MIEMBRO
 // ==========================================
 export function initAddMemberModal() {
   const modal = document.getElementById('modal-add-member');
