@@ -341,3 +341,84 @@ document.getElementById('btn-calculate-today')?.addEventListener('click', async 
     await guardarEdicionGasto();
   });
 }
+// ==========================================
+// CALCULADORA "HOY"
+// ==========================================
+async function abrirCalculadora(groupId, groupName) {
+  const modal = document.getElementById('modal-calculator');
+  const body = document.getElementById('calculator-body');
+  body.innerHTML = '<p class="placeholder-text">Calculando...</p>';
+  modal.classList.remove('hidden');
+
+  try {
+    // Obtener moneda del grupo
+    const { data: grupoInfo } = await supabase
+      .from('groups')
+      .select('currency')
+      .eq('id', groupId)
+      .single();
+
+    const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
+    // Traer gastos del grupo
+    const { data: gastos } = await supabase
+      .from('expenses')
+      .select('amount, currency, exchange_rate')
+      .eq('group_id', groupId);
+
+    if (!gastos || gastos.length === 0) {
+      body.innerHTML = '<p class="placeholder-text">Este grupo no tiene gastos.</p>';
+      return;
+    }
+
+    const { simularHoy } = await import('./currency.js');
+    const resultado = await simularHoy(gastos, monedaGrupo);
+
+    const difColor = resultado.diferencia > 0.01 ? '#e53e3e'
+                   : resultado.diferencia < -0.01 ? '#38a169'
+                   : '#718096';
+    const difSigno = resultado.diferencia > 0 ? '+' : '';
+    const flecha = resultado.diferencia > 0.01 ? 'subio' : resultado.diferencia < -0.01 ? 'bajo' : 'igual';
+
+    body.innerHTML = `
+      <p style="text-align: center; color: #718096; margin-bottom: 20px;">
+        Grupo: <strong>${groupName}</strong>
+      </p>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 15px; margin-bottom: 12px;">
+        <p style="font-size: 0.8rem; color: #718096; margin-bottom: 4px;">Total gastado (con tasas del momento)</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">
+          ${resultado.totalHistorico.toFixed(2)} ${resultado.moneda}
+        </p>
+      </div>
+
+      <div style="background: #f0fdf4; border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #c6f6d5;">
+        <p style="font-size: 0.8rem; color: #4a5568; margin-bottom: 4px;">Si lo hicieras HOY</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: #2ecc87;">
+          ${resultado.totalHoy.toFixed(2)} ${resultado.moneda}
+        </p>
+      </div>
+
+      <div style="background: #ffffff; border-radius: 12px; padding: 15px; border: 2px solid ${difColor}20;">
+        <p style="font-size: 0.8rem; color: #718096; margin-bottom: 4px;">Diferencia</p>
+        <p style="font-size: 1.2rem; font-weight: 700; color: ${difColor};">
+          ${difSigno}${resultado.diferencia.toFixed(2)} ${resultado.moneda}
+          <small style="font-size: 0.8rem; font-weight: 400;">
+            (${difSigno}${resultado.porcentaje.toFixed(1)}%)
+          </small>
+        </p>
+        <p style="font-size: 0.75rem; color: #a0aec0; margin-top: 6px;">
+          La moneda ${flecha} respecto al momento del viaje.
+        </p>
+      </div>
+
+      <p style="font-size: 0.75rem; color: #a0aec0; text-align: center; margin-top: 15px;">
+        Este calculo es solo informativo. No modifica ningun dato.
+      </p>
+    `;
+
+  } catch (error) {
+    console.error('Error calculadora:', error);
+    body.innerHTML = '<p class="error-msg">Error al calcular.</p>';
+  }
+}
