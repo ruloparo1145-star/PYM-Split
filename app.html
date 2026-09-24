@@ -153,7 +153,7 @@
         <div class="form-group">
           <label for="group-date-start">Fecha de inicio (opcional)</label>
           <input type="date" id="group-date-start">
-        </div>  
+        </div>
         <div class="form-group">
           <label for="group-date-end">Fecha de fin (opcional)</label>
           <input type="date" id="group-date-end">
@@ -161,15 +161,19 @@
         <div class="form-group">
           <label for="group-manual-rate">Cotizacion manual (opcional)</label>
           <div style="display: flex; align-items: center; gap: 8px;">
-            <span id="group-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 USD =</span>
+            <span id="group-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 EUR =</span>
             <input type="number" id="group-manual-rate" placeholder="Ej: 1200" step="0.01" min="0" style="flex: 1;">
-            <span id="group-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
+            <span id="group-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">Moneda</span>
           </div>
           <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;">
             Si la cotizacion no esta en la web, se usara esta. Si esta vacio, queda en 0.
           </small>
-        </div> 
+        </div>
         <p id="group-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
+          <button type="submit" class="btn-primary">Crear Grupo</button>
+        </div>
       </form>
     </div>
   </div>
@@ -317,12 +321,31 @@
         <button id="btn-calculate-today" class="btn-calculate-today">
           Calcular en moneda de hoy
         </button>
+        <button id="btn-edit-manual-rate" class="btn-edit-manual-rate" style="display: none;">
+          Editar cotizacion
+        </button>
         <button id="btn-close-computo" class="btn-close-computo" style="display: none;">
           Cerrar computo
         </button>
         <button id="btn-reopen-computo" class="btn-reopen-computo" style="display: none;">
           Reabrir
         </button>
+      </div>
+
+      <div id="manual-rate-editor" class="manual-rate-editor hidden">
+        <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 6px;">
+          Cotizacion manual
+        </label>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span id="edit-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 EUR =</span>
+          <input type="number" id="edit-manual-rate-input" placeholder="Ej: 1200" step="0.01" min="0" style="flex: 1; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+          <span id="edit-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
+        </div>
+        <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
+          <button type="button" id="btn-cancel-manual-rate" class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Cancelar</button>
+          <button type="button" id="btn-save-manual-rate" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;">Guardar</button>
+        </div>
+        <p id="manual-rate-error" class="error-msg" style="text-align: left; font-size: 0.75rem; margin-top: 6px;"></p>
       </div>
 
       <div class="balance-section">
@@ -519,6 +542,7 @@
             <li><strong>Tipo:</strong> viaje, depto, salidas u otro.</li>
             <li><strong>Moneda:</strong> la moneda principal del grupo.</li>
             <li><strong>Fecha de inicio y fin (opcional):</strong> ideal para viajes. Si no las pones, el grupo se crea igual.</li>
+            <li><strong>Cotizacion manual (opcional):</strong> si usas una moneda que no esta en la web (ej: peso argentino blue), podes cargar la cotizacion vos mismo. Si no la pones y la API falla, queda en 0.</li>
           </ul>
           <p>Toca <strong>"Crear Grupo"</strong> y listo. Vos quedas como miembro automaticamente.</p>
         </section>
@@ -562,13 +586,20 @@
         </section>
 
         <section class="manual-section">
-          <h4>9. Ver el balance del grupo</h4>
+          <h4>9. Cotizacion manual</h4>
+          <p>Si usas una moneda que no esta en las APIs (ej: peso argentino blue, bolivar, etc.), podes cargar una <strong>cotizacion manual</strong> al crear el grupo.</p>
+          <p>La app intenta primero la cotizacion de la web. Si no la encuentra, usa la cotizacion manual.</p>
+          <p>Podes <strong>editar la cotizacion</strong> despues, con el boton "Editar cotizacion" en el detalle del grupo.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4>10. Ver el balance del grupo</h4>
           <p>Al abrir un grupo, arriba de todo aparece el <strong>Balance</strong>. Ahi se muestra <strong>quien le debe a quien</strong> y cuanto, ya convertido a la moneda del grupo.</p>
           <p>La app <strong>simplifica las deudas</strong>: si A le debe a B y B le debe a C, se muestra directamente que A le pague a C. Asi se hacen menos transferencias.</p>
         </section>
 
         <section class="manual-section">
-          <h4>10. Calcular en moneda de hoy</h4>
+          <h4>11. Calcular en moneda de hoy</h4>
           <p>En el detalle del grupo, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:</p>
           <ul>
             <li>El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.</li>
@@ -579,7 +610,7 @@
         </section>
 
         <section class="manual-section">
-          <h4>11. Cerrar el computo de un viaje</h4>
+          <h4>12. Cerrar el computo de un viaje</h4>
           <p>Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. La app guarda:</p>
           <ul>
             <li>La <strong>fecha de cierre</strong> (automatica, no editable).</li>
@@ -590,14 +621,14 @@
         </section>
 
         <section class="manual-section">
-          <h4>12. Saldar deudas</h4>
+          <h4>13. Saldar deudas</h4>
           <p>Cuando alguien ya pago por fuera (efectivo, transferencia, etc.), toca el boton <strong>"Saldar"</strong> al lado de la deuda.</p>
           <p>Confirmas y el balance se actualiza automaticamente.</p>
           <p><strong>Aclaracion:</strong> la app NO mueve plata. Solo registra que la deuda ya fue saldada.</p>
         </section>
 
         <section class="manual-section">
-          <h4>13. Historial y graficos</h4>
+          <h4>14. Historial y graficos</h4>
           <p>Dentro de cada grupo, mas abajo, vas a ver:</p>
           <ul>
             <li><strong>Graficos:</strong> cuanto pago cada persona y cuanto se gasto por categoria.</li>
@@ -607,12 +638,12 @@
         </section>
 
         <section class="manual-section">
-          <h4>14. Filtros</h4>
+          <h4>15. Filtros</h4>
           <p>En la lista de gastos de un grupo, podes filtrar por <strong>categoria</strong> para ver solo lo que te interesa (comida, transporte, etc.).</p>
         </section>
 
         <section class="manual-section">
-          <h4>15. Editar o eliminar un gasto</h4>
+          <h4>16. Editar o eliminar un gasto</h4>
           <p>Toca cualquier gasto de la lista. Se abre el detalle, con 2 botones:</p>
           <ul>
             <li><strong>Editar:</strong> cambia descripcion, monto, categoria, moneda o quien pago.</li>
@@ -621,7 +652,7 @@
         </section>
 
         <section class="manual-section">
-          <h4>16. Archivar y restaurar grupos</h4>
+          <h4>17. Archivar y restaurar grupos</h4>
           <p>Cada grupo tiene un boton <strong>&#128230; (archivar)</strong>. Al tocarlo, el grupo desaparece de la lista principal pero <strong>NO se borra</strong>.</p>
           <p>Para ver los grupos archivados, toca el boton <strong>"Archivados"</strong> arriba de la lista.</p>
           <p>Ahi podes <strong>restaurarlos</strong> (boton &#8634;) o <strong>eliminarlos definitivamente</strong> (boton &#128465;).</p>
@@ -629,14 +660,14 @@
         </section>
 
         <section class="manual-section">
-          <h4>17. Eliminar un grupo</h4>
+          <h4>18. Eliminar un grupo</h4>
           <p>Solo se puede eliminar un grupo <strong>despues de archivarlo</strong>. Esto evita borrar por error.</p>
           <p><strong>Atencion:</strong> eliminar un grupo borra TODOS sus gastos, miembros, pagos e historial. <strong>No se puede deshacer.</strong></p>
           <p>Si queres conservar el historico, usa <strong>archivar</strong> en vez de eliminar.</p>
         </section>
 
         <section class="manual-section">
-          <h4>18. Instalar como app en el celular</h4>
+          <h4>19. Instalar como app en el celular</h4>
           <p><strong>iPhone (Safari):</strong></p>
           <ul>
             <li>Abri la app.</li>
