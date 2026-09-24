@@ -1388,3 +1388,31 @@ body {
     padding: 6px 10px;
   }
 }
+/* ==========================================
+   33. COTIZACION MANUAL
+   ========================================== */
+.btn-edit-manual-rate {
+  background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.3);
+}
+
+.btn-edit-manual-rate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.4);
+}
+
+.manual-rate-editor {
+  background: #ebf8ff;
+  border: 2px solid #bee3f8;
+  border-radius: 12px;
+  padding: 15px;
+  margin: 10px 0 15px 0;
+}
