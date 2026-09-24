@@ -438,16 +438,23 @@ function renderizarVacio(monedaUsuario) {
 // ==========================================
 // INICIALIZAR TABS
 // ==========================================
+
 export function initDashboardTabs() {
   const tabs = document.querySelectorAll('.dash-tab');
   if (!tabs.length) return;
 
   tabs.forEach(tab => {
     tab.addEventListener('click', async () => {
+      // Actualizar rango
+      rangoActual = tab.dataset.range || 'month';
+
+      // Marcar visualmente
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      rangoActual = tab.dataset.range || 'month';
+
+      // Recargar dashboard (que tambien re-marca los tabs por las dudas)
       await cargarDashboard();
     });
   });
 }
+
