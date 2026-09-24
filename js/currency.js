@@ -88,43 +88,26 @@ function guardarCache(cacheKey, tasa) {
 // ==========================================
 // DOLARAPI - Obtener cotizaciones
 // ==========================================
-// DolarAPI devuelve cotizaciones del dolar en Argentina.
-// Endpoint: https://dolarapi.com/v1/dolares
-// Tambien tiene cotizaciones en: https://dolarapi.com/v1/cotizaciones
 async function obtenerTasaDolarAPI(desde, hasta) {
-  // Necesitamos las cotizaciones base (todas respecto a ARS)
-  // Pero DolarAPI solo da ARS como base, asi que necesitamos
-  // convertir: desde -> ARS -> hasta
-
-  // Caso 1: desde o hasta es ARS
+  // Caso 1: una es ARS
   if (desde === 'ARS' || hasta === 'ARS') {
-    // Necesitamos la cotizacion de la moneda NO-ARS
     const monedaExtranjera = desde === 'ARS' ? hasta : desde;
-
-    // Obtener cotizacion de esa moneda respecto a ARS
     const cotizacion = await getCotizacionDolarAPI(monedaExtranjera);
     if (cotizacion === null) return null;
 
-    // cotizacion = cuantos ARS vale 1 unidad de monedaExtranjera
     if (desde === 'ARS') {
-      // ARS -> monedaExtranjera: 1 ARS = 1/cotizacion monedaExtranjera
       return 1 / cotizacion;
     } else {
-      // monedaExtranjera -> ARS: 1 monedaExtranjera = cotizacion ARS
       return cotizacion;
     }
   }
 
-  // Caso 2: ninguna es ARS, pero ambas tienen cotizacion en DolarAPI
-  // Ej: USD -> EUR. Se hace USD -> ARS -> EUR
+  // Caso 2: ninguna es ARS pero ambas estan en DolarAPI
   const cotDesde = await getCotizacionDolarAPI(desde);
   const cotHasta = await getCotizacionDolarAPI(hasta);
 
   if (cotDesde === null || cotHasta === null) return null;
 
-  // cotDesde = cuantos ARS vale 1 desde
-  // cotHasta = cuantos ARS vale 1 hasta
-  // desde -> hasta = cotDesde / cotHasta
   return cotDesde / cotHasta;
 }
 
@@ -132,25 +115,18 @@ async function obtenerTasaDolarAPI(desde, hasta) {
 // OBTENER COTIZACION ESPECIFICA
 // ==========================================
 async function getCotizacionDolarAPI(moneda) {
-  // DolarAPI tiene 2 endpoints:
-  // /v1/dolares -> cotizacion del dolar (oficial, blue, mep, etc.)
-  // /v1/cotizaciones -> cotizacion de otras monedas (EUR, BRL, etc.)
-
   try {
     if (moneda === 'USD') {
-      // Usar dolar oficial
       const resp = await fetch('https://dolarapi.com/v1/dolares/oficial');
       if (!resp.ok) return null;
       const data = await resp.json();
       return parseFloat(data.venta) || null;
     }
 
-    // Otras monedas: EUR, BRL, CLP, UYU
     const resp = await fetch('https://dolarapi.com/v1/cotizaciones');
     if (!resp.ok) return null;
     const data = await resp.json();
 
-    // data es un array tipo [{moneda: 'EUR', nombre: 'Euro', compra: ..., venta: ...}, ...]
     const cot = data.find(item => item.moneda === moneda);
     if (cot) {
       return parseFloat(cot.venta) || null;
@@ -183,6 +159,53 @@ export async function convertirMonto(monto, desde, hasta) {
   }
 
   return { monto: monto * tasa, convertido: true };
+}
+
+// ==========================================
+// CONVERTIR CON FALLBACK A COTIZACION MANUAL
+// ==========================================
+// Prioriza: 1) Frankfurter, 2) DolarAPI, 3) Cotizacion manual del grupo
+// La cotizacion manual se guarda SIEMPRE respecto a USD.
+// manualRateUSD = cuantos USD vale 1 unidad de la moneda DESTINO (hasta)
+export async function convertirMontoConGrupo(monto, desde, hasta, manualRateUSD) {
+  monto = parseFloat(monto) || 0;
+  desde = (desde || 'EUR').toUpperCase();
+  hasta = (hasta || 'EUR').toUpperCase();
+
+  if (desde === hasta) {
+    return { monto, convertido: true, fuente: 'same' };
+  }
+
+  // 1. Intentar API (Frankfurter + DolarAPI)
+  const tasaAPI = await obtenerTasa(desde, hasta);
+  if (tasaAPI !== null) {
+    return { monto: monto * tasaAPI, convertido: true, fuente: 'api' };
+  }
+
+  // 2. Fallback: cotizacion manual
+  // La cotizacion manual es: cuantos USD vale 1 unidad de "hasta"
+  // Ej: hasta = ARS, manualRateUSD = 0.00083 (1 ARS = 0.00083 USD)
+  if (manualRateUSD && manualRateUSD > 0) {
+    // Necesitamos: 1 desde = X hasta
+    // 1) desde -> USD
+    const desdeAUSD = await obtenerTasa(desde, 'USD');
+    if (desdeAUSD !== null) {
+      // 1 desde = desdeAUSD USD
+      // 1 hasta = manualRateUSD USD
+      // Entonces: 1 desde = desdeAUSD / manualRateUSD hasta
+      const tasa = desdeAUSD / manualRateUSD;
+      return { monto: monto * tasa, convertido: true, fuente: 'manual' };
+    }
+
+    // Si desde === USD, no hace falta convertir
+    if (desde === 'USD') {
+      // 1 USD = 1 / manualRateUSD hasta
+      const tasa = 1 / manualRateUSD;
+      return { monto: monto * tasa, convertido: true, fuente: 'manual' };
+    }
+  }
+
+  return { monto, convertido: false, fuente: 'none' };
 }
 
 // ==========================================
@@ -271,49 +294,4 @@ export async function simularHoy(gastos, monedaGrupo) {
     porcentaje,
     moneda: monedaGrupo
   };
-}
-// ==========================================
-// CONVERTIR CON FALLBACK A COTIZACION MANUAL
-// ==========================================
-// Prioriza: 1) Frankfurter, 2) DolarAPI, 3) Cotizacion manual del grupo
-// La cotizacion manual se guarda SIEMPRE respecto a USD.
-export async function convertirMontoConGrupo(monto, desde, hasta, manualRateUSD) {
-  monto = parseFloat(monto) || 0;
-  desde = (desde || 'EUR').toUpperCase();
-  hasta = (hasta || 'EUR').toUpperCase();
-
-  if (desde === hasta) return { monto, convertido: true, fuente: 'same' };
-
-  // 1. Intentar API
-  const tasaAPI = await obtenerTasa(desde, hasta);
-  if (tasaAPI !== null) {
-    return { monto: monto * tasaAPI, convertido: true, fuente: 'api' };
-  }
-
-  // 2. Fallback: usar cotizacion manual
-  if (manualRateUSD && manualRateUSD > 0) {
-    // manualRateUSD = cuantos USD vale 1 unidad de la moneda del GRUPO
-    // Pero necesitamos convertir DESDE -> HASTA.
-    // Asumimos que la cotizacion manual es: 1 USD = X (moneda con la que se cargo el grupo)
-    // Esta funcion debe llamarse desde el contexto donde sabemos que
-    // la moneda del grupo es la que tiene cotizacion manual.
-
-    // Si hasta === moneda del grupo (ej: ARS), entonces:
-    // monto (desde) -> ARS
-    // 1) desde -> USD (usando API)
-    // 2) USD -> ARS (usando manualRateUSD)
-
-    if (hasta !== 'USD' && hasta !== 'EUR') {
-      // Intentar desde -> USD
-      const desdeAUSD = await obtenerTasa(desde, 'USD');
-      if (desdeAUSD !== null) {
-        // USD -> hasta usando cotizacion manual
-        // manualRateUSD = cuantos hasta vale 1 USD
-        const montoUSD = monto * desdeAUSD;
-        return { monto: montoUSD * manualRateUSD, convertido: true, fuente: 'manual' };
-      }
-    }
-  }
-
-  return { monto, convertido: false, fuente: 'none' };
 }
