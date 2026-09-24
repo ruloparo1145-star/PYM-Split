@@ -200,6 +200,8 @@ function calcularRango(rango) {
 // ==========================================
 // SUBTEXTOS DE CONVERSION
 // ==========================================
+
+
 function actualizarSubtextos(resultado, monedaUsuario) {
   const statTotal = document.getElementById('stat-total-mes');
   if (!statTotal) return;
@@ -213,7 +215,11 @@ function actualizarSubtextos(resultado, monedaUsuario) {
   }
 
   if (resultado.noConvertidas.length > 0) {
-    sub.textContent = `Sin convertir: ${resultado.noConvertidas.join(', ')}`;
+    // Mostrar cuanto quedo afuera
+    const montoExcluido = resultado.montoNoConvertido
+      ? ` (${resultado.montoNoConvertido.toFixed(2)} no incluidos)`
+      : '';
+    sub.textContent = `Sin convertir: ${resultado.noConvertidas.join(', ')}${montoExcluido}`;
     sub.style.color = '#e53e3e';
   } else if (resultado.monedasOrigen.length > 0) {
     sub.textContent = `Convertido desde ${resultado.monedasOrigen.join(', ')}`;
