@@ -17,7 +17,7 @@ button { font-family: inherit; }
 input, select, textarea { font-family: inherit; }
 
 /* ==========================================
-   1. AUTENTICACIÃƒâ€œN
+   1. AUTENTICACIÃ“N
    ========================================== */
 body {
   background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
@@ -161,6 +161,14 @@ body {
   min-height: 20px;
 }
 
+.success-msg {
+  font-size: 0.85rem;
+  color: #38a169;
+  text-align: center;
+  min-height: 20px;
+  font-weight: 600;
+}
+
 /* ==========================================
    2. DASHBOARD
    ========================================== */
@@ -206,6 +214,8 @@ body {
   margin: 0;
 }
 
+.header-right { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
 .btn-logout {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
@@ -218,9 +228,7 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-logout:hover {
-  background: rgba(255, 255, 255, 0.3);
-}
+.btn-logout:hover { background: rgba(255, 255, 255, 0.3); }
 
 .app-main {
   flex: 1;
@@ -256,6 +264,8 @@ body {
   margin-bottom: 15px;
   border-bottom: 1px solid #edf2f7;
   padding-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .section-header h3 {
@@ -283,11 +293,11 @@ body {
   box-shadow: 0 4px 8px rgba(46, 204, 135, 0.35);
 }
 
-/* Botones dentro del header verde */
 .app-header .btn-small {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: none;
 }
 
 .app-header .btn-small:hover {
@@ -382,6 +392,9 @@ body {
   background: #edf2f7;
   padding: 2px 8px;
   border-radius: 10px;
+  display: inline-block;
+  margin-right: 4px;
+  margin-bottom: 4px;
 }
 
 /* ==========================================
@@ -517,7 +530,8 @@ body {
 .expenses-section,
 .members-section,
 .charts-section,
-.history-section {
+.history-section,
+.totals-section {
   margin-top: 20px;
   padding-top: 15px;
   border-top: 1px solid #edf2f7;
@@ -527,7 +541,8 @@ body {
 .expenses-section h4,
 .members-section h4,
 .charts-section h4,
-.history-section h4 {
+.history-section h4,
+.totals-section h4 {
   font-size: 1rem;
   color: #4a5568;
   margin-bottom: 12px;
@@ -553,13 +568,31 @@ body {
 
 .expense-card {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   background: #f8fafc;
   border-radius: 10px;
   padding: 12px;
   margin-bottom: 8px;
   border: 1px solid #e2e8f0;
+}
+
+.expense-category-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #f0fdf4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  flex-shrink: 0;
+  border: 1px solid #c6f6d5;
+}
+
+.expense-info {
+  flex: 1;
+  min-width: 0;
 }
 
 .expense-info h5 { font-size: 0.9rem; color: #2d3748; margin-bottom: 2px; }
@@ -569,6 +602,16 @@ body {
   font-weight: 700;
   color: #2ecc87;
   font-size: 1rem;
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.expense-subtext {
+  display: block;
+  font-size: 0.7rem;
+  color: #a0aec0;
+  font-weight: 400;
+  margin-top: 2px;
 }
 
 /* ==========================================
@@ -652,7 +695,7 @@ body {
 .history-info small { font-size: 0.7rem; color: #a0aec0; }
 
 /* ==========================================
-   13. GRÃƒÂFICOS
+   13. GRÃFICOS
    ========================================== */
 .chart-container {
   position: relative;
@@ -679,7 +722,20 @@ body {
   display: inline-block;
 }
 
-.group-actions { display: flex; align-items: center; gap: 6px; }
+.badge-closed {
+  display: inline-block;
+  font-size: 0.7rem;
+  background: #fed7d7;
+  color: #c53030;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-left: 6px;
+  margin-top: 4px;
+}
+
+.group-actions { display: flex; align-items: center; gap: 12px; }
+.group-actions .btn-delete { margin-right: 8px; }
 
 .group-arrow {
   color: #a0aec0;
@@ -693,6 +749,16 @@ body {
 .btn-restore { background: #c6f6d5; color: #38a169; }
 .btn-restore:hover { background: #38a169; color: white; }
 
+.btn-delete {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.btn-delete:hover {
+  background: #c53030;
+  color: white;
+}
+
 /* ==========================================
    15. RESPONSIVE
    ========================================== */
@@ -702,56 +768,66 @@ body {
   .fab { bottom: 20px; right: 20px; width: 55px; height: 55px; }
   .debt-card { font-size: 0.8rem; }
 }
+
 /* ==========================================
-   16. BOTON ELIMINAR GRUPO
+   16. MANUAL DE USO
    ========================================== */
-.group-actions { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
+.manual-content {
+  max-width: 700px;
+  max-height: 85vh;
+  text-align: left;
 }
 
-.group-actions .btn-delete {
-  margin-right: 8px;
+.manual-body {
+  padding: 10px 0 20px 0;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 8px;
 }
-.group-actions {
-  gap: 12px;
+
+.manual-section {
+  margin-bottom: 22px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #edf2f7;
 }
+
+.manual-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.manual-section h4 {
+  color: #2ecc87;
+  font-size: 1.05rem;
+  margin-bottom: 10px;
+  font-weight: 700;
+}
+
+.manual-section p {
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin-bottom: 8px;
+}
+
+.manual-section ul {
+  margin: 8px 0 8px 20px;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.manual-section ul li {
+  margin-bottom: 5px;
+}
+
+.manual-section strong {
+  color: #2d3748;
+  font-weight: 700;
+}
+
 /* ==========================================
    17. CATEGORIAS DE GASTOS
-   ========================================== */
-.expense-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.expense-category-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: #f0fdf4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  flex-shrink: 0;
-  border: 1px solid #c6f6d5;
-}
-
-.expense-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.expense-amount {
-  font-weight: 700;
-  color: #2ecc87;
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-/* ==========================================
-   18. FILTRO Y TOTALES POR CATEGORIA
    ========================================== */
 #filter-category {
   width: 100%;
@@ -773,12 +849,6 @@ body {
   margin-top: 20px;
   padding-top: 15px;
   border-top: 1px solid #edf2f7;
-}
-
-.totals-section h4 {
-  font-size: 1rem;
-  color: #4a5568;
-  margin-bottom: 12px;
 }
 
 .category-total-row {
@@ -816,22 +886,8 @@ body {
   font-size: 0.75rem;
 }
 
-.charts-section {
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #edf2f7;
-}
 /* ==========================================
-   19. DASHBOARD - ESTADISTICAS
-   ========================================== */
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-/* ==========================================
-   19. DASHBOARD - ESTADISTICAS
+   18. DASHBOARD - ESTADISTICAS
    ========================================== */
 .stats-grid {
   display: grid;
@@ -873,16 +929,11 @@ body {
   color: #2d3748;
 }
 
-.stat-positive .stat-value {
-  color: #38a169;
-}
-
-.stat-negative .stat-value {
-  color: #e53e3e;
-}
+.stat-positive .stat-value { color: #38a169; }
+.stat-negative .stat-value { color: #e53e3e; }
 
 /* ==========================================
-   20. ULTIMOS MOVIMIENTOS
+   19. ULTIMOS MOVIMIENTOS
    ========================================== */
 .recent-item {
   display: flex;
@@ -892,9 +943,7 @@ body {
   border-bottom: 1px solid #f7fafc;
 }
 
-.recent-item:last-child {
-  border-bottom: none;
-}
+.recent-item:last-child { border-bottom: none; }
 
 .recent-icon {
   width: 38px;
@@ -909,10 +958,7 @@ body {
   border: 1px solid #c6f6d5;
 }
 
-.recent-info {
-  flex: 1;
-  min-width: 0;
-}
+.recent-info { flex: 1; min-width: 0; }
 
 .recent-info h5 {
   font-size: 0.9rem;
@@ -939,136 +985,23 @@ body {
   flex-shrink: 0;
 }
 
-/* Grid responsive */
-@media (min-width: 500px) {
-  .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .stat-value {
-    font-size: 1.4rem;
-  }
-}
-.stat-card {
-  background: #ffffff;
-  border-radius: 15px;
-  padding: 18px 20px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-left: 4px solid #2ecc87;
-}
-
-.stat-card.stat-positive {
-  border-left-color: #38a169;
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
-}
-
-.stat-card.stat-negative {
-  border-left-color: #e53e3e;
-  background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
-}
-
-.stat-label {
-  font-size: 0.8rem;
-  color: #718096;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
-  font-weight: 600;
-}
-
-.stat-value {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #2d3748;
-}
-
-.stat-positive .stat-value {
-  color: #38a169;
-}
-
-.stat-negative .stat-value {
-  color: #e53e3e;
-}
-
-/* ==========================================
-   20. ULTIMOS MOVIMIENTOS
-   ========================================== */
-.recent-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid #f7fafc;
-}
-
-.recent-item:last-child {
-  border-bottom: none;
-}
-
-.recent-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-  background: #f0fdf4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-  border: 1px solid #c6f6d5;
-}
-
-.recent-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.recent-info h5 {
-  font-size: 0.9rem;
-  color: #2d3748;
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.recent-info span {
-  font-size: 0.75rem;
-  color: #718096;
+.recent-subtext {
+  font-size: 0.7rem;
+  color: #a0aec0;
   display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin-top: 2px;
 }
 
-.recent-amount {
-  font-weight: 700;
-  color: #2ecc87;
-  font-size: 0.95rem;
-  flex-shrink: 0;
+.stat-subtext {
+  font-size: 0.75rem;
+  color: #a0aec0;
+  margin-top: 4px;
+  font-weight: 400;
 }
 
-/* Grid responsive */
-@media (min-width: 500px) {
-  .stats-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-  
-  .stat-value {
-    font-size: 1.4rem;
-  }
-}
 /* ==========================================
-   21. PERFIL DE USUARIO
+   20. PERFIL
    ========================================== */
-.success-msg {
-  font-size: 0.85rem;
-  color: #38a169;
-  text-align: center;
-  min-height: 20px;
-  font-weight: 600;
-}
-
 #profile-email:disabled {
   background: #f7fafc;
   color: #718096;
@@ -1092,24 +1025,9 @@ body {
   border-color: #2ecc87;
   box-shadow: 0 0 0 3px rgba(46, 204, 135, 0.15);
 }
-/* ==========================================
-   22. SUBTEXTOS DE CONVERSION
-   ========================================== */
-.stat-subtext {
-  font-size: 0.75rem;
-  color: #a0aec0;
-  margin-top: 4px;
-  font-weight: 400;
-}
 
-.recent-subtext {
-  font-size: 0.7rem;
-  color: #a0aec0;
-  display: block;
-  margin-top: 2px;
-}
 /* ==========================================
-   23. BOTON CALCULAR HOY
+   21. BOTON CALCULAR HOY
    ========================================== */
 .btn-calculate-today {
   background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
@@ -1127,73 +1045,6 @@ body {
 .btn-calculate-today:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(46, 204, 135, 0.4);
-}
-
-.btn-calculate-today:active {
-  transform: translateY(0);
-}
-
-.expense-subtext {
-  display: block;
-  font-size: 0.7rem;
-  color: #a0aec0;
-  font-weight: 400;
-  margin-top: 2px;
-}
-/* ==========================================
-   24. FECHAS Y CIERRE DE COMPUTO
-   ========================================== */
-.group-dates {
-  display: block;
-  font-size: 0.75rem;
-  color: #2d3748;
-  background: #e6fffa;
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-top: 4px;
-  font-weight: 500;
-}
-
-.badge-closed {
-  display: inline-block;
-  font-size: 0.7rem;
-  background: #fed7d7;
-  color: #c53030;
-  padding: 2px 8px;
-  border-radius: 10px;
-  font-weight: 600;
-  margin-left: 6px;
-  margin-top: 4px;
-}
-
-.group-date-info {
-  font-size: 0.9rem;
-  color: #2d3748;
-  font-weight: 500;
-  margin-bottom: 6px;
-}
-
-.group-closed-info {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 12px;
-  padding: 10px 16px;
-  margin-top: 6px;
-}
-
-.group-closed-date {
-  font-size: 0.75rem;
-  color: #718096;
-}
-
-.group-closed-total {
-  font-size: 0.85rem;
-  color: #2d3748;
-  margin-top: 4px;
 }
 
 .btn-close-computo {
@@ -1226,11 +1077,131 @@ body {
   transition: all 0.2s ease;
 }
 
-.btn-reopen-computo:hover {
-  background: #e2e8f0;
-}
+.btn-reopen-computo:hover { background: #e2e8f0; }
+
 /* ==========================================
-   26. LIBRO DE VISITAS
+   22. FECHAS Y CIERRE DE COMPUTO
+   ========================================== */
+.group-dates {
+  display: block;
+  font-size: 0.75rem;
+  color: #2d3748;
+  background: #e6fffa;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.group-date-info {
+  font-size: 0.9rem;
+  color: #2d3748;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.group-closed-date {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 6px;
+}
+
+/* ==========================================
+   23. TOTAL DEL VIAJE
+   ========================================== */
+.group-total {
+  display: block;
+  font-size: 0.75rem;
+  color: #2ecc87;
+  font-weight: 700;
+  background: #f0fdf4;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin-top: 4px;
+  border: 1px solid #c6f6d5;
+}
+
+.group-mi-parte {
+  display: block;
+  font-size: 0.75rem;
+  color: #3182ce;
+  font-weight: 700;
+  background: #ebf4ff;
+  padding: 3px 10px;
+  border-radius: 10px;
+  margin-top: 4px;
+  border: 1px solid #bee3f8;
+}
+
+.group-mi-parte-conv {
+  color: #3182ce;
+  font-weight: 500;
+  font-size: 0.7rem;
+}
+
+.group-total-box {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #c6f6d5;
+  border-radius: 14px;
+  padding: 14px 24px;
+  display: inline-block;
+  min-width: 280px;
+  margin-top: 8px;
+}
+
+.group-total-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.group-total-col {
+  flex: 1;
+  text-align: center;
+}
+
+.group-total-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #c6f6d5;
+}
+
+.group-total-label {
+  font-size: 0.75rem;
+  color: #4a5568;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.group-total-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #14532d;
+}
+
+.group-total-value-mia { color: #2ecc87 !important; }
+
+.group-total-count {
+  font-size: 0.75rem;
+  color: #718096;
+  margin-top: 4px;
+}
+
+.group-total-conv {
+  font-size: 0.75rem;
+  color: #3182ce;
+  font-weight: 600;
+  margin-top: 4px;
+  background: #ebf4ff;
+  padding: 2px 8px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+/* ==========================================
+   24. LIBRO DE VISITAS
    ========================================== */
 .guestbook-item {
   display: flex;
@@ -1239,9 +1210,7 @@ body {
   border-bottom: 1px solid #f7fafc;
 }
 
-.guestbook-item:last-child {
-  border-bottom: none;
-}
+.guestbook-item:last-child { border-bottom: none; }
 
 .guestbook-avatar {
   width: 38px;
@@ -1257,10 +1226,7 @@ body {
   flex-shrink: 0;
 }
 
-.guestbook-content {
-  flex: 1;
-  min-width: 0;
-}
+.guestbook-content { flex: 1; min-width: 0; }
 
 .guestbook-header {
   display: flex;
@@ -1270,15 +1236,8 @@ body {
   flex-wrap: wrap;
 }
 
-.guestbook-header strong {
-  color: #2d3748;
-  font-size: 0.9rem;
-}
-
-.guestbook-header small {
-  color: #a0aec0;
-  font-size: 0.7rem;
-}
+.guestbook-header strong { color: #2d3748; font-size: 0.9rem; }
+.guestbook-header small { color: #a0aec0; font-size: 0.7rem; }
 
 .guestbook-delete {
   background: transparent;
@@ -1291,9 +1250,7 @@ body {
   transition: color 0.2s;
 }
 
-.guestbook-delete:hover {
-  color: #e53e3e;
-}
+.guestbook-delete:hover { color: #e53e3e; }
 
 .guestbook-content p {
   color: #4a5568;
@@ -1307,8 +1264,9 @@ body {
   border-color: #2ecc87 !important;
   box-shadow: 0 0 0 3px rgba(46, 204, 135, 0.15);
 }
+
 /* ==========================================
-   27. DASHBOARD TABS
+   25. DASHBOARD TABS
    ========================================== */
 .dashboard-tabs {
   display: flex;
@@ -1334,10 +1292,7 @@ body {
   white-space: nowrap;
 }
 
-.dash-tab:hover {
-  background: #f7fafc;
-  color: #2ecc87;
-}
+.dash-tab:hover { background: #f7fafc; color: #2ecc87; }
 
 .dash-tab.active {
   background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
@@ -1346,14 +1301,11 @@ body {
 }
 
 @media (max-width: 480px) {
-  .dash-tab {
-    font-size: 0.7rem;
-    padding: 8px 4px;
-  }
+  .dash-tab { font-size: 0.7rem; padding: 8px 4px; }
 }
 
 /* ==========================================
-   28. HISTORICO POR MES
+   26. HISTORICO POR MES
    ========================================== */
 .history-table-wrap {
   display: flex;
@@ -1372,9 +1324,7 @@ body {
   transition: background 0.15s;
 }
 
-.history-row:hover {
-  background: #f7fafc;
-}
+.history-row:hover { background: #f7fafc; }
 
 .history-row-total {
   background: #f0fdf4;
@@ -1383,16 +1333,8 @@ body {
   margin-top: 6px;
 }
 
-.history-month {
-  flex: 1;
-  color: #2d3748;
-  font-weight: 600;
-}
-
-.history-count {
-  color: #718096;
-  font-size: 0.75rem;
-}
+.history-month { flex: 1; color: #2d3748; font-weight: 600; }
+.history-count { color: #718096; font-size: 0.75rem; }
 
 .history-total {
   color: #2ecc87;
