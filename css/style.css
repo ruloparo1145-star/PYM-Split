@@ -1347,3 +1347,44 @@ body {
   color: #14532d;
   font-size: 0.95rem;
 }
+/* ==========================================
+   32. WELCOME HEADER CON BOTON
+   ========================================== */
+.welcome-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-ver-grafico {
+  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
+  color: #ffffff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(46, 204, 135, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-ver-grafico:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.4);
+}
+
+.btn-ver-grafico:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 480px) {
+  .btn-ver-grafico {
+    font-size: 0.7rem;
+    padding: 6px 10px;
+  }
+}
