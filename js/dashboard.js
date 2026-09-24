@@ -12,6 +12,15 @@ export async function cargarDashboard() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
+  // Marcar el tab activo
+  document.querySelectorAll('.dash-tab').forEach(tab => {
+    if (tab.dataset.range === rangoActual) {
+      tab.classList.add('active');
+    } else {
+      tab.classList.remove('active');
+    }
+  });
+
   const { data: perfil } = await supabase
     .from('profiles')
     .select('preferred_currency')
