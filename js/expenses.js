@@ -273,26 +273,30 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       split_type: 'shares'
     }));
   }
-
-  const categoria = document.getElementById('expense-category')?.value || 'otros';
+  
+const categoria = document.getElementById('expense-category')?.value || 'otros';
   const monedaGasto = (document.getElementById('expense-currency')?.value || 'EUR').toUpperCase();
 
-  // Obtener moneda del grupo
+  // Obtener info del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
-    .select('currency')
+    .select('currency, manual_exchange_rate')
     .eq('id', groupId)
     .single();
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+  const manualRateUSD = grupoInfo?.manual_exchange_rate;
 
   // Calcular exchange_rate del momento
   let exchangeRate = 1;
   if (monedaGasto !== monedaGrupo) {
-    const tasa = await obtenerTasa(monedaGasto, monedaGrupo);
-    if (tasa !== null) exchangeRate = tasa;
+    const { convertirMontoConGrupo } = await import('./currency.js');
+    const resultado = await convertirMontoConGrupo(1, monedaGasto, monedaGrupo, manualRateUSD);
+    if (resultado.convertido) {
+      exchangeRate = resultado.monto;
+    }
   }
-
+  
   const { data: gasto, error: gastoError } = await supabase
     .from('expenses')
     .insert([{
