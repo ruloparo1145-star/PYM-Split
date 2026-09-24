@@ -1229,3 +1229,81 @@ body {
 .btn-reopen-computo:hover {
   background: #e2e8f0;
 }
+/* ==========================================
+   26. LIBRO DE VISITAS
+   ========================================== */
+.guestbook-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #f7fafc;
+}
+
+.guestbook-item:last-child {
+  border-bottom: none;
+}
+
+.guestbook-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.guestbook-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.guestbook-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+.guestbook-header strong {
+  color: #2d3748;
+  font-size: 0.9rem;
+}
+
+.guestbook-header small {
+  color: #a0aec0;
+  font-size: 0.7rem;
+}
+
+.guestbook-delete {
+  background: transparent;
+  color: #cbd5e0;
+  border: none;
+  padding: 2px 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-left: auto;
+  transition: color 0.2s;
+}
+
+.guestbook-delete:hover {
+  color: #e53e3e;
+}
+
+.guestbook-content p {
+  color: #4a5568;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+#guestbook-message:focus {
+  border-color: #2ecc87 !important;
+  box-shadow: 0 0 0 3px rgba(46, 204, 135, 0.15);
+}
