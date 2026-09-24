@@ -93,18 +93,21 @@ export async function convertirMonto(monto, desde, hasta) {
 // ==========================================
 // Recibe: [{ monto, moneda }] y una moneda destino
 // Devuelve: { total, noConvertidas: [monedas] }
+
 export async function sumarConvertido(items, monedaDestino) {
   monedaDestino = (monedaDestino || 'EUR').toUpperCase();
 
   let total = 0;
   const noConvertidas = new Set();
   const monedasOrigen = new Set();
+  let montoNoConvertido = 0;
 
   for (const item of items) {
     const monedaOrigen = (item.moneda || 'EUR').toUpperCase();
+    const monto = parseFloat(item.monto) || 0;
 
     if (monedaOrigen === monedaDestino) {
-      total += parseFloat(item.monto) || 0;
+      total += monto;
       continue;
     }
 
@@ -112,17 +115,19 @@ export async function sumarConvertido(items, monedaDestino) {
 
     const tasa = await obtenerTasa(monedaOrigen, monedaDestino);
     if (tasa === null) {
-      total += parseFloat(item.monto) || 0;
+      // NO se puede convertir: NO sumar al total
       noConvertidas.add(monedaOrigen);
+      montoNoConvertido += monto;
     } else {
-      total += (parseFloat(item.monto) || 0) * tasa;
+      total += monto * tasa;
     }
   }
 
   return {
     total,
     noConvertidas: [...noConvertidas],
-    monedasOrigen: [...monedasOrigen]
+    monedasOrigen: [...monedasOrigen],
+    montoNoConvertido
   };
 }
 
