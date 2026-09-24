@@ -243,9 +243,15 @@ async function abrirDetalleGrupo(groupId) {
     .eq('id', groupId)
     .single();
 
+  
+  
+  
   document.getElementById('detail-group-name').textContent = grupo ? grupo.name : 'Detalle';
   modal.dataset.groupId = groupId;
 
+// Guardar nombre del grupo para el simulador
+  modal.dataset.groupName = grupo ? grupo.name : 'Grupo';
+  
   // Resetear filtro de categorÃ­a al abrir un grupo nuevo
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
