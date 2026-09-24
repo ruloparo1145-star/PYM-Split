@@ -4,6 +4,22 @@ import { supabase } from './supabase.js';
 let mostrarArchivados = false;
 
 // ==========================================
+// HELPERS DE FECHAS
+// ==========================================
+function formatearFecha(fechaStr) {
+  if (!fechaStr) return '';
+  const [y, m, d] = fechaStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function formatearRangoFechas(inicio, fin) {
+  if (!inicio && !fin) return '';
+  if (inicio && !fin) return `Desde ${formatearFecha(inicio)}`;
+  if (!inicio && fin) return `Hasta ${formatearFecha(fin)}`;
+  return `${formatearFecha(inicio)} - ${formatearFecha(fin)}`;
+}
+
+// ==========================================
 // 1. CARGAR GRUPOS
 // ==========================================
 export async function cargarGrupos() {
@@ -41,23 +57,30 @@ export async function cargarGrupos() {
       return;
     }
 
-    groupsList.innerHTML = grupos.map(grupo => `
-      <div class="group-card ${grupo.archived ? 'archived' : ''}" data-id="${grupo.id}">
-        <div class="group-info">
-          <h4>${grupo.name}</h4>
-          <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.currency || 'EUR'}</span>
-          ${grupo.archived ? '<span class="badge-archived">Archivado</span>' : ''}
+    groupsList.innerHTML = grupos.map(grupo => {
+      const rango = formatearRangoFechas(grupo.date_start, grupo.date_end);
+      const cerrado = !!grupo.date_closed;
+
+      return `
+        <div class="group-card ${grupo.archived ? 'archived' : ''}" data-id="${grupo.id}">
+          <div class="group-info">
+            <h4>${grupo.name}</h4>
+            <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.currency || 'EUR'}</span>
+            ${rango ? `<span class="group-dates">${rango}</span>` : ''}
+            ${grupo.archived ? '<span class="badge-archived">Archivado</span>' : ''}
+            ${cerrado ? '<span class="badge-closed">Cerrado</span>' : ''}
+          </div>
+          <div class="group-actions">
+            ${grupo.archived 
+              ? `<button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${grupo.name}" title="Eliminar">&#128465;</button>
+                 <button class="btn-small btn-restore" data-id="${grupo.id}" title="Restaurar">&#8634;</button>` 
+              : `<button class="btn-small btn-archive" data-id="${grupo.id}" title="Archivar">&#128230;</button>`
+            }
+            <span class="group-arrow">></span>
+          </div>
         </div>
-        <div class="group-actions">
-          ${grupo.archived 
-            ? `<button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${grupo.name}" title="Eliminar">&#128465;</button>
-               <button class="btn-small btn-restore" data-id="${grupo.id}" title="Restaurar">&#8634;</button>` 
-            : `<button class="btn-small btn-archive" data-id="${grupo.id}" title="Archivar">&#128230;</button>`
-          }
-          <span class="group-arrow">></span>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
 
     groupsList.querySelectorAll('.group-card').forEach(card => {
       card.addEventListener('click', (e) => {
@@ -138,11 +161,14 @@ export function toggleArchivados() {
 }
 
 // ==========================================
-// 5. CREAR GRUPO
+// 5. CREAR GRUPO (con fechas opcionales)
 // ==========================================
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario no autenticado');
+
+  const dateStart = document.getElementById('group-date-start')?.value || null;
+  const dateEnd = document.getElementById('group-date-end')?.value || null;
 
   const { data: groupData, error: groupError } = await supabase
     .from('groups')
@@ -151,7 +177,9 @@ export async function crearGrupo(nombre, tipo, moneda) {
       type: tipo,
       currency: moneda,
       created_by: user.id,
-      owner_id: user.id
+      owner_id: user.id,
+      date_start: dateStart,
+      date_end: dateEnd
     }])
     .select()
     .single();
@@ -233,16 +261,23 @@ async function abrirDetalleGrupo(groupId) {
 
   const { data: grupo } = await supabase
     .from('groups')
-    .select('name, archived')
+    .select('name, archived, currency, date_start, date_end, date_closed, closed_total')
     .eq('id', groupId)
     .single();
 
   document.getElementById('detail-group-name').textContent = grupo ? grupo.name : 'Detalle';
   modal.dataset.groupId = groupId;
   modal.dataset.groupName = grupo ? grupo.name : 'Grupo';
+  modal.dataset.groupCurrency = (grupo?.currency || 'EUR').toUpperCase();
 
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
+
+  // Actualizar badges e info de fechas
+  actualizarInfoGrupo(grupo);
+
+  // Actualizar botones segun estado
+  actualizarBotonesComputo(grupo, groupId);
 
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
@@ -253,7 +288,127 @@ async function abrirDetalleGrupo(groupId) {
 }
 
 // ==========================================
-// 9. CALCULADORA "HOY"
+// 9. ACTUALIZAR INFO DEL GRUPO (fechas + badge)
+// ==========================================
+function actualizarInfoGrupo(grupo) {
+  const badgesContainer = document.getElementById('group-info-badges');
+  if (!badgesContainer) return;
+
+  if (!grupo) {
+    badgesContainer.innerHTML = '';
+    return;
+  }
+
+  const rango = formatearRangoFechas(grupo.date_start, grupo.date_end);
+  const cerrado = !!grupo.date_closed;
+  const moneda = (grupo.currency || 'EUR').toUpperCase();
+
+  let html = '';
+
+  if (rango) {
+    html += `<p class="group-date-info">${rango}</p>`;
+  }
+
+  if (cerrado) {
+    html += `<div class="group-closed-info">`;
+    html += `<span class="badge-closed">Cerrado</span>`;
+    html += `<span class="group-closed-date">el ${formatearFecha(grupo.date_closed)}</span>`;
+    if (grupo.closed_total) {
+      html += `<p class="group-closed-total">Total final: <strong>${parseFloat(grupo.closed_total).toFixed(2)} ${moneda}</strong></p>`;
+    }
+    html += `</div>`;
+  }
+
+  badgesContainer.innerHTML = html;
+}
+
+// ==========================================
+// 10. ACTUALIZAR BOTONES DE COMPUTO
+// ==========================================
+function actualizarBotonesComputo(grupo, groupId) {
+  const btnClose = document.getElementById('btn-close-computo');
+  const btnReopen = document.getElementById('btn-reopen-computo');
+  if (!btnClose || !btnReopen) return;
+
+  const cerrado = grupo && !!grupo.date_closed;
+
+  if (cerrado) {
+    btnClose.style.display = 'none';
+    btnReopen.style.display = 'inline-block';
+  } else {
+    btnClose.style.display = 'inline-block';
+    btnReopen.style.display = 'none';
+  }
+}
+
+// ==========================================
+// 11. CERRAR COMPUTO
+// ==========================================
+async function cerrarComputo(groupId) {
+  // Obtener moneda del grupo
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
+  // Calcular total del grupo (convertido a moneda del grupo)
+  const { data: gastos } = await supabase
+    .from('expenses')
+    .select('amount, currency, exchange_rate')
+    .eq('group_id', groupId);
+
+  let total = 0;
+  (gastos || []).forEach(g => {
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+
+    if (monedaGasto === monedaGrupo) {
+      total += monto;
+    } else {
+      total += monto * tasa;
+    }
+  });
+
+  const hoy = new Date().toISOString().split('T')[0];
+
+  const { error } = await supabase
+    .from('groups')
+    .update({
+      date_closed: hoy,
+      closed_total: parseFloat(total.toFixed(2))
+    })
+    .eq('id', groupId);
+
+  if (error) {
+    alert('Error al cerrar computo: ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 12. REABRIR COMPUTO
+// ==========================================
+async function reabrirComputo(groupId) {
+  const { error } = await supabase
+    .from('groups')
+    .update({
+      date_closed: null,
+      closed_total: null
+    })
+    .eq('id', groupId);
+
+  if (error) {
+    alert('Error al reabrir computo: ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 13. CALCULADORA "HOY"
 // ==========================================
 async function abrirCalculadora(groupId, groupName) {
   const modal = document.getElementById('modal-calculator');
@@ -333,7 +488,7 @@ async function abrirCalculadora(groupId, groupName) {
 }
 
 // ==========================================
-// 10. LISTENERS GLOBALES
+// 14. LISTENERS GLOBALES
 // ==========================================
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
@@ -398,9 +553,7 @@ if (!window.__groupDetailListenersAttached) {
     await guardarEdicionGasto();
   });
 
-  // ==========================================
   // BOTON CALCULAR HOY
-  // ==========================================
   document.getElementById('btn-calculate-today')?.addEventListener('click', async () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     const groupName = document.getElementById('modal-group-detail').dataset.groupName || 'Grupo';
@@ -408,9 +561,7 @@ if (!window.__groupDetailListenersAttached) {
     await abrirCalculadora(groupId, groupName);
   });
 
-  // ==========================================
-  // BOTON CERRAR CALCULADORA
-  // ==========================================
+  // CERRAR CALCULADORA
   document.getElementById('btn-close-calculator')?.addEventListener('click', () => {
     document.getElementById('modal-calculator').classList.add('hidden');
   });
@@ -419,5 +570,25 @@ if (!window.__groupDetailListenersAttached) {
     if (e.target.id === 'modal-calculator') {
       document.getElementById('modal-calculator').classList.add('hidden');
     }
+  });
+
+  // CERRAR COMPUTO
+  document.getElementById('btn-close-computo')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (!groupId) return;
+    if (!confirm('Cerrar el computo de este grupo? Se guardara la fecha y el total final.')) return;
+    await cerrarComputo(groupId);
+    await abrirDetalleGrupo(groupId);
+    await cargarGrupos();
+  });
+
+  // REABRIR COMPUTO
+  document.getElementById('btn-reopen-computo')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (!groupId) return;
+    if (!confirm('Reabrir el computo? Se borrara la fecha de cierre y el total final guardado.')) return;
+    await reabrirComputo(groupId);
+    await abrirDetalleGrupo(groupId);
+    await cargarGrupos();
   });
 }
