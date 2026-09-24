@@ -4,13 +4,9 @@ import { supabase } from './supabase.js';
 // ==========================================
 // 1. CALCULAR BALANCE NETO DEL GRUPO
 // ==========================================
-
-
-
 export async function calcularBalance(groupId) {
   const balance = {};
 
-  // Obtener info del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency, manual_exchange_rate')
@@ -18,7 +14,6 @@ export async function calcularBalance(groupId) {
     .single();
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
-  const manualRateUSD = grupoInfo?.manual_exchange_rate;
 
   const { data: gastos } = await supabase
     .from('expenses')
@@ -82,7 +77,6 @@ export async function calcularBalance(groupId) {
   return balance;
 }
 
-
 // ==========================================
 // 2. SIMPLIFICAR DEUDAS
 // ==========================================
@@ -125,13 +119,11 @@ export function simplificarDeudas(balance) {
 // ==========================================
 // 3. RENDERIZAR BALANCE
 // ==========================================
-
 export async function mostrarBalance(groupId) {
   const container = document.getElementById('group-balance');
   if (!container) return;
   container.innerHTML = '<p class="placeholder-text">Calculando...</p>';
 
-  // Obtener moneda del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -139,7 +131,7 @@ export async function mostrarBalance(groupId) {
     .single();
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
-  
+
   const balance = await calcularBalance(groupId);
   const userIds = Object.keys(balance);
 
@@ -168,9 +160,7 @@ export async function mostrarBalance(groupId) {
       <span class="debt-from">${nombres[t.from] || 'Alguien'}</span>
       <span class="debt-arrow">-></span>
       <span class="debt-to">${nombres[t.to] || 'Alguien'}</span>
-      
       <span class="debt-amount">${t.amount.toFixed(2)} ${monedaGrupo}</span>
-  
       <button class="btn-small btn-settle"
               data-group="${groupId}"
               data-from="${t.from}"
@@ -188,10 +178,10 @@ export async function mostrarBalance(groupId) {
       const toId = btn.dataset.to;
       const amount = parseFloat(btn.dataset.amount);
 
-      if (!confirm(`Confirmas que se pagaron ${amount.toFixed(2)} EUR?`)) return;
+      if (!confirm(`Confirmas que se pagaron ${amount.toFixed(2)} ${monedaGrupo}?`)) return;
 
       try {
-        await saldarDeuda(gId, fromId, toId, amount);
+        await saldarDeuda(gId, fromId, toId, amount, monedaGrupo);
         await mostrarBalance(gId);
         const { cargarHistorial } = await import('./history.js');
         await cargarHistorial(gId);
@@ -205,7 +195,7 @@ export async function mostrarBalance(groupId) {
 // ==========================================
 // 4. REGISTRAR UN PAGO
 // ==========================================
-async function saldarDeuda(groupId, fromUserId, toUserId, amount) {
+async function saldarDeuda(groupId, fromUserId, toUserId, amount, monedaGrupo) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Usuario no autenticado');
 
@@ -216,7 +206,7 @@ async function saldarDeuda(groupId, fromUserId, toUserId, amount) {
       from_user: fromUserId,
       to_user: toUserId,
       amount: amount,
-      currency: 'EUR',
+      currency: monedaGrupo || 'EUR',
       date: new Date().toISOString().split('T')[0]
     }]);
 
