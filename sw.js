@@ -1,5 +1,5 @@
 // sw.js - PYM Split
-const CACHE_NAME = 'pym-split-v18';
+const CACHE_NAME = 'pym-split-v19';
 const APP_ASSETS = [
   './',
   './index.html',
@@ -18,9 +18,13 @@ const APP_ASSETS = [
   './js/friends.js',
   './js/members.js',
   './js/history.js',
-  './js/charts.js'
+  './js/charts.js',
+  './js/dashboard.js',
+  './js/profile.js',
+  './js/currency.js'
 ];
 
+// Instalacion
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -30,6 +34,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+// Activacion
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -39,9 +44,13 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// Fetch
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  // No cachear peticiones a Supabase ni a Frankfurter
   if (event.request.url.includes('supabase.co')) return;
+  if (event.request.url.includes('frankfurter.app')) return;
 
   event.respondWith(
     caches.match(event.request).then(cached => {
@@ -53,7 +62,9 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
         }
         return response;
-      }).catch(() => caches.match('./index.html'));
+      }).catch(() => {
+        return caches.match('./index.html');
+      });
     })
   );
 });
