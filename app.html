@@ -35,8 +35,15 @@
 
     <main class="app-main">
       <div class="welcome-section">
-        <h2 id="welcome-message">Hola, ...</h2>
-        <p>Bienvenido a tu gestor de gastos</p>
+        <div class="welcome-header">
+          <div>
+            <h2 id="welcome-message">Hola, ...</h2>
+            <p>Bienvenido a tu gestor de gastos</p>
+          </div>
+          <button id="btn-ver-grafico" class="btn-ver-grafico" title="Ver grafico historico">
+            Ver grafico
+          </button>
+        </div>
       </div>
 
       <div class="dashboard-tabs">
@@ -73,9 +80,6 @@
       <div class="section-card">
         <div class="section-header">
           <h3>Historico por mes</h3>
-        </div>
-        <div class="chart-container" style="height: 220px; max-width: 100%; margin-bottom: 15px;">
-          <canvas id="chart-history"></canvas>
         </div>
         <div id="history-table">
           <p class="placeholder-text">Cargando historial...</p>
@@ -726,6 +730,27 @@
     </div>
   </div>
 
+  <!-- MODAL: Grafico historico -->
+  <div id="modal-chart-history" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 700px;">
+      <h3>Historico por mes</h3>
+
+      <div style="padding: 15px 0;">
+        <div style="position: relative; width: 100%; height: 320px;">
+          <canvas id="chart-history"></canvas>
+        </div>
+      </div>
+
+      <p style="font-size: 0.75rem; color: #a0aec0; text-align: center;">
+        Ultimos 12 meses, convertidos a tu moneda preferida.
+      </p>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-close-chart-history" class="btn-secondary">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL: Simulador "Calcular hoy" -->
   <div id="modal-calculator" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
@@ -743,4 +768,4 @@
 
   <script type="module" src="js/ui.js"></script>
 </body>
-</html>
+</html
