@@ -1,7 +1,27 @@
 // js/groups.js
 import { supabase } from './supabase.js';
+import { convertirMonto } from './currency.js';
 
 let mostrarArchivados = false;
+
+// Cache de la moneda preferida del usuario
+let monedaPreferidaCache = null;
+
+async function getMonedaPreferida() {
+  if (monedaPreferidaCache) return monedaPreferidaCache;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: perfil } = await supabase
+    .from('profiles')
+    .select('preferred_currency')
+    .eq('id', user.id)
+    .single();
+
+  monedaPreferidaCache = (perfil?.preferred_currency || 'EUR').toUpperCase();
+  return monedaPreferidaCache;
+}
 
 // ==========================================
 // HELPERS DE FECHAS
@@ -17,6 +37,75 @@ function formatearRangoFechas(inicio, fin) {
   if (inicio && !fin) return `Desde ${formatearFecha(inicio)}`;
   if (!inicio && fin) return `Hasta ${formatearFecha(fin)}`;
   return `${formatearFecha(inicio)} - ${formatearFecha(fin)}`;
+}
+
+// ==========================================
+// CALCULAR TOTAL DE UN GRUPO + MI PARTE
+// ==========================================
+async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed) {
+  const { data: gastos } = await supabase
+    .from('expenses')
+    .select('id, amount, currency, exchange_rate')
+    .eq('group_id', groupId);
+
+  if (!gastos || gastos.length === 0) {
+    return { total: 0, miParte: 0, count: 0, congelado: false };
+  }
+
+  // 1. Total del grupo
+  let total = 0;
+  const monedaPorGasto = {};
+
+  gastos.forEach(g => {
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+
+    monedaPorGasto[g.id] = { monedaGasto, tasa };
+
+    if (monedaGasto === monedaGrupo) {
+      total += monto;
+    } else {
+      total += monto * tasa;
+    }
+  });
+
+  // 2. Mi parte (splits del usuario)
+  const { data: { user } } = await supabase.auth.getUser();
+  let miParte = 0;
+
+  if (user) {
+    const expIds = gastos.map(g => g.id);
+    const { data: splits } = await supabase
+      .from('expense_splits')
+      .select('amount_owed, expense_id')
+      .in('expense_id', expIds)
+      .eq('user_id', user.id);
+
+    (splits || []).forEach(s => {
+      const info = monedaPorGasto[s.expense_id];
+      if (!info) return;
+
+      const monto = parseFloat(s.amount_owed) || 0;
+      if (info.monedaGasto === monedaGrupo) {
+        miParte += monto;
+      } else {
+        miParte += monto * info.tasa;
+      }
+    });
+  }
+
+  // 3. Si esta cerrado, usar closed_total
+  const totalFinal = (dateClosed && closedTotal != null)
+    ? parseFloat(closedTotal)
+    : total;
+
+  return {
+    total: totalFinal,
+    miParte,
+    count: gastos.length,
+    congelado: !!(dateClosed && closedTotal != null)
+  };
 }
 
 // ==========================================
@@ -57,16 +146,58 @@ export async function cargarGrupos() {
       return;
     }
 
-    groupsList.innerHTML = grupos.map(grupo => {
+    groupsList.innerHTML = '<p class="placeholder-text">Calculando totales...</p>';
+
+    const monedaUsuario = await getMonedaPreferida();
+
+    const gruposConTotales = await Promise.all(grupos.map(async (grupo) => {
+      const monedaGrupo = (grupo.currency || 'EUR').toUpperCase();
+      const info = await calcularTotalGrupo(
+        grupo.id,
+        monedaGrupo,
+        grupo.closed_total,
+        grupo.date_closed
+      );
+
+      let miParteConvertida = null;
+      if (monedaUsuario && monedaUsuario !== monedaGrupo && info.miParte > 0) {
+        const r = await convertirMonto(info.miParte, monedaGrupo, monedaUsuario);
+        if (r.convertido) {
+          miParteConvertida = r.monto;
+        }
+      }
+
+      return { ...grupo, ...info, monedaGrupo, miParteConvertida, monedaUsuario };
+    }));
+
+    groupsList.innerHTML = gruposConTotales.map(grupo => {
       const rango = formatearRangoFechas(grupo.date_start, grupo.date_end);
       const cerrado = !!grupo.date_closed;
+
+      let totalesHTML = '';
+      if (grupo.count > 0 || cerrado) {
+        const totalTexto = `${grupo.total.toFixed(2)} ${grupo.monedaGrupo}`;
+        const miParteTexto = `${grupo.miParte.toFixed(2)} ${grupo.monedaGrupo}`;
+        const countTexto = grupo.count > 0 ? ` (${grupo.count} gastos)` : '';
+
+        let conversionHTML = '';
+        if (grupo.miParteConvertida != null) {
+          conversionHTML = ` <span class="group-mi-parte-conv">(~${grupo.miParteConvertida.toFixed(2)} ${grupo.monedaUsuario})</span>`;
+        }
+
+        totalesHTML = `
+          <span class="group-total">Total: ${totalTexto}${countTexto}</span>
+          <span class="group-mi-parte">Mi parte: ${miParteTexto}${conversionHTML}</span>
+        `;
+      }
 
       return `
         <div class="group-card ${grupo.archived ? 'archived' : ''}" data-id="${grupo.id}">
           <div class="group-info">
             <h4>${grupo.name}</h4>
-            <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.currency || 'EUR'}</span>
+            <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.monedaGrupo}</span>
             ${rango ? `<span class="group-dates">${rango}</span>` : ''}
+            ${totalesHTML}
             ${grupo.archived ? '<span class="badge-archived">Archivado</span>' : ''}
             ${cerrado ? '<span class="badge-closed">Cerrado</span>' : ''}
           </div>
@@ -161,7 +292,7 @@ export function toggleArchivados() {
 }
 
 // ==========================================
-// 5. CREAR GRUPO (con fechas opcionales)
+// 5. CREAR GRUPO
 // ==========================================
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -273,10 +404,27 @@ async function abrirDetalleGrupo(groupId) {
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
 
-  // Actualizar badges e info de fechas
-  actualizarInfoGrupo(grupo);
+  // Total del grupo
+  const monedaGrupo = (grupo?.currency || 'EUR').toUpperCase();
+  const infoTotal = await calcularTotalGrupo(
+    groupId,
+    monedaGrupo,
+    grupo?.closed_total,
+    grupo?.date_closed
+  );
 
-  // Actualizar botones segun estado
+  // Convertir mi parte
+  const monedaUsuario = await getMonedaPreferida();
+  let miParteConvertida = null;
+
+  if (monedaUsuario && monedaUsuario !== monedaGrupo && infoTotal.miParte > 0) {
+    const r = await convertirMonto(infoTotal.miParte, monedaGrupo, monedaUsuario);
+    if (r.convertido) {
+      miParteConvertida = r.monto;
+    }
+  }
+
+  actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida, monedaUsuario);
   actualizarBotonesComputo(grupo, groupId);
 
   modal.classList.remove('hidden');
@@ -288,9 +436,9 @@ async function abrirDetalleGrupo(groupId) {
 }
 
 // ==========================================
-// 9. ACTUALIZAR INFO DEL GRUPO (fechas + badge)
+// 9. ACTUALIZAR INFO DEL GRUPO
 // ==========================================
-function actualizarInfoGrupo(grupo) {
+function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = null, monedaUsuario = null) {
   const badgesContainer = document.getElementById('group-info-badges');
   if (!badgesContainer) return;
 
@@ -301,7 +449,6 @@ function actualizarInfoGrupo(grupo) {
 
   const rango = formatearRangoFechas(grupo.date_start, grupo.date_end);
   const cerrado = !!grupo.date_closed;
-  const moneda = (grupo.currency || 'EUR').toUpperCase();
 
   let html = '';
 
@@ -309,21 +456,46 @@ function actualizarInfoGrupo(grupo) {
     html += `<p class="group-date-info">${rango}</p>`;
   }
 
+  const sinGastos = infoTotal.count === 0;
+
+  let conversionHTML = '';
+  if (miParteConvertida != null) {
+    conversionHTML = `<p class="group-total-conv">~${miParteConvertida.toFixed(2)} ${monedaUsuario}</p>`;
+  }
+
+  html += `
+    <div class="group-total-box">
+      <div class="group-total-row">
+        <div class="group-total-col">
+          <p class="group-total-label">
+            ${cerrado ? 'Total final' : 'Total del viaje'}
+          </p>
+          <p class="group-total-value">
+            ${sinGastos ? '0.00' : infoTotal.total.toFixed(2)} ${monedaGrupo}
+          </p>
+          ${!sinGastos ? `<p class="group-total-count">(${infoTotal.count} gastos)</p>` : ''}
+        </div>
+        <div class="group-total-divider"></div>
+        <div class="group-total-col">
+          <p class="group-total-label">Mi parte</p>
+          <p class="group-total-value group-total-value-mia">
+            ${infoTotal.miParte.toFixed(2)} ${monedaGrupo}
+          </p>
+          ${conversionHTML}
+        </div>
+      </div>
+    </div>
+  `;
+
   if (cerrado) {
-    html += `<div class="group-closed-info">`;
-    html += `<span class="badge-closed">Cerrado</span>`;
-    html += `<span class="group-closed-date">el ${formatearFecha(grupo.date_closed)}</span>`;
-    if (grupo.closed_total) {
-      html += `<p class="group-closed-total">Total final: <strong>${parseFloat(grupo.closed_total).toFixed(2)} ${moneda}</strong></p>`;
-    }
-    html += `</div>`;
+    html += `<p class="group-closed-date">Cerrado el ${formatearFecha(grupo.date_closed)}</p>`;
   }
 
   badgesContainer.innerHTML = html;
 }
 
 // ==========================================
-// 10. ACTUALIZAR BOTONES DE COMPUTO
+// 10. BOTONES DE COMPUTO
 // ==========================================
 function actualizarBotonesComputo(grupo, groupId) {
   const btnClose = document.getElementById('btn-close-computo');
@@ -345,7 +517,6 @@ function actualizarBotonesComputo(grupo, groupId) {
 // 11. CERRAR COMPUTO
 // ==========================================
 async function cerrarComputo(groupId) {
-  // Obtener moneda del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -354,7 +525,6 @@ async function cerrarComputo(groupId) {
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
-  // Calcular total del grupo (convertido a moneda del grupo)
   const { data: gastos } = await supabase
     .from('expenses')
     .select('amount, currency, exchange_rate')
@@ -553,7 +723,6 @@ if (!window.__groupDetailListenersAttached) {
     await guardarEdicionGasto();
   });
 
-  // BOTON CALCULAR HOY
   document.getElementById('btn-calculate-today')?.addEventListener('click', async () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     const groupName = document.getElementById('modal-group-detail').dataset.groupName || 'Grupo';
@@ -561,7 +730,6 @@ if (!window.__groupDetailListenersAttached) {
     await abrirCalculadora(groupId, groupName);
   });
 
-  // CERRAR CALCULADORA
   document.getElementById('btn-close-calculator')?.addEventListener('click', () => {
     document.getElementById('modal-calculator').classList.add('hidden');
   });
@@ -572,7 +740,6 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
-  // CERRAR COMPUTO
   document.getElementById('btn-close-computo')?.addEventListener('click', async () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     if (!groupId) return;
@@ -582,7 +749,6 @@ if (!window.__groupDetailListenersAttached) {
     await cargarGrupos();
   });
 
-  // REABRIR COMPUTO
   document.getElementById('btn-reopen-computo')?.addEventListener('click', async () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     if (!groupId) return;
