@@ -3,7 +3,7 @@ import { supabase } from './supabase.js';
 import { sumarConvertido, formatearMonto } from './currency.js';
 
 let chartHistoryInstance = null;
-let rangoActual = 'month'; // 'month' | '3months' | 'year' | 'all'
+let rangoActual = 'month';
 
 // ==========================================
 // CARGAR DASHBOARD
@@ -30,7 +30,6 @@ export async function cargarDashboard() {
   const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
 
   try {
-    // Traer grupos activos
     const { data: grupos } = await supabase
       .from('groups')
       .select('id, currency')
@@ -45,10 +44,8 @@ export async function cargarDashboard() {
       return;
     }
 
-    // Calcular rango de fechas segÃºn el tab activo
     const rango = calcularRango(rangoActual);
 
-    // Traer gastos del rango
     let query = supabase
       .from('expenses')
       .select('id, description, amount, currency, date, paid_by, group_id, category')
@@ -64,7 +61,6 @@ export async function cargarDashboard() {
 
     const { data: gastosRango } = await query;
 
-    // Preparar items para conversiÃ³n
     const itemsRango = (gastosRango || []).map(g => ({
       monto: parseFloat(g.amount),
       moneda: g.currency || monedaPorGrupo[g.group_id] || 'EUR'
@@ -72,7 +68,7 @@ export async function cargarDashboard() {
 
     const resultado = await sumarConvertido(itemsRango, monedaUsuario);
 
-    // Balance global (todos los gastos de todos los grupos activos)
+    // Balance global
     const { data: gastosTodos } = await supabase
       .from('expenses')
       .select('id, amount, currency, paid_by, group_id')
@@ -147,8 +143,8 @@ export async function cargarDashboard() {
     const teDeben = miBalance > 0 ? miBalance : 0;
     const debes = miBalance < 0 ? Math.abs(miBalance) : 0;
 
-    // Label dinÃ¡mico del total
-    const labelTotal = document.querySelector('.stat-card .stat-label');
+    // Label dinamico
+    const labelTotal = document.getElementById('stat-total-label');
     if (labelTotal) {
       labelTotal.textContent = rango.label;
     }
@@ -159,11 +155,9 @@ export async function cargarDashboard() {
 
     actualizarSubtextos(resultado, monedaUsuario);
 
-    // Ãšltimos movimientos
     const ultimos = (gastosRango || []).slice(0, 5);
     await renderizarUltimos(ultimos, groupIds, monedaPorGrupo, monedaUsuario);
 
-    // HistÃ³rico (siempre Ãºltimos 12 meses)
     await cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario);
 
   } catch (error) {
@@ -172,7 +166,7 @@ export async function cargarDashboard() {
 }
 
 // ==========================================
-// CALCULAR RANGO DE FECHAS
+// CALCULAR RANGO
 // ==========================================
 function calcularRango(rango) {
   const hoy = new Date();
@@ -198,10 +192,8 @@ function calcularRango(rango) {
 }
 
 // ==========================================
-// SUBTEXTOS DE CONVERSION
+// SUBTEXTOS
 // ==========================================
-
-
 function actualizarSubtextos(resultado, monedaUsuario) {
   const statTotal = document.getElementById('stat-total-mes');
   if (!statTotal) return;
@@ -215,7 +207,6 @@ function actualizarSubtextos(resultado, monedaUsuario) {
   }
 
   if (resultado.noConvertidas.length > 0) {
-    // Mostrar cuanto quedo afuera
     const montoExcluido = resultado.montoNoConvertido
       ? ` (${resultado.montoNoConvertido.toFixed(2)} no incluidos)`
       : '';
@@ -302,14 +293,14 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
 }
 
 // ==========================================
-// HISTORICO POR MES (ultimos 12 meses)
+// HISTORICO POR MES
 // ==========================================
 async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
   const tableContainer = document.getElementById('history-table');
-  const canvas = document.getElementById('chart-history');
-  if (!tableContainer || !canvas) return;
+  if (!tableContainer) return;
 
-  // Rango: ultimos 12 meses
+  const canvas = document.getElementById('chart-history');
+
   const hoy = new Date();
   const hace12 = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1);
   const desdeHistorico = hace12.toISOString().split('T')[0];
@@ -326,7 +317,6 @@ async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
     return;
   }
 
-  // Agrupar por mes (YYYY-MM)
   const porMes = {};
   gastos.forEach(g => {
     const mes = (g.date || '').substring(0, 7);
@@ -337,7 +327,6 @@ async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
     porMes[mes].count++;
   });
 
-  // Convertir cada mes a la moneda del usuario
   const mesesOrdenados = Object.keys(porMes).sort();
   const resultados = [];
 
@@ -351,50 +340,52 @@ async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
     });
   }
 
-  // === GrÃ¡fico ===
+  // Grafico (solo si el canvas existe)
   if (chartHistoryInstance) chartHistoryInstance.destroy();
 
-  const labels = resultados.map(r => r.label);
-  const data = resultados.map(r => r.total);
+  if (canvas) {
+    const labels = resultados.map(r => r.label);
+    const data = resultados.map(r => r.total);
 
-  chartHistoryInstance = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Gastado',
-        data,
-        backgroundColor: '#2ecc87',
-        borderRadius: 6,
-        borderSkipped: false
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: (ctx) => `${ctx.parsed.y.toFixed(2)} ${monedaUsuario}`
-          }
-        }
+    chartHistoryInstance = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Gastado',
+          data,
+          backgroundColor: '#2ecc87',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
       },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: (v) => v.toFixed(0) + ' ' + monedaUsuario
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => `${ctx.parsed.y.toFixed(2)} ${monedaUsuario}`
+            }
           }
         },
-        x: {
-          ticks: { font: { size: 10 } }
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (v) => v.toFixed(0) + ' ' + monedaUsuario
+            }
+          },
+          x: {
+            ticks: { font: { size: 10 } }
+          }
         }
       }
-    }
-  });
+    });
+  }
 
-  // === Tabla ===
+  // Tabla
   const totalGeneral = resultados.reduce((sum, r) => sum + r.total, 0);
 
   tableContainer.innerHTML = `
@@ -444,23 +435,18 @@ function renderizarVacio(monedaUsuario) {
 // ==========================================
 // INICIALIZAR TABS
 // ==========================================
-
 export function initDashboardTabs() {
   const tabs = document.querySelectorAll('.dash-tab');
   if (!tabs.length) return;
 
   tabs.forEach(tab => {
     tab.addEventListener('click', async () => {
-      // Actualizar rango
       rangoActual = tab.dataset.range || 'month';
 
-      // Marcar visualmente
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
 
-      // Recargar dashboard (que tambien re-marca los tabs por las dudas)
       await cargarDashboard();
     });
   });
 }
-
