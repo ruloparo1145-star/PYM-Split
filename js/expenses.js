@@ -1,5 +1,6 @@
 // js/expenses.js
 import { supabase } from './supabase.js';
+import { obtenerTasa } from './currency.js';
 
 // ==========================================
 // CATEGORIAS E ICONOS
@@ -21,7 +22,6 @@ function getCategoria(cat) {
   return CATEGORIAS[cat] || CATEGORIAS.otros;
 }
 
-// Variable global del filtro
 let filtroCategoriaActual = '';
 
 // ==========================================
@@ -33,7 +33,7 @@ export async function cargarGruposParaGasto() {
 
   const { data: grupos } = await supabase
     .from('groups')
-    .select('id, name')
+    .select('id, name, currency')
     .eq('archived', false)
     .order('name');
 
@@ -69,11 +69,23 @@ export async function cargarMiembrosDelGrupo(groupId) {
   selectPaidBy.innerHTML = '<option value="">Seleccionar quien pago...</option>' +
     miembros.map(m => `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`).join('');
 
+  // Establecer la moneda del grupo como default
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
+
+  if (grupoInfo && grupoInfo.currency) {
+    const selectMoneda = document.getElementById('expense-currency');
+    if (selectMoneda) selectMoneda.value = grupoInfo.currency;
+  }
+
   renderizarSplitInputs(miembros);
 }
 
 // ==========================================
-// 3. RENDERIZAR INPUTS SEGUN TIPO DE DIVISION
+// 3. RENDERIZAR INPUTS
 // ==========================================
 function renderizarSplitInputs(miembros, preserveValues = {}) {
   const splitList = document.getElementById('expense-split-members');
@@ -88,7 +100,7 @@ function renderizarSplitInputs(miembros, preserveValues = {}) {
     if (splitType === 'percentage') {
       extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="%" step="0.01" min="0" max="100" value="${valorActual}" style="width: 80px;">`;
     } else if (splitType === 'exact') {
-      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="EUR" step="0.01" min="0" value="${valorActual}" style="width: 90px;">`;
+      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="Monto" step="0.01" min="0" value="${valorActual}" style="width: 90px;">`;
     } else if (splitType === 'shares') {
       extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="partes" step="1" min="0" value="${valorActual}" style="width: 80px;">`;
     }
@@ -113,12 +125,13 @@ function renderizarSplitInputs(miembros, preserveValues = {}) {
 }
 
 // ==========================================
-// 4. ACTUALIZAR RESUMEN EN TIEMPO REAL
+// 4. ACTUALIZAR RESUMEN
 // ==========================================
 function actualizarResumenSplit() {
   const summary = document.getElementById('split-summary');
   const monto = parseFloat(document.getElementById('expense-amount').value) || 0;
   const splitType = document.getElementById('split-type').value;
+  const moneda = document.getElementById('expense-currency')?.value || 'EUR';
 
   const checkboxes = document.querySelectorAll('#expense-split-members .split-checkbox:checked');
   if (checkboxes.length === 0) {
@@ -128,7 +141,7 @@ function actualizarResumenSplit() {
 
   if (splitType === 'equal') {
     const montoPorPersona = (monto / checkboxes.length).toFixed(2);
-    summary.innerHTML = `<p><strong>${montoPorPersona} EUR</strong> por persona (${checkboxes.length} personas)</p>`;
+    summary.innerHTML = `<p><strong>${montoPorPersona} ${moneda}</strong> por persona (${checkboxes.length} personas)</p>`;
     return;
   }
 
@@ -140,7 +153,7 @@ function actualizarResumenSplit() {
       const pct = parseFloat(input?.value) || 0;
       total += pct;
       const montoPct = (monto * pct / 100).toFixed(2);
-      lineas.push(`<p>${pct}% -> <strong>${montoPct} EUR</strong></p>`);
+      lineas.push(`<p>${pct}% -> <strong>${montoPct} ${moneda}</strong></p>`);
     });
     const aviso = Math.abs(total - 100) > 0.01 
       ? `<p style="color: #e53e3e; margin-top: 5px;">Los porcentajes suman ${total.toFixed(2)}%, deberian sumar 100%.</p>` 
@@ -156,10 +169,10 @@ function actualizarResumenSplit() {
       const input = document.querySelector(`.split-value[data-user="${cb.value}"]`);
       const val = parseFloat(input?.value) || 0;
       total += val;
-      lineas.push(`<p>${val.toFixed(2)} EUR</p>`);
+      lineas.push(`<p>${val.toFixed(2)} ${moneda}</p>`);
     });
     const aviso = Math.abs(total - monto) > 0.01 
-      ? `<p style="color: #e53e3e; margin-top: 5px;">Suma ${total.toFixed(2)} EUR, deberia sumar ${monto.toFixed(2)} EUR.</p>` 
+      ? `<p style="color: #e53e3e; margin-top: 5px;">Suma ${total.toFixed(2)} ${moneda}, deberia sumar ${monto.toFixed(2)} ${moneda}.</p>` 
       : '<p style="color: #38a169; margin-top: 5px;">OK. Suma correcta.</p>';
     summary.innerHTML = lineas.join('') + aviso;
     return;
@@ -182,7 +195,7 @@ function actualizarResumenSplit() {
 
     const lineas = inputs.map(i => {
       const montoParte = (monto * i.shares / totalShares).toFixed(2);
-      return `<p>${i.shares} partes -> <strong>${montoParte} EUR</strong></p>`;
+      return `<p>${i.shares} partes -> <strong>${montoParte} ${moneda}</strong></p>`;
     });
     summary.innerHTML = lineas.join('') + `<p style="color: #38a169; margin-top: 5px;">OK. Total: ${totalShares} partes.</p>`;
   }
@@ -242,7 +255,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       };
     });
     if (Math.abs(totalExacto - monto) > 0.01) {
-      throw new Error(`Los montos suman ${totalExacto.toFixed(2)} EUR, deben sumar ${monto.toFixed(2)} EUR.`);
+      throw new Error(`Los montos suman ${totalExacto.toFixed(2)}, deben sumar ${monto.toFixed(2)}.`);
     }
   } 
   else if (splitType === 'shares') {
@@ -262,6 +275,23 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   }
 
   const categoria = document.getElementById('expense-category')?.value || 'otros';
+  const monedaGasto = (document.getElementById('expense-currency')?.value || 'EUR').toUpperCase();
+
+  // Obtener moneda del grupo
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
+  // Calcular exchange_rate del momento
+  let exchangeRate = 1;
+  if (monedaGasto !== monedaGrupo) {
+    const tasa = await obtenerTasa(monedaGasto, monedaGrupo);
+    if (tasa !== null) exchangeRate = tasa;
+  }
 
   const { data: gasto, error: gastoError } = await supabase
     .from('expenses')
@@ -270,7 +300,8 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       description: descripcion,
       amount: monto,
       paid_by: paidBy,
-      currency: 'EUR',
+      currency: monedaGasto,
+      exchange_rate: exchangeRate,
       category: categoria,
       date: new Date().toISOString().split('T')[0]
     }])
@@ -296,14 +327,14 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
 }
 
 // ==========================================
-// 6. CARGAR GASTOS DE UN GRUPO (CON FILTRO)
+// 6. CARGAR GASTOS DE UN GRUPO
 // ==========================================
 export async function cargarGastosDelGrupo(groupId) {
   const listContainer = document.getElementById('group-expenses-list');
   
   const { data: gastos, error } = await supabase
     .from('expenses')
-    .select('id, description, amount, currency, date, paid_by, category')
+    .select('id, description, amount, currency, date, paid_by, category, exchange_rate')
     .eq('group_id', groupId)
     .order('created_at', { ascending: false });
 
@@ -336,8 +367,32 @@ export async function cargarGastosDelGrupo(groupId) {
   const nombres = {};
   (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
 
+  // Obtener moneda del grupo
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
   listContainer.innerHTML = gastosFiltrados.map(g => {
     const cat = getCategoria(g.category);
+    const monto = parseFloat(g.amount);
+    const monedaGasto = (g.currency || 'EUR').toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+
+    let montoMostrar;
+    let subtexto = '';
+
+    if (monedaGasto === monedaGrupo) {
+      montoMostrar = `${monto.toFixed(2)} ${monedaGrupo}`;
+    } else {
+      const convertido = monto * tasa;
+      montoMostrar = `${convertido.toFixed(2)} ${monedaGrupo}`;
+      subtexto = `(${monto.toFixed(2)} ${monedaGasto})`;
+    }
+
     return `
       <div class="expense-card clickable-expense" data-expense-id="${g.id}">
         <div class="expense-category-icon" title="${cat.label}">${cat.icono}</div>
@@ -346,7 +401,8 @@ export async function cargarGastosDelGrupo(groupId) {
           <span>Pago: ${nombres[g.paid_by] || 'Desconocido'} - ${g.date}</span>
         </div>
         <div class="expense-amount">
-          ${parseFloat(g.amount).toFixed(2)} ${g.currency}
+          ${montoMostrar}
+          ${subtexto ? `<small class="expense-subtext">${subtexto}</small>` : ''}
         </div>
       </div>
     `;
@@ -387,6 +443,7 @@ export function initExpenseModal() {
   const selectGrupo = document.getElementById('expense-group');
   const splitType = document.getElementById('split-type');
   const amountInput = document.getElementById('expense-amount');
+  const currencySelect = document.getElementById('expense-currency');
 
   btnFab.addEventListener('click', async () => {
     modal.classList.remove('hidden');
@@ -426,6 +483,7 @@ export function initExpenseModal() {
   });
 
   amountInput.addEventListener('input', actualizarResumenSplit);
+  currencySelect?.addEventListener('change', actualizarResumenSplit);
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -476,7 +534,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
   const { data: gasto, error } = await supabase
     .from('expenses')
-    .select('id, description, amount, currency, date, category, notes, paid_by')
+    .select('id, description, amount, currency, date, category, notes, paid_by, exchange_rate, group_id')
     .eq('id', expenseId)
     .single();
 
@@ -508,10 +566,32 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
   const cat = getCategoria(gasto.category);
 
+  // Obtener moneda del grupo
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', gasto.group_id)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+  const monedaGasto = (gasto.currency || 'EUR').toUpperCase();
+  const monto = parseFloat(gasto.amount);
+  const tasa = parseFloat(gasto.exchange_rate) || 1;
+
+  let montoPrincipal, montoSub;
+  if (monedaGasto === monedaGrupo) {
+    montoPrincipal = `${monto.toFixed(2)} ${monedaGrupo}`;
+    montoSub = '';
+  } else {
+    montoPrincipal = `${(monto * tasa).toFixed(2)} ${monedaGrupo}`;
+    montoSub = `(${monto.toFixed(2)} ${monedaGasto})`;
+  }
+
   container.innerHTML = `
     <div style="text-align: center; margin-bottom: 20px;">
       <div style="font-size: 3rem; margin-bottom: 8px;">${cat.icono}</div>
-      <h2 style="color: #2ecc87; font-size: 2rem;">${parseFloat(gasto.amount).toFixed(2)} ${gasto.currency}</h2>
+      <h2 style="color: #2ecc87; font-size: 2rem;">${montoPrincipal}</h2>
+      ${montoSub ? `<p style="color: #a0aec0; font-size: 0.85rem;">${montoSub}</p>` : ''}
       <p style="color: #4a5568; font-size: 1.1rem;">${gasto.description}</p>
       <p style="color: #718096; font-size: 0.85rem;">${cat.label} - ${gasto.date}</p>
     </div>
@@ -527,7 +607,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
       ${splits && splits.length > 0 ? splits.map(s => `
         <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.9rem;">
           <span>${nombres[s.user_id] || 'Desconocido'}</span>
-          <span style="font-weight: 600; color: #2d3748;">${parseFloat(s.amount_owed).toFixed(2)} ${gasto.currency}</span>
+          <span style="font-weight: 600; color: #2d3748;">${parseFloat(s.amount_owed).toFixed(2)} ${monedaGasto}</span>
         </div>
       `).join('') : '<p class="placeholder-text">Sin divisiones.</p>'}
     </div>
@@ -579,7 +659,7 @@ export async function cargarGastoParaEditar() {
 
   const { data: gasto } = await supabase
     .from('expenses')
-    .select('id, description, amount, paid_by, group_id, category')
+    .select('id, description, amount, paid_by, group_id, category, currency')
     .eq('id', expenseId)
     .single();
 
@@ -604,6 +684,11 @@ export async function cargarGastoParaEditar() {
     selectCat.value = gasto.category || 'otros';
   }
 
+  const selectMoneda = document.getElementById('edit-expense-currency');
+  if (selectMoneda && gasto.currency) {
+    selectMoneda.value = gasto.currency;
+  }
+
   document.getElementById('edit-expense-error').textContent = '';
 
   detailModal.classList.add('hidden');
@@ -623,19 +708,45 @@ export async function guardarEdicionGasto() {
   const monto = parseFloat(document.getElementById('edit-expense-amount').value);
   const paidBy = document.getElementById('edit-expense-paid-by').value;
   const categoria = document.getElementById('edit-expense-category')?.value || 'otros';
+  const monedaGasto = (document.getElementById('edit-expense-currency')?.value || 'EUR').toUpperCase();
 
   btnSubmit.disabled = true;
   btnSubmit.textContent = 'Guardando...';
   errorMsg.textContent = '';
 
   try {
+    // Obtener info del gasto (para conocer el grupo)
+    const { data: gastoActual } = await supabase
+      .from('expenses')
+      .select('group_id')
+      .eq('id', expenseId)
+      .single();
+
+    let exchangeRate = 1;
+    if (gastoActual) {
+      const { data: grupoInfo } = await supabase
+        .from('groups')
+        .select('currency')
+        .eq('id', gastoActual.group_id)
+        .single();
+
+      const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
+      if (monedaGasto !== monedaGrupo) {
+        const tasa = await obtenerTasa(monedaGasto, monedaGrupo);
+        if (tasa !== null) exchangeRate = tasa;
+      }
+    }
+
     const { error: updateError } = await supabase
       .from('expenses')
       .update({
         description: descripcion,
         amount: monto,
         paid_by: paidBy,
-        category: categoria
+        category: categoria,
+        currency: monedaGasto,
+        exchange_rate: exchangeRate
       })
       .eq('id', expenseId);
 
