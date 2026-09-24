@@ -1092,3 +1092,19 @@ body {
   border-color: #2ecc87;
   box-shadow: 0 0 0 3px rgba(46, 204, 135, 0.15);
 }
+/* ==========================================
+   22. SUBTEXTOS DE CONVERSION
+   ========================================== */
+.stat-subtext {
+  font-size: 0.75rem;
+  color: #a0aec0;
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+.recent-subtext {
+  font-size: 0.7rem;
+  color: #a0aec0;
+  display: block;
+  margin-top: 2px;
+}
