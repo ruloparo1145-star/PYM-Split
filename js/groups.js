@@ -1,6 +1,6 @@
 // js/groups.js
 import { supabase } from './supabase.js';
-import { convertirMonto } from './currency.js';
+import { convertirMonto, obtenerTasa } from './currency.js';
 
 let mostrarArchivados = false;
 
@@ -70,7 +70,7 @@ async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed)
     }
   });
 
-  // 2. Mi parte (splits del usuario)
+  // 2. Mi parte
   const { data: { user } } = await supabase.auth.getUser();
   let miParte = 0;
 
@@ -95,7 +95,6 @@ async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed)
     });
   }
 
-  // 3. Si esta cerrado, usar closed_total
   const totalFinal = (dateClosed && closedTotal != null)
     ? parseFloat(closedTotal)
     : total;
@@ -292,7 +291,7 @@ export function toggleArchivados() {
 }
 
 // ==========================================
-// 5. CREAR GRUPO
+// 5. CREAR GRUPO (con cotizacion manual)
 // ==========================================
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -306,7 +305,6 @@ export async function crearGrupo(nombre, tipo, moneda) {
   // Convertir la cotizacion manual a USD (referencia universal)
   let manualRateUSD = null;
   if (manualRate && manualRate > 0) {
-    // Obtener moneda del usuario
     const { data: perfil } = await supabase
       .from('profiles')
       .select('preferred_currency')
@@ -316,22 +314,12 @@ export async function crearGrupo(nombre, tipo, moneda) {
     const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
 
     if (monedaUsuario === 'USD') {
-      // Ya esta en USD
       manualRateUSD = manualRate;
     } else {
-      // Convertir: monedaUsuario -> USD
-      // Si 1 monedaUsuario = manualRate (moneda del grupo)
-      // Entonces: 1 monedaUsuario = manualRate / (1 monedaUsuario en monedaGrupo)
-      // Necesitamos saber cuantos USD vale 1 monedaUsuario
-      const { obtenerTasa } = await import('./currency.js');
       const tasaUsuarioAUSD = await obtenerTasa(monedaUsuario, 'USD');
       if (tasaUsuarioAUSD !== null) {
-        // 1 monedaUsuario = tasaUsuarioAUSD USD
-        // 1 monedaUsuario = manualRate monedaGrupo
-        // Entonces: 1 USD = manualRate / tasaUsuarioAUSD monedaGrupo
         manualRateUSD = manualRate / tasaUsuarioAUSD;
       } else {
-        // No se pudo convertir, guardar como esta (asumir USD)
         manualRateUSD = manualRate;
       }
     }
@@ -356,6 +344,7 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   return groupData;
 }
+
 // ==========================================
 // 6. MODAL CREAR GRUPO
 // ==========================================
@@ -365,7 +354,6 @@ export function initGroupModal() {
   const btnCancel = document.getElementById('btn-cancel-group');
   const form = document.getElementById('form-group');
   const errorMsg = document.getElementById('group-error');
-
 
   btnNew?.addEventListener('click', async () => {
     modal.classList.remove('hidden');
@@ -389,19 +377,19 @@ export function initGroupModal() {
     }
   });
 
-  // Escuchar cambio de moneda del grupo
-  const selectCurrency = document.getElementById('group-currency');
-  selectCurrency?.addEventListener('change', (e) => {
-    const currencyEl = document.getElementById('group-manual-rate-currency');
-    if (currencyEl) currencyEl.textContent = e.target.value || 'ARS';
-  });
-
   btnCancel?.addEventListener('click', () => {
     modal.classList.add('hidden');
   });
 
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) modal.classList.add('hidden');
+  });
+
+  // Escuchar cambio de moneda del grupo
+  const selectCurrency = document.getElementById('group-currency');
+  selectCurrency?.addEventListener('change', (e) => {
+    const currencyEl = document.getElementById('group-manual-rate-currency');
+    if (currencyEl) currencyEl.textContent = e.target.value || 'ARS';
   });
 
   form?.addEventListener('submit', async (e) => {
@@ -452,7 +440,7 @@ async function abrirDetalleGrupo(groupId) {
 
   const { data: grupo } = await supabase
     .from('groups')
-    .select('name, archived, currency, date_start, date_end, date_closed, closed_total')
+    .select('name, archived, currency, date_start, date_end, date_closed, closed_total, manual_exchange_rate')
     .eq('id', groupId)
     .single();
 
@@ -460,6 +448,7 @@ async function abrirDetalleGrupo(groupId) {
   modal.dataset.groupId = groupId;
   modal.dataset.groupName = grupo ? grupo.name : 'Grupo';
   modal.dataset.groupCurrency = (grupo?.currency || 'EUR').toUpperCase();
+  modal.dataset.manualRate = grupo?.manual_exchange_rate || '';
 
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
@@ -486,6 +475,10 @@ async function abrirDetalleGrupo(groupId) {
 
   actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida, monedaUsuario);
   actualizarBotonesComputo(grupo, groupId);
+  actualizarBotonCotizacion(grupo);
+
+  // Ocultar editor de cotizacion al abrir
+  document.getElementById('manual-rate-editor')?.classList.add('hidden');
 
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
@@ -551,11 +544,16 @@ function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = 
     html += `<p class="group-closed-date">Cerrado el ${formatearFecha(grupo.date_closed)}</p>`;
   }
 
+  // Mostrar cotizacion manual si existe
+  if (grupo.manual_exchange_rate) {
+    html += `<p class="group-manual-rate-info">Cotizacion manual: ${parseFloat(grupo.manual_exchange_rate).toFixed(2)} USD</p>`;
+  }
+
   badgesContainer.innerHTML = html;
 }
 
 // ==========================================
-// 10. BOTONES DE COMPUTO
+// 10. ACTUALIZAR BOTONES DE COMPUTO
 // ==========================================
 function actualizarBotonesComputo(grupo, groupId) {
   const btnClose = document.getElementById('btn-close-computo');
@@ -574,7 +572,21 @@ function actualizarBotonesComputo(grupo, groupId) {
 }
 
 // ==========================================
-// 11. CERRAR COMPUTO
+// 11. ACTUALIZAR BOTON COTIZACION
+// ==========================================
+function actualizarBotonCotizacion(grupo) {
+  const btnEdit = document.getElementById('btn-edit-manual-rate');
+  if (!btnEdit) return;
+
+  if (grupo && grupo.manual_exchange_rate) {
+    btnEdit.style.display = 'inline-block';
+  } else {
+    btnEdit.style.display = 'none';
+  }
+}
+
+// ==========================================
+// 12. CERRAR COMPUTO
 // ==========================================
 async function cerrarComputo(groupId) {
   const { data: grupoInfo } = await supabase
@@ -620,7 +632,7 @@ async function cerrarComputo(groupId) {
 }
 
 // ==========================================
-// 12. REABRIR COMPUTO
+// 13. REABRIR COMPUTO
 // ==========================================
 async function reabrirComputo(groupId) {
   const { error } = await supabase
@@ -638,7 +650,7 @@ async function reabrirComputo(groupId) {
 }
 
 // ==========================================
-// 13. CALCULADORA "HOY"
+// 14. CALCULADORA "HOY"
 // ==========================================
 async function abrirCalculadora(groupId, groupName) {
   const modal = document.getElementById('modal-calculator');
@@ -718,7 +730,7 @@ async function abrirCalculadora(groupId, groupName) {
 }
 
 // ==========================================
-// 14. LISTENERS GLOBALES
+// 15. LISTENERS GLOBALES
 // ==========================================
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
@@ -816,5 +828,115 @@ if (!window.__groupDetailListenersAttached) {
     await reabrirComputo(groupId);
     await abrirDetalleGrupo(groupId);
     await cargarGrupos();
+  });
+
+  // BOTON EDITAR COTIZACION
+  document.getElementById('btn-edit-manual-rate')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (!groupId) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    let monedaUsuario = 'EUR';
+    if (user) {
+      const { data: perfil } = await supabase
+        .from('profiles')
+        .select('preferred_currency')
+        .eq('id', user.id)
+        .single();
+      monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
+    }
+
+    const { data: grupoInfo } = await supabase
+      .from('groups')
+      .select('currency, manual_exchange_rate')
+      .eq('id', groupId)
+      .single();
+
+    const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+    const rateUSD = grupoInfo?.manual_exchange_rate;
+
+    // Convertir de USD a la moneda del usuario para mostrarlo
+    let rateMostrar = '';
+    if (rateUSD && rateUSD > 0) {
+      if (monedaUsuario === 'USD') {
+        rateMostrar = rateUSD.toFixed(2);
+      } else {
+        const tasa = await obtenerTasa('USD', monedaUsuario);
+        if (tasa !== null) {
+          rateMostrar = (rateUSD * tasa).toFixed(2);
+        } else {
+          rateMostrar = rateUSD.toFixed(2);
+        }
+      }
+    }
+
+    const editor = document.getElementById('manual-rate-editor');
+    const input = document.getElementById('edit-manual-rate-input');
+    const labelEl = document.getElementById('edit-manual-rate-label');
+    const currencyEl = document.getElementById('edit-manual-rate-currency');
+    const errorMsg = document.getElementById('manual-rate-error');
+
+    if (labelEl) labelEl.textContent = `1 ${monedaUsuario} =`;
+    if (currencyEl) currencyEl.textContent = monedaGrupo;
+    if (input) input.value = rateMostrar;
+    if (errorMsg) errorMsg.textContent = '';
+
+    editor?.classList.remove('hidden');
+  });
+
+  // CANCELAR EDICION DE COTIZACION
+  document.getElementById('btn-cancel-manual-rate')?.addEventListener('click', () => {
+    document.getElementById('manual-rate-editor')?.classList.add('hidden');
+  });
+
+  // GUARDAR COTIZACION
+  document.getElementById('btn-save-manual-rate')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    const input = document.getElementById('edit-manual-rate-input');
+    const errorMsg = document.getElementById('manual-rate-error');
+
+    if (!groupId || !input) return;
+
+    const valor = parseFloat(input.value);
+    if (isNaN(valor) || valor < 0) {
+      errorMsg.textContent = 'Ingresa un numero valido.';
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('No autenticado');
+
+      const { data: perfil } = await supabase
+        .from('profiles')
+        .select('preferred_currency')
+        .eq('id', user.id)
+        .single();
+
+      const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
+
+      // Convertir a USD
+      let valorUSD = valor;
+      if (monedaUsuario !== 'USD') {
+        const tasa = await obtenerTasa(monedaUsuario, 'USD');
+        if (tasa !== null) {
+          valorUSD = valor * tasa;
+        }
+      }
+
+      const { error } = await supabase
+        .from('groups')
+        .update({ manual_exchange_rate: valorUSD })
+        .eq('id', groupId);
+
+      if (error) throw error;
+
+      document.getElementById('manual-rate-editor').classList.add('hidden');
+      await abrirDetalleGrupo(groupId);
+      await cargarGrupos();
+
+    } catch (error) {
+      errorMsg.textContent = 'Error al guardar: ' + error.message;
+    }
   });
 }
