@@ -5,7 +5,6 @@ import { supabase } from './supabase.js';
 // MONEDAS DISPONIBLES
 // ==========================================
 const MONEDAS = [
-  // America
   { code: 'ARS', label: 'Peso argentino' },
   { code: 'BOB', label: 'Boliviano' },
   { code: 'BRL', label: 'Real brasileno' },
@@ -25,7 +24,6 @@ const MONEDAS = [
   { code: 'USD', label: 'Dolar estadounidense' },
   { code: 'UYU', label: 'Peso uruguayo' },
   { code: 'VES', label: 'Bolivar venezolano' },
-  // Europa
   { code: 'EUR', label: 'Euro' },
   { code: 'GBP', label: 'Libra esterlina' },
   { code: 'CHF', label: 'Franco suizo' },
@@ -43,7 +41,7 @@ const MONEDAS = [
 ];
 
 // ==========================================
-// 1. CARGAR PERFIL
+// CARGAR PERFIL
 // ==========================================
 export async function cargarPerfil() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -60,15 +58,11 @@ export async function cargarPerfil() {
     return;
   }
 
-  // Llenar el select de monedas
   const selectMoneda = document.getElementById('profile-currency');
   selectMoneda.innerHTML = MONEDAS.map(m =>
-    `<option value="${m.code}" ${m.code === (perfil.preferred_currency || 'EUR') ? 'selected' : ''}>
-      ${m.code} - ${m.label}
-    </option>`
+    `<option value="${m.code}" ${m.code === (perfil.preferred_currency || 'EUR') ? 'selected' : ''}>${m.code} - ${m.label}</option>`
   ).join('');
 
-  // Llenar los otros campos
   document.getElementById('profile-email').value = perfil.email || '';
   document.getElementById('profile-name').value = perfil.full_name || '';
   document.getElementById('profile-phone').value = perfil.phone || '';
@@ -78,7 +72,7 @@ export async function cargarPerfil() {
 }
 
 // ==========================================
-// 2. GUARDAR PERFIL
+// GUARDAR PERFIL
 // ==========================================
 export async function guardarPerfil() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -99,15 +93,14 @@ export async function guardarPerfil() {
 
   if (error) throw error;
 
-  // Actualizar el mensaje de bienvenida si cambiÃ³ el nombre
   const welcomeMessage = document.getElementById('welcome-message');
   if (welcomeMessage && fullName) {
-    welcomeMessage.textContent = `Hola, ${fullName}`;
+    welcomeMessage.textContent = 'Hola, ' + fullName;
   }
 }
 
 // ==========================================
-// 3. INICIALIZAR MODAL DE PERFIL
+// INICIALIZAR MODAL DE PERFIL
 // ==========================================
 export function initProfileModal() {
   const modal = document.getElementById('modal-profile');
@@ -144,7 +137,6 @@ export function initProfileModal() {
       successMsg.style.color = '#38a169';
       successMsg.textContent = 'Perfil guardado correctamente.';
 
-      // Cerrar despuÃ©s de 1.5s
       setTimeout(() => {
         modal.classList.add('hidden');
         successMsg.textContent = '';
@@ -157,3 +149,4 @@ export function initProfileModal() {
       btnSubmit.textContent = 'Guardar cambios';
     }
   });
+}
