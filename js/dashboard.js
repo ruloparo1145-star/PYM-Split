@@ -1,28 +1,40 @@
 // js/dashboard.js
 import { supabase } from './supabase.js';
+import { sumarConvertido, formatearMonto } from './currency.js';
 
 // ==========================================
-// CALCULAR ESTADISTICAS GLOBALES
+// CARGAR DASHBOARD CON CONVERSION
 // ==========================================
 export async function cargarDashboard() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
+  // Moneda preferida del usuario
+  const { data: perfil } = await supabase
+    .from('profiles')
+    .select('preferred_currency')
+    .eq('id', user.id)
+    .single();
+
+  const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
+
   try {
-    // 1. Traer todos los grupos activos del usuario
+    // Traer todos los grupos activos
     const { data: grupos } = await supabase
       .from('groups')
-      .select('id')
+      .select('id, currency')
       .eq('archived', false);
 
     const groupIds = (grupos || []).map(g => g.id);
+    const monedaPorGrupo = {};
+    (grupos || []).forEach(g => monedaPorGrupo[g.id] = g.currency || 'EUR');
 
     if (groupIds.length === 0) {
-      renderizarVacio();
+      renderizarVacio(monedaUsuario);
       return;
     }
 
-    // 2. Gastos de este mes
+    // Gastos de este mes
     const hoy = new Date();
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().split('T')[0];
 
@@ -33,56 +45,111 @@ export async function cargarDashboard() {
       .gte('date', inicioMes)
       .order('created_at', { ascending: false });
 
-    const totalMes = (gastosMes || []).reduce((sum, g) => sum + parseFloat(g.amount), 0);
+    // Preparar items para convertir (usando la moneda del grupo si el gasto no tiene)
+    const itemsMes = (gastosMes || []).map(g => ({
+      monto: parseFloat(g.amount),
+      moneda: g.currency || monedaPorGrupo[g.group_id] || 'EUR'
+    }));
 
-    // 3. Balance global: gastos - splits - settlements
+    const resultadoMes = await sumarConvertido(itemsMes, monedaUsuario);
+
+    // Balance global
     const { data: gastosTodos } = await supabase
       .from('expenses')
-      .select('id, amount, paid_by, group_id')
+      .select('id, amount, currency, paid_by, group_id')
       .in('group_id', groupIds);
 
     const balance = {};
 
     if (gastosTodos && gastosTodos.length > 0) {
-      // Sumar lo que pagÃ³ cada uno
-      gastosTodos.forEach(g => {
-        balance[g.paid_by] = (balance[g.paid_by] || 0) + parseFloat(g.amount);
-      });
+      // Preparar para convertir
+      const itemsBalance = gastosTodos.map(g => ({
+        monto: parseFloat(g.amount),
+        moneda: g.currency || monedaPorGrupo[g.group_id] || 'EUR',
+        tipo: 'pago',
+        userId: g.paid_by
+      }));
 
-      // Restar splits
+      // Sumar por persona
+      const sumasPorPersona = {};
+      for (const item of itemsBalance) {
+        if (!sumasPorPersona[item.userId]) sumasPorPersona[item.userId] = [];
+        sumasPorPersona[item.userId].push({ monto: item.monto, moneda: item.moneda });
+      }
+
+      for (const [userId, items] of Object.entries(sumasPorPersona)) {
+        const { total } = await sumarConvertido(items, monedaUsuario);
+        balance[userId] = (balance[userId] || 0) + total;
+      }
+
+      // Restar splits (convertidos)
       const expIds = gastosTodos.map(g => g.id);
       const { data: splits } = await supabase
         .from('expense_splits')
-        .select('user_id, amount_owed')
+        .select('user_id, amount_owed, expense_id')
         .in('expense_id', expIds);
 
-      (splits || []).forEach(s => {
-        balance[s.user_id] = (balance[s.user_id] || 0) - parseFloat(s.amount_owed);
-      });
+      const monedaPorExpense = {};
+      gastosTodos.forEach(g => monedaPorExpense[g.id] = g.currency || monedaPorGrupo[g.group_id] || 'EUR');
+
+      if (splits && splits.length > 0) {
+        const splitsPorPersona = {};
+        for (const s of splits) {
+          const moneda = monedaPorExpense[s.expense_id] || 'EUR';
+          if (!splitsPorPersona[s.user_id]) splitsPorPersona[s.user_id] = [];
+          splitsPorPersona[s.user_id].push({ monto: parseFloat(s.amount_owed), moneda });
+        }
+
+        for (const [userId, items] of Object.entries(splitsPorPersona)) {
+          const { total } = await sumarConvertido(items, monedaUsuario);
+          balance[userId] = (balance[userId] || 0) - total;
+        }
+      }
 
       // Aplicar settlements
       const { data: pagos } = await supabase
         .from('settlements')
-        .select('from_user, to_user, amount')
+        .select('from_user, to_user, amount, currency, group_id')
         .in('group_id', groupIds);
 
-      (pagos || []).forEach(p => {
-        balance[p.from_user] = (balance[p.from_user] || 0) + parseFloat(p.amount);
-        balance[p.to_user] = (balance[p.to_user] || 0) - parseFloat(p.amount);
-      });
+      if (pagos && pagos.length > 0) {
+        const pagosDesde = {};
+        const pagosHacia = {};
+
+        for (const p of pagos) {
+          const moneda = p.currency || monedaPorGrupo[p.group_id] || 'EUR';
+          if (!pagosDesde[p.from_user]) pagosDesde[p.from_user] = [];
+          if (!pagosHacia[p.to_user]) pagosHacia[p.to_user] = [];
+          pagosDesde[p.from_user].push({ monto: parseFloat(p.amount), moneda });
+          pagosHacia[p.to_user].push({ monto: parseFloat(p.amount), moneda });
+        }
+
+        for (const [userId, items] of Object.entries(pagosDesde)) {
+          const { total } = await sumarConvertido(items, monedaUsuario);
+          balance[userId] = (balance[userId] || 0) + total;
+        }
+        for (const [userId, items] of Object.entries(pagosHacia)) {
+          const { total } = await sumarConvertido(items, monedaUsuario);
+          balance[userId] = (balance[userId] || 0) - total;
+        }
+      }
     }
 
     const miBalance = balance[user.id] || 0;
     const teDeben = miBalance > 0 ? miBalance : 0;
     const debes = miBalance < 0 ? Math.abs(miBalance) : 0;
 
-    // 4. Renderizar tarjetas
-    document.getElementById('stat-total-mes').textContent = `${totalMes.toFixed(2)} EUR`;
-    document.getElementById('stat-te-deben').textContent = `${teDeben.toFixed(2)} EUR`;
-    document.getElementById('stat-debes').textContent = `${debes.toFixed(2)} EUR`;
-    // 5. Ãšltimos movimientos
+    // Renderizar tarjetas
+    document.getElementById('stat-total-mes').textContent = formatearMonto(resultadoMes.total, monedaUsuario);
+    document.getElementById('stat-te-deben').textContent = formatearMonto(teDeben, monedaUsuario);
+    document.getElementById('stat-debes').textContent = formatearMonto(debes, monedaUsuario);
+
+    // Subtexto de conversiÃ³n
+    actualizarSubtextos(resultadoMes, monedaUsuario);
+
+    // Ãšltimos movimientos
     const ultimos = (gastosMes || []).slice(0, 5);
-    renderizarUltimos(ultimos, groupIds);
+    await renderizarUltimos(ultimos, groupIds, monedaPorGrupo, monedaUsuario);
 
   } catch (error) {
     console.error('Error dashboard:', error);
@@ -90,9 +157,36 @@ export async function cargarDashboard() {
 }
 
 // ==========================================
-// RENDERIZAR ULTIMOS MOVIMIENTOS
+// SUBTEXTOS DE CONVERSION
 // ==========================================
-async function renderizarUltimos(gastos, groupIds) {
+function actualizarSubtextos(resultado, monedaUsuario) {
+  // Buscar o crear subtexto debajo del total
+  const statTotal = document.getElementById('stat-total-mes');
+  if (!statTotal) return;
+
+  let sub = document.getElementById('stat-total-mes-sub');
+  if (!sub) {
+    sub = document.createElement('div');
+    sub.id = 'stat-total-mes-sub';
+    sub.className = 'stat-subtext';
+    statTotal.parentNode.appendChild(sub);
+  }
+
+  if (resultado.noConvertidas.length > 0) {
+    sub.textContent = `Sin convertir: ${resultado.noConvertidas.join(', ')}`;
+    sub.style.color = '#e53e3e';
+  } else if (resultado.monedasOrigen.length > 0) {
+    sub.textContent = `Convertido desde ${resultado.monedasOrigen.join(', ')}`;
+    sub.style.color = '#a0aec0';
+  } else {
+    sub.textContent = '';
+  }
+}
+
+// ==========================================
+// ULTIMOS MOVIMIENTOS
+// ==========================================
+async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario) {
   const container = document.getElementById('dashboard-recent');
   if (!container) return;
 
@@ -101,7 +195,6 @@ async function renderizarUltimos(gastos, groupIds) {
     return;
   }
 
-  // Traer grupos y pagadores
   const { data: grupos } = await supabase
     .from('groups')
     .select('id, name')
@@ -125,28 +218,60 @@ async function renderizarUltimos(gastos, groupIds) {
     servicios: '&#128241;', compras: '&#128717;', viajes: '&#9992;', otros: '&#128176;'
   };
 
-  container.innerHTML = gastos.map(g => {
+  // Convertir cada monto
+  const items = gastos.map(g => {
+    const monedaOrigen = g.currency || monedaPorGrupo[g.group_id] || 'EUR';
+    return {
+      monto: parseFloat(g.amount),
+      moneda: monedaOrigen,
+      gasto: g
+    };
+  });
+
+  const html = [];
+  for (const item of items) {
+    const g = item.gasto;
     const icono = CATEGORIAS_ICONOS[g.category] || CATEGORIAS_ICONOS.otros;
-    return `
+
+    let montoMostrar;
+    let subtexto = '';
+
+    if (item.moneda === monedaUsuario) {
+      montoMostrar = parseFloat(g.amount).toFixed(2) + ' ' + monedaUsuario;
+    } else {
+      const { convertirMonto } = await import('./currency.js');
+      const r = await convertirMonto(item.monto, item.moneda, monedaUsuario);
+      if (r.convertido) {
+        montoMostrar = r.monto.toFixed(2) + ' ' + monedaUsuario;
+        subtexto = `(${parseFloat(g.amount).toFixed(2)} ${item.moneda})`;
+      } else {
+        montoMostrar = parseFloat(g.amount).toFixed(2) + ' ' + item.moneda;
+      }
+    }
+
+    html.push(`
       <div class="recent-item">
         <div class="recent-icon">${icono}</div>
         <div class="recent-info">
           <h5>${g.description}</h5>
-          <span>${nombresGrupos[g.group_id] || 'Grupo'} Â· ${nombres[g.paid_by] || 'Desconocido'}</span>
+          <span>${nombresGrupos[g.group_id] || 'Grupo'} - ${nombres[g.paid_by] || 'Desconocido'}</span>
+          ${subtexto ? `<small class="recent-subtext">${subtexto}</small>` : ''}
         </div>
-        <div class="recent-amount">${parseFloat(g.amount).toFixed(2)} â‚¬</div>
+        <div class="recent-amount">${montoMostrar}</div>
       </div>
-    `;
-  }).join('');
+    `);
+  }
+
+  container.innerHTML = html.join('');
 }
 
 // ==========================================
 // RENDERIZAR VACIO
 // ==========================================
-function renderizarVacio() {
-  document.getElementById('stat-total-mes').textContent = '0.00 â‚¬';
-  document.getElementById('stat-te-deben').textContent = '0.00 â‚¬';
-  document.getElementById('stat-debes').textContent = '0.00 â‚¬';
+function renderizarVacio(monedaUsuario) {
+  document.getElementById('stat-total-mes').textContent = formatearMonto(0, monedaUsuario);
+  document.getElementById('stat-te-deben').textContent = formatearMonto(0, monedaUsuario);
+  document.getElementById('stat-debes').textContent = formatearMonto(0, monedaUsuario);
 
   const container = document.getElementById('dashboard-recent');
   if (container) {
