@@ -300,6 +300,42 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   const dateStart = document.getElementById('group-date-start')?.value || null;
   const dateEnd = document.getElementById('group-date-end')?.value || null;
+  const manualRateInput = document.getElementById('group-manual-rate')?.value;
+  const manualRate = manualRateInput ? parseFloat(manualRateInput) : null;
+
+  // Convertir la cotizacion manual a USD (referencia universal)
+  let manualRateUSD = null;
+  if (manualRate && manualRate > 0) {
+    // Obtener moneda del usuario
+    const { data: perfil } = await supabase
+      .from('profiles')
+      .select('preferred_currency')
+      .eq('id', user.id)
+      .single();
+
+    const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
+
+    if (monedaUsuario === 'USD') {
+      // Ya esta en USD
+      manualRateUSD = manualRate;
+    } else {
+      // Convertir: monedaUsuario -> USD
+      // Si 1 monedaUsuario = manualRate (moneda del grupo)
+      // Entonces: 1 monedaUsuario = manualRate / (1 monedaUsuario en monedaGrupo)
+      // Necesitamos saber cuantos USD vale 1 monedaUsuario
+      const { obtenerTasa } = await import('./currency.js');
+      const tasaUsuarioAUSD = await obtenerTasa(monedaUsuario, 'USD');
+      if (tasaUsuarioAUSD !== null) {
+        // 1 monedaUsuario = tasaUsuarioAUSD USD
+        // 1 monedaUsuario = manualRate monedaGrupo
+        // Entonces: 1 USD = manualRate / tasaUsuarioAUSD monedaGrupo
+        manualRateUSD = manualRate / tasaUsuarioAUSD;
+      } else {
+        // No se pudo convertir, guardar como esta (asumir USD)
+        manualRateUSD = manualRate;
+      }
+    }
+  }
 
   const { data: groupData, error: groupError } = await supabase
     .from('groups')
@@ -310,7 +346,8 @@ export async function crearGrupo(nombre, tipo, moneda) {
       created_by: user.id,
       owner_id: user.id,
       date_start: dateStart,
-      date_end: dateEnd
+      date_end: dateEnd,
+      manual_exchange_rate: manualRateUSD
     }])
     .select()
     .single();
@@ -319,7 +356,6 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   return groupData;
 }
-
 // ==========================================
 // 6. MODAL CREAR GRUPO
 // ==========================================
