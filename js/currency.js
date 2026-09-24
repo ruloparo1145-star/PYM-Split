@@ -272,3 +272,48 @@ export async function simularHoy(gastos, monedaGrupo) {
     moneda: monedaGrupo
   };
 }
+// ==========================================
+// CONVERTIR CON FALLBACK A COTIZACION MANUAL
+// ==========================================
+// Prioriza: 1) Frankfurter, 2) DolarAPI, 3) Cotizacion manual del grupo
+// La cotizacion manual se guarda SIEMPRE respecto a USD.
+export async function convertirMontoConGrupo(monto, desde, hasta, manualRateUSD) {
+  monto = parseFloat(monto) || 0;
+  desde = (desde || 'EUR').toUpperCase();
+  hasta = (hasta || 'EUR').toUpperCase();
+
+  if (desde === hasta) return { monto, convertido: true, fuente: 'same' };
+
+  // 1. Intentar API
+  const tasaAPI = await obtenerTasa(desde, hasta);
+  if (tasaAPI !== null) {
+    return { monto: monto * tasaAPI, convertido: true, fuente: 'api' };
+  }
+
+  // 2. Fallback: usar cotizacion manual
+  if (manualRateUSD && manualRateUSD > 0) {
+    // manualRateUSD = cuantos USD vale 1 unidad de la moneda del GRUPO
+    // Pero necesitamos convertir DESDE -> HASTA.
+    // Asumimos que la cotizacion manual es: 1 USD = X (moneda con la que se cargo el grupo)
+    // Esta funcion debe llamarse desde el contexto donde sabemos que
+    // la moneda del grupo es la que tiene cotizacion manual.
+
+    // Si hasta === moneda del grupo (ej: ARS), entonces:
+    // monto (desde) -> ARS
+    // 1) desde -> USD (usando API)
+    // 2) USD -> ARS (usando manualRateUSD)
+
+    if (hasta !== 'USD' && hasta !== 'EUR') {
+      // Intentar desde -> USD
+      const desdeAUSD = await obtenerTasa(desde, 'USD');
+      if (desdeAUSD !== null) {
+        // USD -> hasta usando cotizacion manual
+        // manualRateUSD = cuantos hasta vale 1 USD
+        const montoUSD = monto * desdeAUSD;
+        return { monto: montoUSD * manualRateUSD, convertido: true, fuente: 'manual' };
+      }
+    }
+  }
+
+  return { monto, convertido: false, fuente: 'none' };
+}
