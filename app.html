@@ -39,7 +39,6 @@
         <p>Bienvenido a tu gestor de gastos</p>
       </div>
 
-      <!-- Tarjetas de estadisticas -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-label">Total gastado este mes</div>
@@ -55,7 +54,6 @@
         </div>
       </div>
 
-      <!-- Ultimos movimientos -->
       <div class="section-card">
         <div class="section-header">
           <h3>Ultimos movimientos</h3>
@@ -65,7 +63,6 @@
         </div>
       </div>
 
-      <!-- Grupos -->
       <div class="section-card" id="groups-section">
         <div class="section-header">
           <h3>Mis Grupos</h3>
@@ -113,7 +110,30 @@
             <option value="COP">COP - Peso colombiano</option>
             <option value="PEN">PEN - Sol peruano</option>
             <option value="UYU">UYU - Peso uruguayo</option>
+            <option value="BOB">BOB - Boliviano</option>
+            <option value="PYG">PYG - Guarani paraguayo</option>
+            <option value="VES">VES - Bolivar venezolano</option>
+            <option value="PAB">PAB - Balboa panameno</option>
+            <option value="CRC">CRC - Colon costarricense</option>
+            <option value="GTQ">GTQ - Quetzal guatemalteco</option>
+            <option value="DOP">DOP - Peso dominicano</option>
+            <option value="HNL">HNL - Lempira hondurena</option>
+            <option value="NIO">NIO - Cordoba nicaraguense</option>
+            <option value="CUP">CUP - Peso cubano</option>
+            <option value="CAD">CAD - Dolar canadiense</option>
             <option value="GBP">GBP - Libra esterlina</option>
+            <option value="CHF">CHF - Franco suizo</option>
+            <option value="NOK">NOK - Corona noruega</option>
+            <option value="SEK">SEK - Corona sueca</option>
+            <option value="DKK">DKK - Corona danesa</option>
+            <option value="PLN">PLN - Zloty polaco</option>
+            <option value="CZK">CZK - Corona checa</option>
+            <option value="HUF">HUF - Forinto hungaro</option>
+            <option value="RON">RON - Leu rumano</option>
+            <option value="BGN">BGN - Lev bulgaro</option>
+            <option value="TRY">TRY - Lira turca</option>
+            <option value="RUB">RUB - Rublo ruso</option>
+            <option value="UAH">UAH - Grivna ucraniana</option>
           </select>
         </div>
         <p id="group-error" class="error-msg"></p>
@@ -175,6 +195,44 @@
           <select id="expense-paid-by" required><option value="">Seleccionar quien pago...</option></select>
         </div>
         <div class="form-group">
+          <label for="expense-currency">Moneda</label>
+          <select id="expense-currency" required>
+            <option value="EUR">EUR - Euro</option>
+            <option value="USD">USD - Dolar estadounidense</option>
+            <option value="ARS">ARS - Peso argentino</option>
+            <option value="MXN">MXN - Peso mexicano</option>
+            <option value="BRL">BRL - Real brasileno</option>
+            <option value="CLP">CLP - Peso chileno</option>
+            <option value="COP">COP - Peso colombiano</option>
+            <option value="PEN">PEN - Sol peruano</option>
+            <option value="UYU">UYU - Peso uruguayo</option>
+            <option value="BOB">BOB - Boliviano</option>
+            <option value="PYG">PYG - Guarani paraguayo</option>
+            <option value="VES">VES - Bolivar venezolano</option>
+            <option value="PAB">PAB - Balboa panameno</option>
+            <option value="CRC">CRC - Colon costarricense</option>
+            <option value="GTQ">GTQ - Quetzal guatemalteco</option>
+            <option value="DOP">DOP - Peso dominicano</option>
+            <option value="HNL">HNL - Lempira hondurena</option>
+            <option value="NIO">NIO - Cordoba nicaraguense</option>
+            <option value="CUP">CUP - Peso cubano</option>
+            <option value="CAD">CAD - Dolar canadiense</option>
+            <option value="GBP">GBP - Libra esterlina</option>
+            <option value="CHF">CHF - Franco suizo</option>
+            <option value="NOK">NOK - Corona noruega</option>
+            <option value="SEK">SEK - Corona sueca</option>
+            <option value="DKK">DKK - Corona danesa</option>
+            <option value="PLN">PLN - Zloty polaco</option>
+            <option value="CZK">CZK - Corona checa</option>
+            <option value="HUF">HUF - Forinto hungaro</option>
+            <option value="RON">RON - Leu rumano</option>
+            <option value="BGN">BGN - Lev bulgaro</option>
+            <option value="TRY">TRY - Lira turca</option>
+            <option value="RUB">RUB - Rublo ruso</option>
+            <option value="UAH">UAH - Grivna ucraniana</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label for="expense-category">Categoria</label>
           <select id="expense-category">
             <option value="otros">&#128176; Otros</option>
@@ -223,6 +281,12 @@
   <div id="modal-group-detail" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 600px;">
       <h3 id="detail-group-name">Detalle del Grupo</h3>
+
+      <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+        <button id="btn-calculate-today" class="btn-calculate-today">
+          Calcular en moneda de hoy
+        </button>
+      </div>
 
       <div class="balance-section">
         <h4>Balance</h4>
@@ -345,6 +409,20 @@
           </select>
         </div>
         <div class="form-group">
+          <label for="edit-expense-currency">Moneda</label>
+          <select id="edit-expense-currency" required>
+            <option value="EUR">EUR - Euro</option>
+            <option value="USD">USD - Dolar estadounidense</option>
+            <option value="ARS">ARS - Peso argentino</option>
+            <option value="MXN">MXN - Peso mexicano</option>
+            <option value="BRL">BRL - Real brasileno</option>
+            <option value="CLP">CLP - Peso chileno</option>
+            <option value="COP">COP - Peso colombiano</option>
+            <option value="PEN">PEN - Sol peruano</option>
+            <option value="UYU">UYU - Peso uruguayo</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label for="edit-expense-paid-by">Quien pago?</label>
           <select id="edit-expense-paid-by" required></select>
         </div>
@@ -384,7 +462,7 @@
         </section>
         <section class="manual-section">
           <h4>5. Cargar un gasto</h4>
-          <p>Toca el boton <strong>"+"</strong> abajo a la derecha. Completa que fue, monto, quien pago, categoria y como se divide.</p>
+          <p>Toca el boton <strong>"+"</strong> abajo a la derecha. Completa que fue, monto, quien pago, categoria, moneda y como se divide.</p>
         </section>
         <section class="manual-section">
           <h4>6. Tipos de division</h4>
@@ -396,26 +474,35 @@
           </ul>
         </section>
         <section class="manual-section">
-          <h4>7. Ver el balance</h4>
-          <p>Al abrir un grupo, arriba aparece el <strong>Balance</strong>: quien le debe a quien y cuanto.</p>
+          <h4>7. Monedas</h4>
+          <p>Cada grupo tiene su <strong>moneda principal</strong> (ej: EUR). Podes cargar gastos en <strong>cualquier otra moneda</strong>. La app convierte automaticamente a la moneda del grupo.</p>
+          <p>En tu <strong>Perfil</strong> podes elegir tu moneda preferida. El dashboard mostrara los totales en esa moneda.</p>
         </section>
         <section class="manual-section">
-          <h4>8. Saldar deudas</h4>
+          <h4>8. Ver el balance</h4>
+          <p>Al abrir un grupo, arriba aparece el <strong>Balance</strong>: quien le debe a quien y cuanto, ya convertido a la moneda del grupo.</p>
+        </section>
+        <section class="manual-section">
+          <h4>9. Calcular en moneda de hoy</h4>
+          <p>En el detalle del grupo, toca <strong>"Calcular en moneda de hoy"</strong> para ver cuanto costaria ese viaje con las tasas actuales. Es solo informativo, no modifica nada.</p>
+        </section>
+        <section class="manual-section">
+          <h4>10. Saldar deudas</h4>
           <p>Toca <strong>"Saldar"</strong> al lado de la deuda. La app registra que ya pagaste (no mueve plata).</p>
         </section>
         <section class="manual-section">
-          <h4>9. Archivar y restaurar grupos</h4>
+          <h4>11. Archivar y restaurar grupos</h4>
           <p>Cada grupo tiene un boton <strong>&#128230; (archivar)</strong>. Los archivados se ven en la pestana "Archivados". Ahi podes restaurarlos o eliminarlos definitivamente.</p>
         </section>
         <section class="manual-section">
-          <h4>10. Instalar como app</h4>
+          <h4>12. Instalar como app</h4>
           <p><strong>iPhone (Safari):</strong> compartir &rarr; "Anadir a pantalla de inicio".</p>
           <p><strong>Android (Chrome):</strong> menu &rarr; "Instalar app".</p>
         </section>
         <section class="manual-section">
           <h4>Preguntas frecuentes</h4>
           <p><strong>La app mueve plata?</strong> No, solo registra gastos y calcula quien debe a quien.</p>
-          <p><strong>Puedo usar varias monedas?</strong> Si, cada grupo tiene su moneda, y vos podes elegir tu moneda preferida en el perfil.</p>
+          <p><strong>Puedo usar varias monedas?</strong> Si, cada grupo tiene su moneda, y vos podes cargar gastos en cualquier moneda.</p>
           <p><strong>Quien ve mis gastos?</strong> Solo los miembros de cada grupo.</p>
         </section>
       </div>
@@ -458,6 +545,21 @@
           <button type="submit" class="btn-primary">Guardar cambios</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Simulador "Calcular hoy" -->
+  <div id="modal-calculator" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <h3>Calculadora de hoy</h3>
+
+      <div id="calculator-body" style="padding: 15px 0;">
+        <p class="placeholder-text">Calculando...</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-close-calculator" class="btn-secondary">Cerrar</button>
+      </div>
     </div>
   </div>
 
