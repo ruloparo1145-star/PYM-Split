@@ -4,7 +4,7 @@ import { cargarGrupos, initGroupModal, initArchivedToggle } from './groups.js';
 import { initFriendsModal } from './friends.js';
 import { initExpenseModal, initFiltroCategoria } from './expenses.js';
 import { initAddMemberModal } from './members.js';
-import { cargarDashboard } from './dashboard.js';
+import { cargarDashboard, initDashboardTabs } from './dashboard.js';
 import { initProfileModal } from './profile.js';
 import { initGuestbook } from './guestbook.js';
 
@@ -19,7 +19,7 @@ import { initGuestbook } from './guestbook.js';
     return;
   }
 
-  // Mostrar nombre del usuario (desde profiles, es la fuente real)
+  // Mostrar nombre del usuario (desde profiles)
   const welcomeMessage = document.getElementById('welcome-message');
   
   const { data: perfil } = await supabase
@@ -50,6 +50,8 @@ import { initGuestbook } from './guestbook.js';
   initProfileModal();
   initManualModal();
   initGuestbook();
+  initDashboardTabs();
+  initChartHistoryModal();
 })();
 
 // ==========================================
@@ -76,7 +78,34 @@ function initManualModal() {
 }
 
 // ==========================================
-// 3. CERRAR SESION (Logout)
+// 3. MODAL: GRAFICO HISTORICO
+// ==========================================
+function initChartHistoryModal() {
+  const btnVer = document.getElementById('btn-ver-grafico');
+  const modal = document.getElementById('modal-chart-history');
+  const btnClose = document.getElementById('btn-close-chart-history');
+
+  btnVer?.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+    // Forzar redibujado del chart (el canvas puede tener tamaÃ±o 0 al inicio)
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 100);
+  });
+
+  btnClose?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-chart-history') {
+      modal.classList.add('hidden');
+    }
+  });
+}
+
+// ==========================================
+// 4. CERRAR SESION (Logout)
 // ==========================================
 document.getElementById('btn-logout').addEventListener('click', async () => {
   const { error } = await supabase.auth.signOut();
