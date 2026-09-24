@@ -133,3 +133,50 @@ export function formatearMonto(monto, moneda) {
   const n = parseFloat(monto) || 0;
   return n.toFixed(2) + ' ' + (moneda || 'EUR').toUpperCase();
 }
+// ==========================================
+// CALCULAR SIMULADOR "HOY"
+// ==========================================
+// Recibe: array de gastos con { amount, currency }
+// Devuelve: { totalHistorico, totalHoy, diferencia, moneda }
+export async function simularHoy(gastos, monedaGrupo) {
+  monedaGrupo = (monedaGrupo || 'EUR').toUpperCase();
+
+  let totalHistorico = 0;
+  let totalHoy = 0;
+
+  for (const g of gastos) {
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasaGuardada = parseFloat(g.exchange_rate) || 1;
+
+    // Total histÃ³rico: monto * tasa del momento (si el gasto fue en otra moneda)
+    if (monedaGasto === monedaGrupo) {
+      totalHistorico += monto;
+    } else {
+      totalHistorico += monto * tasaGuardada;
+    }
+
+    // Total hoy: convertir con tasas actuales
+    if (monedaGasto === monedaGrupo) {
+      totalHoy += monto;
+    } else {
+      const tasaHoy = await obtenerTasa(monedaGasto, monedaGrupo);
+      if (tasaHoy !== null) {
+        totalHoy += monto * tasaHoy;
+      } else {
+        totalHoy += monto * tasaGuardada;
+      }
+    }
+  }
+
+  const diferencia = totalHoy - totalHistorico;
+  const porcentaje = totalHistorico > 0 ? (diferencia / totalHistorico * 100) : 0;
+
+  return {
+    totalHistorico,
+    totalHoy,
+    diferencia,
+    porcentaje,
+    moneda: monedaGrupo
+  };
+}
