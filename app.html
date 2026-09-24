@@ -136,6 +136,14 @@
             <option value="UAH">UAH - Grivna ucraniana</option>
           </select>
         </div>
+        <div class="form-group">
+          <label for="group-date-start">Fecha de inicio (opcional)</label>
+          <input type="date" id="group-date-start">
+        </div>
+        <div class="form-group">
+          <label for="group-date-end">Fecha de fin (opcional)</label>
+          <input type="date" id="group-date-end">
+        </div>
         <p id="group-error" class="error-msg"></p>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
@@ -282,9 +290,17 @@
     <div class="modal-content" style="max-width: 600px;">
       <h3 id="detail-group-name">Detalle del Grupo</h3>
 
-      <div style="display: flex; justify-content: center; margin-bottom: 15px;">
+      <div id="group-info-badges" style="text-align: center; margin-bottom: 10px;"></div>
+
+      <div id="group-action-buttons" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
         <button id="btn-calculate-today" class="btn-calculate-today">
           Calcular en moneda de hoy
+        </button>
+        <button id="btn-close-computo" class="btn-close-computo" style="display: none;">
+          Cerrar computo
+        </button>
+        <button id="btn-reopen-computo" class="btn-reopen-computo" style="display: none;">
+          Reabrir
         </button>
       </div>
 
@@ -454,7 +470,7 @@
         </section>
         <section class="manual-section">
           <h4>3. Crear un grupo</h4>
-          <p>Toca <strong>"+ Nuevo"</strong> arriba de "Mis Grupos". Elegi nombre, tipo y moneda.</p>
+          <p>Toca <strong>"+ Nuevo"</strong> arriba de "Mis Grupos". Elegi nombre, tipo, moneda y opcionalmente las <strong>fechas de inicio y fin</strong> del viaje.</p>
         </section>
         <section class="manual-section">
           <h4>4. Agregar amigos al grupo</h4>
@@ -487,15 +503,19 @@
           <p>En el detalle del grupo, toca <strong>"Calcular en moneda de hoy"</strong> para ver cuanto costaria ese viaje con las tasas actuales. Es solo informativo, no modifica nada.</p>
         </section>
         <section class="manual-section">
-          <h4>10. Saldar deudas</h4>
+          <h4>10. Cerrar el computo de un viaje</h4>
+          <p>Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. Se guarda la fecha de cierre y el total final del viaje. Si te equivocaste, podes reabrirlo.</p>
+        </section>
+        <section class="manual-section">
+          <h4>11. Saldar deudas</h4>
           <p>Toca <strong>"Saldar"</strong> al lado de la deuda. La app registra que ya pagaste (no mueve plata).</p>
         </section>
         <section class="manual-section">
-          <h4>11. Archivar y restaurar grupos</h4>
+          <h4>12. Archivar y restaurar grupos</h4>
           <p>Cada grupo tiene un boton <strong>&#128230; (archivar)</strong>. Los archivados se ven en la pestana "Archivados". Ahi podes restaurarlos o eliminarlos definitivamente.</p>
         </section>
         <section class="manual-section">
-          <h4>12. Instalar como app</h4>
+          <h4>13. Instalar como app</h4>
           <p><strong>iPhone (Safari):</strong> compartir &rarr; "Anadir a pantalla de inicio".</p>
           <p><strong>Android (Chrome):</strong> menu &rarr; "Instalar app".</p>
         </section>
