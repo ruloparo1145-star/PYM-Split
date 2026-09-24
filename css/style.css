@@ -1058,3 +1058,37 @@ body {
     font-size: 1.4rem;
   }
 }
+/* ==========================================
+   21. PERFIL DE USUARIO
+   ========================================== */
+.success-msg {
+  font-size: 0.85rem;
+  color: #38a169;
+  text-align: center;
+  min-height: 20px;
+  font-weight: 600;
+}
+
+#profile-email:disabled {
+  background: #f7fafc;
+  color: #718096;
+  cursor: not-allowed;
+  border-color: #edf2f7;
+}
+
+#profile-currency {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 1rem;
+  background: white;
+  color: #2d3748;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+#profile-currency:focus {
+  border-color: #2ecc87;
+  box-shadow: 0 0 0 3px rgba(46, 204, 135, 0.15);
+}
