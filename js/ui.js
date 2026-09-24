@@ -18,9 +18,21 @@ import { initProfileModal } from './profile.js';
     return;
   }
 
-  // Mostrar nombre del usuario
+  // Mostrar nombre del usuario (desde profiles, es la fuente real)
   const welcomeMessage = document.getElementById('welcome-message');
-  const fullName = session.user.user_metadata?.full_name || 'Usuario';
+  
+  const { data: perfil } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', session.user.id)
+    .single();
+
+  const fullName = perfil?.full_name
+    || session.user.user_metadata?.full_name
+    || perfil?.email
+    || session.user.email
+    || 'Usuario';
+
   welcomeMessage.textContent = `Hola, ${fullName}`;
 
   // Cargar datos
