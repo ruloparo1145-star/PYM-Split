@@ -4,17 +4,21 @@ import { supabase } from './supabase.js';
 // ==========================================
 // 1. CALCULAR BALANCE NETO DEL GRUPO
 // ==========================================
+
+
+
 export async function calcularBalance(groupId) {
   const balance = {};
 
-  // Obtener moneda del grupo
+  // Obtener info del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
-    .select('currency')
+    .select('currency, manual_exchange_rate')
     .eq('id', groupId)
     .single();
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+  const manualRateUSD = grupoInfo?.manual_exchange_rate;
 
   const { data: gastos } = await supabase
     .from('expenses')
@@ -22,7 +26,6 @@ export async function calcularBalance(groupId) {
     .eq('group_id', groupId);
 
   if (gastos) {
-    // Sumar lo que pagÃ³ cada persona (convertido a moneda del grupo)
     gastos.forEach(g => {
       const monto = parseFloat(g.amount);
       const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
@@ -63,7 +66,6 @@ export async function calcularBalance(groupId) {
     }
   }
 
-  // Settlements
   const { data: pagos } = await supabase
     .from('settlements')
     .select('from_user, to_user, amount, currency, group_id')
@@ -72,8 +74,6 @@ export async function calcularBalance(groupId) {
   if (pagos) {
     pagos.forEach(p => {
       const monto = parseFloat(p.amount);
-      const monedaPago = (p.currency || monedaGrupo).toUpperCase();
-      // Asumimos que settlements estÃ¡n en la moneda del grupo
       balance[p.from_user] = (balance[p.from_user] || 0) + monto;
       balance[p.to_user] = (balance[p.to_user] || 0) - monto;
     });
@@ -81,6 +81,8 @@ export async function calcularBalance(groupId) {
 
   return balance;
 }
+
+
 // ==========================================
 // 2. SIMPLIFICAR DEUDAS
 // ==========================================
