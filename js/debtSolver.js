@@ -7,46 +7,80 @@ import { supabase } from './supabase.js';
 export async function calcularBalance(groupId) {
   const balance = {};
 
+  // Obtener moneda del grupo
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
   const { data: gastos } = await supabase
     .from('expenses')
-    .select('id, amount, paid_by')
+    .select('id, amount, paid_by, currency, exchange_rate')
     .eq('group_id', groupId);
 
   if (gastos) {
+    // Sumar lo que pagÃ³ cada persona (convertido a moneda del grupo)
     gastos.forEach(g => {
-      balance[g.paid_by] = (balance[g.paid_by] || 0) + parseFloat(g.amount);
+      const monto = parseFloat(g.amount);
+      const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+      const tasa = parseFloat(g.exchange_rate) || 1;
+
+      let montoConvertido = monto;
+      if (monedaGasto !== monedaGrupo) {
+        montoConvertido = monto * tasa;
+      }
+
+      balance[g.paid_by] = (balance[g.paid_by] || 0) + montoConvertido;
     });
 
     const expenseIds = gastos.map(g => g.id);
     if (expenseIds.length > 0) {
       const { data: splits } = await supabase
         .from('expense_splits')
-        .select('user_id, amount_owed')
+        .select('user_id, amount_owed, expense_id')
         .in('expense_id', expenseIds);
+
+      const monedaPorExpense = {};
+      gastos.forEach(g => monedaPorExpense[g.id] = {
+        moneda: (g.currency || monedaGrupo).toUpperCase(),
+        tasa: parseFloat(g.exchange_rate) || 1
+      });
 
       if (splits) {
         splits.forEach(s => {
-          balance[s.user_id] = (balance[s.user_id] || 0) - parseFloat(s.amount_owed);
+          const info = monedaPorExpense[s.expense_id];
+          const monto = parseFloat(s.amount_owed);
+          let montoConvertido = monto;
+          if (info && info.moneda !== monedaGrupo) {
+            montoConvertido = monto * info.tasa;
+          }
+          balance[s.user_id] = (balance[s.user_id] || 0) - montoConvertido;
         });
       }
     }
   }
 
+  // Settlements
   const { data: pagos } = await supabase
     .from('settlements')
-    .select('from_user, to_user, amount')
+    .select('from_user, to_user, amount, currency, group_id')
     .eq('group_id', groupId);
 
   if (pagos) {
     pagos.forEach(p => {
-      balance[p.from_user] = (balance[p.from_user] || 0) + parseFloat(p.amount);
-      balance[p.to_user] = (balance[p.to_user] || 0) - parseFloat(p.amount);
+      const monto = parseFloat(p.amount);
+      const monedaPago = (p.currency || monedaGrupo).toUpperCase();
+      // Asumimos que settlements estÃ¡n en la moneda del grupo
+      balance[p.from_user] = (balance[p.from_user] || 0) + monto;
+      balance[p.to_user] = (balance[p.to_user] || 0) - monto;
     });
   }
 
   return balance;
 }
-
 // ==========================================
 // 2. SIMPLIFICAR DEUDAS
 // ==========================================
