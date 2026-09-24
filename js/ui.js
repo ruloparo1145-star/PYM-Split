@@ -51,7 +51,13 @@ import { initGuestbook } from './guestbook.js';
   initManualModal();
   initGuestbook();
   initDashboardTabs();
-  initChartHistoryModal();
+
+  // Inicializar el modal del historico (con delay para asegurar que el DOM este listo)
+  setTimeout(() => {
+    initChartHistoryModal();
+  }, 100);
+
+  console.log('PYM Split iniciado correctamente');
 })();
 
 // ==========================================
@@ -81,27 +87,50 @@ function initManualModal() {
 // 3. MODAL: GRAFICO HISTORICO
 // ==========================================
 function initChartHistoryModal() {
-  const btnVer = document.getElementById('btn-ver-grafico');
+  const btnVer = document.getElementById('btn-ver-historico');
   const modal = document.getElementById('modal-chart-history');
   const btnClose = document.getElementById('btn-close-chart-history');
 
-  btnVer?.addEventListener('click', () => {
+  console.log('Inicializando modal historico...');
+  console.log('btn-ver-historico:', btnVer);
+  console.log('modal-chart-history:', modal);
+
+  if (!btnVer) {
+    console.warn('Boton "Ver historico" no encontrado');
+    return;
+  }
+
+  if (!modal) {
+    console.warn('Modal "modal-chart-history" no encontrado');
+    return;
+  }
+
+  // Remover listeners previos (por si se llama 2 veces)
+  const nuevoBtn = btnVer.cloneNode(true);
+  btnVer.parentNode.replaceChild(nuevoBtn, btnVer);
+
+  nuevoBtn.addEventListener('click', () => {
+    console.log('Click en Ver historico');
     modal.classList.remove('hidden');
-    // Forzar redibujado del chart (el canvas puede tener tamaÃ±o 0 al inicio)
+    // Forzar resize del chart despues de abrir
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
-    }, 100);
+    }, 200);
   });
 
-  btnClose?.addEventListener('click', () => {
-    modal.classList.add('hidden');
-  });
+  if (btnClose) {
+    btnClose.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+  }
 
-  modal?.addEventListener('click', (e) => {
+  modal.addEventListener('click', (e) => {
     if (e.target.id === 'modal-chart-history') {
       modal.classList.add('hidden');
     }
   });
+
+  console.log('Modal historico inicializado OK');
 }
 
 // ==========================================
