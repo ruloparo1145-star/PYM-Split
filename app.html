@@ -631,6 +631,28 @@
         </section>
 
         <section class="manual-section">
+          <h4>Libro de visitas</h4>
+          <p>Dejanos tu comentario, sugerencia o saludo. Todos los usuarios pueden leer los comentarios.</p>
+
+          <form id="form-guestbook" style="margin-top: 12px; margin-bottom: 20px;">
+            <div class="form-group">
+              <textarea id="guestbook-message" placeholder="Escribi tu comentario..." rows="3" maxlength="500" required style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; outline: none;"></textarea>
+              <small style="color: #a0aec0; font-size: 0.75rem; text-align: right; display: block; margin-top: 4px;">
+                Maximo 500 caracteres
+              </small>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+              <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px;">Publicar</button>
+            </div>
+            <p id="guestbook-error" class="error-msg" style="text-align: left;"></p>
+          </form>
+
+          <div id="guestbook-list" style="margin-top: 15px;">
+            <p class="placeholder-text">Cargando comentarios...</p>
+          </div>
+        </section>
+        
+        <section class="manual-section">
           <h4>Preguntas frecuentes</h4>
           <p><strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.</p>
           <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.</p>
