@@ -293,7 +293,7 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
 }
 
 // ==========================================
-// HISTORICO POR MES
+// HISTORICO POR MES (dentro del modal)
 // ==========================================
 async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
   const tableContainer = document.getElementById('history-table');
