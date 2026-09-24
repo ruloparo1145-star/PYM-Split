@@ -1307,3 +1307,101 @@ body {
   border-color: #2ecc87 !important;
   box-shadow: 0 0 0 3px rgba(46, 204, 135, 0.15);
 }
+/* ==========================================
+   27. DASHBOARD TABS
+   ========================================== */
+.dashboard-tabs {
+  display: flex;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  gap: 4px;
+}
+
+.dash-tab {
+  flex: 1;
+  padding: 10px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #718096;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.dash-tab:hover {
+  background: #f7fafc;
+  color: #2ecc87;
+}
+
+.dash-tab.active {
+  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(46, 204, 135, 0.3);
+}
+
+@media (max-width: 480px) {
+  .dash-tab {
+    font-size: 0.7rem;
+    padding: 8px 4px;
+  }
+}
+
+/* ==========================================
+   28. HISTORICO POR MES
+   ========================================== */
+.history-table-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  transition: background 0.15s;
+}
+
+.history-row:hover {
+  background: #f7fafc;
+}
+
+.history-row-total {
+  background: #f0fdf4;
+  font-weight: 700;
+  border: 1px solid #c6f6d5;
+  margin-top: 6px;
+}
+
+.history-month {
+  flex: 1;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.history-count {
+  color: #718096;
+  font-size: 0.75rem;
+}
+
+.history-total {
+  color: #2ecc87;
+  font-weight: 700;
+  min-width: 100px;
+  text-align: right;
+}
+
+.history-row-total .history-total {
+  color: #14532d;
+  font-size: 0.95rem;
+}
