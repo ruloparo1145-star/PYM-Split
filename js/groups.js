@@ -366,10 +366,34 @@ export function initGroupModal() {
   const form = document.getElementById('form-group');
   const errorMsg = document.getElementById('group-error');
 
-  btnNew?.addEventListener('click', () => {
+
+  btnNew?.addEventListener('click', async () => {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
     form.reset();
+
+    // Actualizar label del input de cotizacion manual
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: perfil } = await supabase
+        .from('profiles')
+        .select('preferred_currency')
+        .eq('id', user.id)
+        .single();
+
+      const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
+      const labelEl = document.getElementById('group-manual-rate-label');
+      const currencyEl = document.getElementById('group-manual-rate-currency');
+      if (labelEl) labelEl.textContent = `1 ${monedaUsuario} =`;
+      if (currencyEl) currencyEl.textContent = 'Moneda grupo';
+    }
+  });
+
+  // Escuchar cambio de moneda del grupo
+  const selectCurrency = document.getElementById('group-currency');
+  selectCurrency?.addEventListener('change', (e) => {
+    const currencyEl = document.getElementById('group-manual-rate-currency');
+    if (currencyEl) currencyEl.textContent = e.target.value || 'ARS';
   });
 
   btnCancel?.addEventListener('click', () => {
