@@ -123,11 +123,21 @@ export function simplificarDeudas(balance) {
 // ==========================================
 // 3. RENDERIZAR BALANCE
 // ==========================================
+
 export async function mostrarBalance(groupId) {
   const container = document.getElementById('group-balance');
   if (!container) return;
   container.innerHTML = '<p class="placeholder-text">Calculando...</p>';
 
+  // Obtener moneda del grupo
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+  
   const balance = await calcularBalance(groupId);
   const userIds = Object.keys(balance);
 
