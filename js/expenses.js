@@ -1,6 +1,6 @@
 // js/expenses.js
 import { supabase } from './supabase.js';
-import { obtenerTasa } from './currency.js';
+import { obtenerTasa, convertirMontoConGrupo } from './currency.js';
 
 // ==========================================
 // CATEGORIAS E ICONOS
@@ -69,7 +69,6 @@ export async function cargarMiembrosDelGrupo(groupId) {
   selectPaidBy.innerHTML = '<option value="">Seleccionar quien pago...</option>' +
     miembros.map(m => `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`).join('');
 
-  // Establecer la moneda del grupo como default
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -273,11 +272,11 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       split_type: 'shares'
     }));
   }
-  
-const categoria = document.getElementById('expense-category')?.value || 'otros';
+
+  const categoria = document.getElementById('expense-category')?.value || 'otros';
   const monedaGasto = (document.getElementById('expense-currency')?.value || 'EUR').toUpperCase();
 
-  // Obtener info del grupo
+  // Obtener info del grupo (moneda + cotizacion manual)
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency, manual_exchange_rate')
@@ -287,16 +286,15 @@ const categoria = document.getElementById('expense-category')?.value || 'otros';
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
   const manualRateUSD = grupoInfo?.manual_exchange_rate;
 
-  // Calcular exchange_rate del momento
+  // Calcular exchange_rate del momento (con fallback a manual)
   let exchangeRate = 1;
   if (monedaGasto !== monedaGrupo) {
-    const { convertirMontoConGrupo } = await import('./currency.js');
     const resultado = await convertirMontoConGrupo(1, monedaGasto, monedaGrupo, manualRateUSD);
     if (resultado.convertido) {
       exchangeRate = resultado.monto;
     }
   }
-  
+
   const { data: gasto, error: gastoError } = await supabase
     .from('expenses')
     .insert([{
@@ -371,7 +369,6 @@ export async function cargarGastosDelGrupo(groupId) {
   const nombres = {};
   (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
 
-  // Obtener moneda del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -570,7 +567,6 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
   const cat = getCategoria(gasto.category);
 
-  // Obtener moneda del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -719,7 +715,6 @@ export async function guardarEdicionGasto() {
   errorMsg.textContent = '';
 
   try {
-    // Obtener info del gasto (para conocer el grupo)
     const { data: gastoActual } = await supabase
       .from('expenses')
       .select('group_id')
@@ -730,15 +725,18 @@ export async function guardarEdicionGasto() {
     if (gastoActual) {
       const { data: grupoInfo } = await supabase
         .from('groups')
-        .select('currency')
+        .select('currency, manual_exchange_rate')
         .eq('id', gastoActual.group_id)
         .single();
 
       const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+      const manualRateUSD = grupoInfo?.manual_exchange_rate;
 
       if (monedaGasto !== monedaGrupo) {
-        const tasa = await obtenerTasa(monedaGasto, monedaGrupo);
-        if (tasa !== null) exchangeRate = tasa;
+        const resultado = await convertirMontoConGrupo(1, monedaGasto, monedaGrupo, manualRateUSD);
+        if (resultado.convertido) {
+          exchangeRate = resultado.monto;
+        }
       }
     }
 
