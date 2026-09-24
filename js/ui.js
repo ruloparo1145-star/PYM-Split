@@ -6,6 +6,7 @@ import { initExpenseModal, initFiltroCategoria } from './expenses.js';
 import { initAddMemberModal } from './members.js';
 import { cargarDashboard } from './dashboard.js';
 import { initProfileModal } from './profile.js';
+import { initGuestbook } from './guestbook.js';
 
 // ==========================================
 // 1. PROTEGER LA RUTA Y CARGAR DATOS
