@@ -1,746 +1,760 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PYM Split - Dashboard</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="icon" href="icon-192.png">
-  <link rel="stylesheet" href="css/style.css">
+// js/groups.js
+import { supabase } from './supabase.js';
+import { convertirMonto } from './currency.js';
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+let mostrarArchivados = false;
 
-  <script type="importmap">
-  {
-    "imports": {
-      "@supabase/supabase-js": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm"
+// Cache de la moneda preferida del usuario
+let monedaPreferidaCache = null;
+
+async function getMonedaPreferida() {
+  if (monedaPreferidaCache) return monedaPreferidaCache;
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: perfil } = await supabase
+    .from('profiles')
+    .select('preferred_currency')
+    .eq('id', user.id)
+    .single();
+
+  monedaPreferidaCache = (perfil?.preferred_currency || 'EUR').toUpperCase();
+  return monedaPreferidaCache;
+}
+
+// ==========================================
+// HELPERS DE FECHAS
+// ==========================================
+function formatearFecha(fechaStr) {
+  if (!fechaStr) return '';
+  const [y, m, d] = fechaStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function formatearRangoFechas(inicio, fin) {
+  if (!inicio && !fin) return '';
+  if (inicio && !fin) return `Desde ${formatearFecha(inicio)}`;
+  if (!inicio && fin) return `Hasta ${formatearFecha(fin)}`;
+  return `${formatearFecha(inicio)} - ${formatearFecha(fin)}`;
+}
+
+// ==========================================
+// CALCULAR TOTAL DE UN GRUPO + MI PARTE
+// ==========================================
+async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed) {
+  const { data: gastos } = await supabase
+    .from('expenses')
+    .select('id, amount, currency, exchange_rate')
+    .eq('group_id', groupId);
+
+  if (!gastos || gastos.length === 0) {
+    return { total: 0, miParte: 0, count: 0, congelado: false };
+  }
+
+  // 1. Total del grupo
+  let total = 0;
+  const monedaPorGasto = {};
+
+  gastos.forEach(g => {
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+
+    monedaPorGasto[g.id] = { monedaGasto, tasa };
+
+    if (monedaGasto === monedaGrupo) {
+      total += monto;
+    } else {
+      total += monto * tasa;
+    }
+  });
+
+  // 2. Mi parte (splits del usuario)
+  const { data: { user } } = await supabase.auth.getUser();
+  let miParte = 0;
+
+  if (user) {
+    const expIds = gastos.map(g => g.id);
+    const { data: splits } = await supabase
+      .from('expense_splits')
+      .select('amount_owed, expense_id')
+      .in('expense_id', expIds)
+      .eq('user_id', user.id);
+
+    (splits || []).forEach(s => {
+      const info = monedaPorGasto[s.expense_id];
+      if (!info) return;
+
+      const monto = parseFloat(s.amount_owed) || 0;
+      if (info.monedaGasto === monedaGrupo) {
+        miParte += monto;
+      } else {
+        miParte += monto * info.tasa;
+      }
+    });
+  }
+
+  // 3. Si esta cerrado, usar closed_total
+  const totalFinal = (dateClosed && closedTotal != null)
+    ? parseFloat(closedTotal)
+    : total;
+
+  return {
+    total: totalFinal,
+    miParte,
+    count: gastos.length,
+    congelado: !!(dateClosed && closedTotal != null)
+  };
+}
+
+// ==========================================
+// 1. CARGAR GRUPOS
+// ==========================================
+export async function cargarGrupos() {
+  const groupsList = document.getElementById('groups-list');
+  const headerTitle = document.querySelector('#groups-section h3');
+  const btnToggle = document.getElementById('btn-toggle-archived');
+  const btnNew = document.getElementById('btn-new-group');
+
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) throw new Error('Usuario no autenticado');
+
+    const { data: grupos, error } = await supabase
+      .from('groups')
+      .select('*')
+      .eq('archived', mostrarArchivados)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    if (headerTitle) {
+      headerTitle.textContent = mostrarArchivados ? 'Grupos Archivados' : 'Mis Grupos';
+    }
+    if (btnToggle) {
+      btnToggle.textContent = mostrarArchivados ? 'Ver activos' : 'Archivados';
+    }
+    if (btnNew) {
+      btnNew.style.display = mostrarArchivados ? 'none' : 'inline-block';
+    }
+
+    if (!grupos || grupos.length === 0) {
+      groupsList.innerHTML = mostrarArchivados
+        ? '<p class="placeholder-text">No tienes grupos archivados.</p>'
+        : '<p class="placeholder-text">Aun no tienes grupos. Crea uno nuevo!</p>';
+      return;
+    }
+
+    groupsList.innerHTML = '<p class="placeholder-text">Calculando totales...</p>';
+
+    const monedaUsuario = await getMonedaPreferida();
+
+    const gruposConTotales = await Promise.all(grupos.map(async (grupo) => {
+      const monedaGrupo = (grupo.currency || 'EUR').toUpperCase();
+      const info = await calcularTotalGrupo(
+        grupo.id,
+        monedaGrupo,
+        grupo.closed_total,
+        grupo.date_closed
+      );
+
+      let miParteConvertida = null;
+      if (monedaUsuario && monedaUsuario !== monedaGrupo && info.miParte > 0) {
+        const r = await convertirMonto(info.miParte, monedaGrupo, monedaUsuario);
+        if (r.convertido) {
+          miParteConvertida = r.monto;
+        }
+      }
+
+      return { ...grupo, ...info, monedaGrupo, miParteConvertida, monedaUsuario };
+    }));
+
+    groupsList.innerHTML = gruposConTotales.map(grupo => {
+      const rango = formatearRangoFechas(grupo.date_start, grupo.date_end);
+      const cerrado = !!grupo.date_closed;
+
+      let totalesHTML = '';
+      if (grupo.count > 0 || cerrado) {
+        const totalTexto = `${grupo.total.toFixed(2)} ${grupo.monedaGrupo}`;
+        const miParteTexto = `${grupo.miParte.toFixed(2)} ${grupo.monedaGrupo}`;
+        const countTexto = grupo.count > 0 ? ` (${grupo.count} gastos)` : '';
+
+        let conversionHTML = '';
+        if (grupo.miParteConvertida != null) {
+          conversionHTML = ` <span class="group-mi-parte-conv">(~${grupo.miParteConvertida.toFixed(2)} ${grupo.monedaUsuario})</span>`;
+        }
+
+        totalesHTML = `
+          <span class="group-total">Total: ${totalTexto}${countTexto}</span>
+          <span class="group-mi-parte">Mi parte: ${miParteTexto}${conversionHTML}</span>
+        `;
+      }
+
+      return `
+        <div class="group-card ${grupo.archived ? 'archived' : ''}" data-id="${grupo.id}">
+          <div class="group-info">
+            <h4>${grupo.name}</h4>
+            <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.monedaGrupo}</span>
+            ${rango ? `<span class="group-dates">${rango}</span>` : ''}
+            ${totalesHTML}
+            ${grupo.archived ? '<span class="badge-archived">Archivado</span>' : ''}
+            ${cerrado ? '<span class="badge-closed">Cerrado</span>' : ''}
+          </div>
+          <div class="group-actions">
+            ${grupo.archived 
+              ? `<button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${grupo.name}" title="Eliminar">&#128465;</button>
+                 <button class="btn-small btn-restore" data-id="${grupo.id}" title="Restaurar">&#8634;</button>` 
+              : `<button class="btn-small btn-archive" data-id="${grupo.id}" title="Archivar">&#128230;</button>`
+            }
+            <span class="group-arrow">></span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    groupsList.querySelectorAll('.group-card').forEach(card => {
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-archive') || e.target.closest('.btn-restore') || e.target.closest('.btn-delete')) return;
+        abrirDetalleGrupo(card.dataset.id);
+      });
+    });
+
+    groupsList.querySelectorAll('.btn-archive').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await archivarGrupo(btn.dataset.id, true);
+        await cargarGrupos();
+      });
+    });
+
+    groupsList.querySelectorAll('.btn-restore').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await archivarGrupo(btn.dataset.id, false);
+        await cargarGrupos();
+      });
+    });
+
+    groupsList.querySelectorAll('.btn-delete').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const groupId = btn.dataset.id;
+        const groupName = btn.dataset.name;
+        if (!confirm(`Eliminar el grupo "${groupName}" y TODOS sus datos? Esta accion no se puede deshacer.`)) return;
+        await eliminarGrupo(groupId);
+        await cargarGrupos();
+      });
+    });
+
+  } catch (error) {
+    console.error('Error detallado:', error);
+    groupsList.innerHTML = `<p class="error-msg">Error: ${error.message || 'No se pudo conectar con Supabase'}</p>`;
+  }
+}
+
+// ==========================================
+// 2. ARCHIVAR / DESARCHIVAR GRUPO
+// ==========================================
+export async function archivarGrupo(groupId, archivar) {
+  const { error } = await supabase
+    .from('groups')
+    .update({ archived: archivar })
+    .eq('id', groupId);
+
+  if (error) {
+    alert('Error al ' + (archivar ? 'archivar' : 'restaurar') + ': ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 3. ELIMINAR GRUPO
+// ==========================================
+export async function eliminarGrupo(groupId) {
+  const { error } = await supabase
+    .from('groups')
+    .delete()
+    .eq('id', groupId);
+
+  if (error) {
+    alert('Error al eliminar el grupo: ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 4. TOGGLE ARCHIVADOS
+// ==========================================
+export function toggleArchivados() {
+  mostrarArchivados = !mostrarArchivados;
+  cargarGrupos();
+}
+
+// ==========================================
+// 5. CREAR GRUPO
+// ==========================================
+export async function crearGrupo(nombre, tipo, moneda) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Usuario no autenticado');
+
+  const dateStart = document.getElementById('group-date-start')?.value || null;
+  const dateEnd = document.getElementById('group-date-end')?.value || null;
+
+  const { data: groupData, error: groupError } = await supabase
+    .from('groups')
+    .insert([{
+      name: nombre,
+      type: tipo,
+      currency: moneda,
+      created_by: user.id,
+      owner_id: user.id,
+      date_start: dateStart,
+      date_end: dateEnd
+    }])
+    .select()
+    .single();
+
+  if (groupError) throw groupError;
+
+  return groupData;
+}
+
+// ==========================================
+// 6. MODAL CREAR GRUPO
+// ==========================================
+export function initGroupModal() {
+  const modal = document.getElementById('modal-group');
+  const btnNew = document.getElementById('btn-new-group');
+  const btnCancel = document.getElementById('btn-cancel-group');
+  const form = document.getElementById('form-group');
+  const errorMsg = document.getElementById('group-error');
+
+  btnNew?.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+    errorMsg.textContent = '';
+    form.reset();
+  });
+
+  btnCancel?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) modal.classList.add('hidden');
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.textContent = '';
+    const btnSubmit = form.querySelector('button[type="submit"]');
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Creando...';
+
+    const nombre = document.getElementById('group-name').value.trim();
+    const tipo = document.getElementById('group-type').value;
+    const moneda = document.getElementById('group-currency').value;
+
+    try {
+      await crearGrupo(nombre, tipo, moneda);
+      modal.classList.add('hidden');
+      await cargarGrupos();
+    } catch (error) {
+      errorMsg.textContent = 'Error al crear el grupo: ' + error.message;
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = 'Crear Grupo';
+    }
+  });
+}
+
+// ==========================================
+// 7. INICIALIZAR BOTON "ARCHIVADOS"
+// ==========================================
+export function initArchivedToggle() {
+  const btn = document.getElementById('btn-toggle-archived');
+  btn?.addEventListener('click', () => {
+    toggleArchivados();
+  });
+}
+
+// ==========================================
+// 8. ABRIR DETALLE DEL GRUPO
+// ==========================================
+async function abrirDetalleGrupo(groupId) {
+  const { cargarGastosDelGrupo } = await import('./expenses.js');
+  const { mostrarBalance } = await import('./debtSolver.js');
+  const { cargarMiembrosDelGrupo } = await import('./members.js');
+  const { cargarHistorial } = await import('./history.js');
+  const { cargarGraficos } = await import('./charts.js');
+
+  const modal = document.getElementById('modal-group-detail');
+
+  const { data: grupo } = await supabase
+    .from('groups')
+    .select('name, archived, currency, date_start, date_end, date_closed, closed_total')
+    .eq('id', groupId)
+    .single();
+
+  document.getElementById('detail-group-name').textContent = grupo ? grupo.name : 'Detalle';
+  modal.dataset.groupId = groupId;
+  modal.dataset.groupName = grupo ? grupo.name : 'Grupo';
+  modal.dataset.groupCurrency = (grupo?.currency || 'EUR').toUpperCase();
+
+  const selectFiltro = document.getElementById('filter-category');
+  if (selectFiltro) selectFiltro.value = '';
+
+  // Total del grupo
+  const monedaGrupo = (grupo?.currency || 'EUR').toUpperCase();
+  const infoTotal = await calcularTotalGrupo(
+    groupId,
+    monedaGrupo,
+    grupo?.closed_total,
+    grupo?.date_closed
+  );
+
+  // Convertir mi parte
+  const monedaUsuario = await getMonedaPreferida();
+  let miParteConvertida = null;
+
+  if (monedaUsuario && monedaUsuario !== monedaGrupo && infoTotal.miParte > 0) {
+    const r = await convertirMonto(infoTotal.miParte, monedaGrupo, monedaUsuario);
+    if (r.convertido) {
+      miParteConvertida = r.monto;
     }
   }
-  </script>
-</head>
-<body class="app-body">
-  <div class="app-container">
-    <header class="app-header">
-      <div class="header-left">
-        <img src="icon-192.png" alt="PYM Split" class="header-logo">
-        <h1>PYM Split</h1>
-      </div>
-      <div class="header-right">
-        <button id="btn-manual" class="btn-small" title="Manual de uso">?</button>
-        <button id="btn-friends" class="btn-small">Amigos</button>
-        <button id="btn-profile" class="btn-small">Perfil</button>
-        <button id="btn-logout" class="btn-logout">Salir</button>
-      </div>
-    </header>
 
-    <main class="app-main">
-      <div class="welcome-section">
-        <h2 id="welcome-message">Hola, ...</h2>
-        <p>Bienvenido a tu gestor de gastos</p>
-      </div>
+  actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida, monedaUsuario);
+  actualizarBotonesComputo(grupo, groupId);
 
-      <div class="dashboard-tabs">
-        <button class="dash-tab active" data-range="month">Mes actual</button>
-        <button class="dash-tab" data-range="3months">3 meses</button>
-        <button class="dash-tab" data-range="year">Este ano</button>
-        <button class="dash-tab" data-range="all">Todo</button>
-      </div>
-      
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Total gastado este mes</div>
-          <div class="stat-value" id="stat-total-mes">0.00 EUR</div>
-        </div>
-        <div class="stat-card stat-positive">
-          <div class="stat-label">Te deben</div>
-          <div class="stat-value" id="stat-te-deben">0.00 EUR</div>
-        </div>
-        <div class="stat-card stat-negative">
-          <div class="stat-label">Debes</div>
-          <div class="stat-value" id="stat-debes">0.00 EUR</div>
-        </div>
-      </div>
+  modal.classList.remove('hidden');
+  await cargarGastosDelGrupo(groupId);
+  await mostrarBalance(groupId);
+  await cargarMiembrosDelGrupo(groupId);
+  await cargarHistorial(groupId);
+  await cargarGraficos(groupId);
+}
 
-      <div class="section-card">
-        <div class="section-header">
-          <h3>Ultimos movimientos</h3>
-        </div>
-        <div id="dashboard-recent">
-          <p class="placeholder-text">Cargando...</p>
-        </div>
-      </div>
+// ==========================================
+// 9. ACTUALIZAR INFO DEL GRUPO
+// ==========================================
+function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = null, monedaUsuario = null) {
+  const badgesContainer = document.getElementById('group-info-badges');
+  if (!badgesContainer) return;
 
-<div class="section-card">
-        <div class="section-header">
-          <h3>Historico por mes</h3>
-        </div>
-        <div class="chart-container" style="height: 220px; max-width: 100%; margin-bottom: 15px;">
-          <canvas id="chart-history"></canvas>
-        </div>
-        <div id="history-table">
-          <p class="placeholder-text">Cargando historial...</p>
-        </div>
-      </div>
-      
-      <div class="section-card" id="groups-section">
-        <div class="section-header">
-          <h3>Mis Grupos</h3>
-          <div style="display: flex; gap: 6px;">
-            <button id="btn-toggle-archived" class="btn-small" style="background: #fefcbf; color: #b7791f;">Archivados</button>
-            <button id="btn-new-group" class="btn-small">+ Nuevo</button>
-          </div>
-        </div>
-        <div id="groups-list">
-          <p class="placeholder-text">Cargando grupos...</p>
-        </div>
-      </div>
-    </main>
+  if (!grupo) {
+    badgesContainer.innerHTML = '';
+    return;
+  }
 
-    <button id="fab-add" class="fab" title="Anadir Gasto">+</button>
-  </div>
+  const rango = formatearRangoFechas(grupo.date_start, grupo.date_end);
+  const cerrado = !!grupo.date_closed;
 
-  <!-- MODAL: Crear Grupo -->
-  <div id="modal-group" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h3>Crear Nuevo Grupo</h3>
-      <form id="form-group">
-        <div class="form-group">
-          <label for="group-name">Nombre del Grupo</label>
-          <input type="text" id="group-name" placeholder="Ej: Viaje a Bariloche" required>
-        </div>
-        <div class="form-group">
-          <label for="group-type">Tipo</label>
-          <select id="group-type" required>
-            <option value="viaje">Viaje</option>
-            <option value="depto">Departamento</option>
-            <option value="salidas">Salidas</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="group-currency">Moneda</label>
-          <select id="group-currency" required>
-            <option value="EUR">EUR - Euro</option>
-            <option value="USD">USD - Dolar estadounidense</option>
-            <option value="ARS">ARS - Peso argentino</option>
-            <option value="MXN">MXN - Peso mexicano</option>
-            <option value="BRL">BRL - Real brasileno</option>
-            <option value="CLP">CLP - Peso chileno</option>
-            <option value="COP">COP - Peso colombiano</option>
-            <option value="PEN">PEN - Sol peruano</option>
-            <option value="UYU">UYU - Peso uruguayo</option>
-            <option value="BOB">BOB - Boliviano</option>
-            <option value="PYG">PYG - Guarani paraguayo</option>
-            <option value="VES">VES - Bolivar venezolano</option>
-            <option value="PAB">PAB - Balboa panameno</option>
-            <option value="CRC">CRC - Colon costarricense</option>
-            <option value="GTQ">GTQ - Quetzal guatemalteco</option>
-            <option value="DOP">DOP - Peso dominicano</option>
-            <option value="HNL">HNL - Lempira hondurena</option>
-            <option value="NIO">NIO - Cordoba nicaraguense</option>
-            <option value="CUP">CUP - Peso cubano</option>
-            <option value="CAD">CAD - Dolar canadiense</option>
-            <option value="GBP">GBP - Libra esterlina</option>
-            <option value="CHF">CHF - Franco suizo</option>
-            <option value="NOK">NOK - Corona noruega</option>
-            <option value="SEK">SEK - Corona sueca</option>
-            <option value="DKK">DKK - Corona danesa</option>
-            <option value="PLN">PLN - Zloty polaco</option>
-            <option value="CZK">CZK - Corona checa</option>
-            <option value="HUF">HUF - Forinto hungaro</option>
-            <option value="RON">RON - Leu rumano</option>
-            <option value="BGN">BGN - Lev bulgaro</option>
-            <option value="TRY">TRY - Lira turca</option>
-            <option value="RUB">RUB - Rublo ruso</option>
-            <option value="UAH">UAH - Grivna ucraniana</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="group-date-start">Fecha de inicio (opcional)</label>
-          <input type="date" id="group-date-start">
-        </div>
-        <div class="form-group">
-          <label for="group-date-end">Fecha de fin (opcional)</label>
-          <input type="date" id="group-date-end">
-        </div>
-        <p id="group-error" class="error-msg"></p>
-        <div class="modal-actions">
-          <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
-          <button type="submit" class="btn-primary">Crear Grupo</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  let html = '';
 
-  <!-- MODAL: Amigos -->
-  <div id="modal-friends" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 500px;">
-      <h3>Gestion de Amigos</h3>
-      <form id="form-add-friend" style="margin-bottom: 20px;">
-        <div class="form-group">
-          <label for="friend-email">Agregar amigo por email</label>
-          <div style="display: flex; gap: 10px;">
-            <input type="email" id="friend-email" placeholder="amigo@email.com" required style="flex:1;">
-            <button type="submit" class="btn-primary" style="width: auto; padding: 0 20px;">Enviar</button>
-          </div>
-          <p id="friend-error" class="error-msg" style="text-align: left; margin-top: 5px;"></p>
+  if (rango) {
+    html += `<p class="group-date-info">${rango}</p>`;
+  }
+
+  const sinGastos = infoTotal.count === 0;
+
+  let conversionHTML = '';
+  if (miParteConvertida != null) {
+    conversionHTML = `<p class="group-total-conv">~${miParteConvertida.toFixed(2)} ${monedaUsuario}</p>`;
+  }
+
+  html += `
+    <div class="group-total-box">
+      <div class="group-total-row">
+        <div class="group-total-col">
+          <p class="group-total-label">
+            ${cerrado ? 'Total final' : 'Total del viaje'}
+          </p>
+          <p class="group-total-value">
+            ${sinGastos ? '0.00' : infoTotal.total.toFixed(2)} ${monedaGrupo}
+          </p>
+          ${!sinGastos ? `<p class="group-total-count">(${infoTotal.count} gastos)</p>` : ''}
         </div>
-      </form>
-      <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
-        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Solicitudes Pendientes</h4>
-        <div id="friend-requests-list"><p class="placeholder-text">Cargando...</p></div>
-      </div>
-      <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
-        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Mis Amigos</h4>
-        <div id="friends-list"><p class="placeholder-text">Cargando...</p></div>
-      </div>
-      <div class="modal-actions">
-        <button type="button" id="btn-cancel-friends" class="btn-secondary">Cerrar</button>
+        <div class="group-total-divider"></div>
+        <div class="group-total-col">
+          <p class="group-total-label">Mi parte</p>
+          <p class="group-total-value group-total-value-mia">
+            ${infoTotal.miParte.toFixed(2)} ${monedaGrupo}
+          </p>
+          ${conversionHTML}
+        </div>
       </div>
     </div>
-  </div>
+  `;
 
-  <!-- MODAL: Anadir Gasto -->
-  <div id="modal-expense" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h3>Nuevo Gasto</h3>
-      <form id="form-expense">
-        <div class="form-group">
-          <label for="expense-description">Que fue?</label>
-          <input type="text" id="expense-description" placeholder="Ej: Cena en el restaurante" required>
-        </div>
-        <div class="form-group">
-          <label for="expense-amount">Monto</label>
-          <input type="number" id="expense-amount" placeholder="0.00" step="0.01" min="0.01" required>
-        </div>
-        <div class="form-group">
-          <label for="expense-group">Grupo</label>
-          <select id="expense-group" required><option value="">Seleccionar grupo...</option></select>
-        </div>
-        <div class="form-group">
-          <label for="expense-paid-by">Quien pago?</label>
-          <select id="expense-paid-by" required><option value="">Seleccionar quien pago...</option></select>
-        </div>
-        <div class="form-group">
-          <label for="expense-currency">Moneda</label>
-          <select id="expense-currency" required>
-            <option value="EUR">EUR - Euro</option>
-            <option value="USD">USD - Dolar estadounidense</option>
-            <option value="ARS">ARS - Peso argentino</option>
-            <option value="MXN">MXN - Peso mexicano</option>
-            <option value="BRL">BRL - Real brasileno</option>
-            <option value="CLP">CLP - Peso chileno</option>
-            <option value="COP">COP - Peso colombiano</option>
-            <option value="PEN">PEN - Sol peruano</option>
-            <option value="UYU">UYU - Peso uruguayo</option>
-            <option value="BOB">BOB - Boliviano</option>
-            <option value="PYG">PYG - Guarani paraguayo</option>
-            <option value="VES">VES - Bolivar venezolano</option>
-            <option value="PAB">PAB - Balboa panameno</option>
-            <option value="CRC">CRC - Colon costarricense</option>
-            <option value="GTQ">GTQ - Quetzal guatemalteco</option>
-            <option value="DOP">DOP - Peso dominicano</option>
-            <option value="HNL">HNL - Lempira hondurena</option>
-            <option value="NIO">NIO - Cordoba nicaraguense</option>
-            <option value="CUP">CUP - Peso cubano</option>
-            <option value="CAD">CAD - Dolar canadiense</option>
-            <option value="GBP">GBP - Libra esterlina</option>
-            <option value="CHF">CHF - Franco suizo</option>
-            <option value="NOK">NOK - Corona noruega</option>
-            <option value="SEK">SEK - Corona sueca</option>
-            <option value="DKK">DKK - Corona danesa</option>
-            <option value="PLN">PLN - Zloty polaco</option>
-            <option value="CZK">CZK - Corona checa</option>
-            <option value="HUF">HUF - Forinto hungaro</option>
-            <option value="RON">RON - Leu rumano</option>
-            <option value="BGN">BGN - Lev bulgaro</option>
-            <option value="TRY">TRY - Lira turca</option>
-            <option value="RUB">RUB - Rublo ruso</option>
-            <option value="UAH">UAH - Grivna ucraniana</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="expense-category">Categoria</label>
-          <select id="expense-category">
-            <option value="otros">&#128176; Otros</option>
-            <option value="comida">&#127829; Comida</option>
-            <option value="transporte">&#128663; Transporte</option>
-            <option value="alojamiento">&#127968; Alojamiento</option>
-            <option value="supermercado">&#128722; Supermercado</option>
-            <option value="ocio">&#127881; Ocio</option>
-            <option value="salud">&#128138; Salud</option>
-            <option value="servicios">&#128241; Servicios</option>
-            <option value="compras">&#128717; Compras</option>
-            <option value="viajes">&#9992; Viajes</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="split-type">Tipo de division:</label>
-          <select id="split-type" required>
-            <option value="equal">Partes iguales</option>
-            <option value="percentage">Por porcentaje (%)</option>
-            <option value="exact">Montos exactos</option>
-            <option value="shares">Por partes (shares)</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Dividir entre:</label>
-          <div id="expense-split-members" class="split-members-list">
-            <p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Resumen de la division:</label>
-          <div id="split-summary" style="padding: 10px; background: #f8fafc; border-radius: 10px; font-size: 0.85rem; color: #4a5568;">
-            <p>Selecciona un grupo y ajusta los valores.</p>
-          </div>
-        </div>
-        <p id="expense-error" class="error-msg"></p>
-        <div class="modal-actions">
-          <button type="button" id="btn-cancel-expense" class="btn-secondary">Cancelar</button>
-          <button type="submit" class="btn-primary">Guardar Gasto</button>
-        </div>
-      </form>
-    </div>
-  </div>
+  if (cerrado) {
+    html += `<p class="group-closed-date">Cerrado el ${formatearFecha(grupo.date_closed)}</p>`;
+  }
 
-  <!-- MODAL: Detalle del Grupo -->
-  <div id="modal-group-detail" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 600px;">
-      <h3 id="detail-group-name">Detalle del Grupo</h3>
+  badgesContainer.innerHTML = html;
+}
 
-      <div id="group-info-badges" style="text-align: center; margin-bottom: 10px;"></div>
+// ==========================================
+// 10. BOTONES DE COMPUTO
+// ==========================================
+function actualizarBotonesComputo(grupo, groupId) {
+  const btnClose = document.getElementById('btn-close-computo');
+  const btnReopen = document.getElementById('btn-reopen-computo');
+  if (!btnClose || !btnReopen) return;
 
-      <div id="group-action-buttons" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
-        <button id="btn-calculate-today" class="btn-calculate-today">
-          Calcular en moneda de hoy
-        </button>
-        <button id="btn-close-computo" class="btn-close-computo" style="display: none;">
-          Cerrar computo
-        </button>
-        <button id="btn-reopen-computo" class="btn-reopen-computo" style="display: none;">
-          Reabrir
-        </button>
-      </div>
+  const cerrado = grupo && !!grupo.date_closed;
 
-      <div class="balance-section">
-        <h4>Balance</h4>
-        <div id="group-balance"><p class="placeholder-text">Calculando balances...</p></div>
-      </div>
+  if (cerrado) {
+    btnClose.style.display = 'none';
+    btnReopen.style.display = 'inline-block';
+  } else {
+    btnClose.style.display = 'inline-block';
+    btnReopen.style.display = 'none';
+  }
+}
 
-      <div class="expenses-section">
-        <div class="section-header">
-          <h4>Gastos</h4>
-          <button id="btn-add-expense-from-detail" class="btn-small">+ Anadir</button>
-        </div>
-        <div class="form-group" style="margin-bottom: 10px;">
-          <select id="filter-category">
-            <option value="">Todas las categorias</option>
-            <option value="comida">&#127829; Comida</option>
-            <option value="transporte">&#128663; Transporte</option>
-            <option value="alojamiento">&#127968; Alojamiento</option>
-            <option value="supermercado">&#128722; Supermercado</option>
-            <option value="ocio">&#127881; Ocio</option>
-            <option value="salud">&#128138; Salud</option>
-            <option value="servicios">&#128241; Servicios</option>
-            <option value="compras">&#128717; Compras</option>
-            <option value="viajes">&#9992; Viajes</option>
-            <option value="otros">&#128176; Otros</option>
-          </select>
-        </div>
-        <div id="group-expenses-list"><p class="placeholder-text">Cargando gastos...</p></div>
-      </div>
+// ==========================================
+// 11. CERRAR COMPUTO
+// ==========================================
+async function cerrarComputo(groupId) {
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
 
-      <div class="members-section">
-        <div class="section-header">
-          <h4>Miembros</h4>
-          <button id="btn-add-member" class="btn-small">+ Anadir miembro</button>
-        </div>
-        <div id="group-members-list"><p class="placeholder-text">Cargando miembros...</p></div>
-      </div>
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
-      <div class="charts-section">
-        <div class="section-header"><h4>Grafico por persona</h4></div>
-        <div class="chart-container"><canvas id="chart-by-person"></canvas></div>
-      </div>
+  const { data: gastos } = await supabase
+    .from('expenses')
+    .select('amount, currency, exchange_rate')
+    .eq('group_id', groupId);
 
-      <div class="charts-section">
-        <div class="section-header"><h4>Grafico por categoria</h4></div>
-        <div class="chart-container"><canvas id="chart-by-category"></canvas></div>
-      </div>
+  let total = 0;
+  (gastos || []).forEach(g => {
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
 
-      <div class="totals-section">
-        <div class="section-header"><h4>Totales por categoria</h4></div>
-        <div id="group-category-totals"><p class="placeholder-text">Sin datos.</p></div>
-      </div>
+    if (monedaGasto === monedaGrupo) {
+      total += monto;
+    } else {
+      total += monto * tasa;
+    }
+  });
 
-      <div class="history-section">
-        <div class="section-header"><h4>Historial</h4></div>
-        <div id="group-history-list"><p class="placeholder-text">Cargando historial...</p></div>
-      </div>
+  const hoy = new Date().toISOString().split('T')[0];
 
-      <div class="modal-actions">
-        <button type="button" id="btn-close-detail" class="btn-secondary">Cerrar</button>
-      </div>
-    </div>
-  </div>
+  const { error } = await supabase
+    .from('groups')
+    .update({
+      date_closed: hoy,
+      closed_total: parseFloat(total.toFixed(2))
+    })
+    .eq('id', groupId);
 
-  <!-- MODAL: Anadir miembro -->
-  <div id="modal-add-member" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h3>Anadir miembro al grupo</h3>
-      <p style="font-size: 0.85rem; color: #718096; text-align: center; margin-bottom: 15px;">
-        Selecciona un amigo para anadirlo a este grupo
+  if (error) {
+    alert('Error al cerrar computo: ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 12. REABRIR COMPUTO
+// ==========================================
+async function reabrirComputo(groupId) {
+  const { error } = await supabase
+    .from('groups')
+    .update({
+      date_closed: null,
+      closed_total: null
+    })
+    .eq('id', groupId);
+
+  if (error) {
+    alert('Error al reabrir computo: ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 13. CALCULADORA "HOY"
+// ==========================================
+async function abrirCalculadora(groupId, groupName) {
+  const modal = document.getElementById('modal-calculator');
+  const body = document.getElementById('calculator-body');
+  body.innerHTML = '<p class="placeholder-text">Calculando...</p>';
+  modal.classList.remove('hidden');
+
+  try {
+    const { data: grupoInfo } = await supabase
+      .from('groups')
+      .select('currency')
+      .eq('id', groupId)
+      .single();
+
+    const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
+    const { data: gastos } = await supabase
+      .from('expenses')
+      .select('amount, currency, exchange_rate')
+      .eq('group_id', groupId);
+
+    if (!gastos || gastos.length === 0) {
+      body.innerHTML = '<p class="placeholder-text">Este grupo no tiene gastos.</p>';
+      return;
+    }
+
+    const { simularHoy } = await import('./currency.js');
+    const resultado = await simularHoy(gastos, monedaGrupo);
+
+    const difColor = resultado.diferencia > 0.01 ? '#e53e3e'
+                   : resultado.diferencia < -0.01 ? '#38a169'
+                   : '#718096';
+    const difSigno = resultado.diferencia > 0 ? '+' : '';
+    const flecha = resultado.diferencia > 0.01 ? 'subio' : resultado.diferencia < -0.01 ? 'bajo' : 'igual';
+
+    body.innerHTML = `
+      <p style="text-align: center; color: #718096; margin-bottom: 20px;">
+        Grupo: <strong>${groupName}</strong>
       </p>
-      <div id="available-friends-list"><p class="placeholder-text">Cargando amigos...</p></div>
-      <div class="modal-actions">
-        <button type="button" id="btn-cancel-add-member" class="btn-secondary">Cerrar</button>
+
+      <div style="background: #f8fafc; border-radius: 12px; padding: 15px; margin-bottom: 12px;">
+        <p style="font-size: 0.8rem; color: #718096; margin-bottom: 4px;">Total gastado (con tasas del momento)</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">
+          ${resultado.totalHistorico.toFixed(2)} ${resultado.moneda}
+        </p>
       </div>
-    </div>
-  </div>
 
-  <!-- MODAL: Detalle del Gasto -->
-  <div id="modal-expense-detail" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 500px;">
-      <h3>Detalle del Gasto</h3>
-      <div id="expense-detail-content" style="padding: 15px 0;">
-        <p class="placeholder-text">Cargando...</p>
+      <div style="background: #f0fdf4; border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #c6f6d5;">
+        <p style="font-size: 0.8rem; color: #4a5568; margin-bottom: 4px;">Si lo hicieras HOY</p>
+        <p style="font-size: 1.5rem; font-weight: 700; color: #2ecc87;">
+          ${resultado.totalHoy.toFixed(2)} ${resultado.moneda}
+        </p>
       </div>
-      <div class="modal-actions">
-        <button type="button" id="btn-edit-expense" class="btn-secondary" style="background: #ebf4ff; color: #3182ce;">Editar</button>
-        <button type="button" id="btn-delete-expense" class="btn-secondary" style="background: #fed7d7; color: #e53e3e;">Eliminar</button>
-        <button type="button" id="btn-close-expense-detail" class="btn-secondary">Cerrar</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- MODAL: Editar Gasto -->
-  <div id="modal-expense-edit" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h3>Editar Gasto</h3>
-      <form id="form-expense-edit">
-        <input type="hidden" id="edit-expense-id">
-        <div class="form-group">
-          <label for="edit-expense-description">Que fue?</label>
-          <input type="text" id="edit-expense-description" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-expense-amount">Monto</label>
-          <input type="number" id="edit-expense-amount" step="0.01" min="0.01" required>
-        </div>
-        <div class="form-group">
-          <label for="edit-expense-category">Categoria</label>
-          <select id="edit-expense-category">
-            <option value="otros">&#128176; Otros</option>
-            <option value="comida">&#127829; Comida</option>
-            <option value="transporte">&#128663; Transporte</option>
-            <option value="alojamiento">&#127968; Alojamiento</option>
-            <option value="supermercado">&#128722; Supermercado</option>
-            <option value="ocio">&#127881; Ocio</option>
-            <option value="salud">&#128138; Salud</option>
-            <option value="servicios">&#128241; Servicios</option>
-            <option value="compras">&#128717; Compras</option>
-            <option value="viajes">&#9992; Viajes</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="edit-expense-currency">Moneda</label>
-          <select id="edit-expense-currency" required>
-            <option value="EUR">EUR - Euro</option>
-            <option value="USD">USD - Dolar estadounidense</option>
-            <option value="ARS">ARS - Peso argentino</option>
-            <option value="MXN">MXN - Peso mexicano</option>
-            <option value="BRL">BRL - Real brasileno</option>
-            <option value="CLP">CLP - Peso chileno</option>
-            <option value="COP">COP - Peso colombiano</option>
-            <option value="PEN">PEN - Sol peruano</option>
-            <option value="UYU">UYU - Peso uruguayo</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="edit-expense-paid-by">Quien pago?</label>
-          <select id="edit-expense-paid-by" required></select>
-        </div>
-        <p id="edit-expense-error" class="error-msg"></p>
-        <div class="modal-actions">
-          <button type="button" id="btn-cancel-edit" class="btn-secondary">Cancelar</button>
-          <button type="submit" class="btn-primary">Guardar cambios</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: Manual de uso -->
-  <div id="modal-manual" class="modal-overlay hidden">
-    <div class="modal-content manual-content">
-      <h3>Manual de uso</h3>
-      <div class="manual-body">
-
-        <section class="manual-section">
-          <h4>Que es PYM Split?</h4>
-          <p>PYM Split es una app para <strong>dividir gastos</strong> entre amigos, familia o companeros de piso. Cargas quien pago que, y la app calcula automaticamente <strong>quien le debe a quien</strong>. Ademas, <strong>simplifica las deudas</strong> para que se hagan la menor cantidad de transferencias posible.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>1. Crear una cuenta</h4>
-          <p>En la pantalla de inicio, toca <strong>"Crear cuenta"</strong>, completa tu nombre, email y una contrasena (minimo 6 caracteres). Listo, ya estas dentro.</p>
-          <p>Despues de registrarte, revisa tu email: puede que tengas que confirmar la cuenta antes de poder entrar.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>2. Completar tu Perfil</h4>
-          <p>Toca el boton <strong>"Perfil"</strong> arriba a la derecha. Ahi podes:</p>
-          <ul>
-            <li>Editar tu <strong>nombre</strong>.</li>
-            <li>Agregar tu <strong>telefono</strong> (opcional).</li>
-            <li>Elegir tu <strong>moneda preferida</strong> (ej: MXN, EUR, ARS).</li>
-          </ul>
-          <p>La moneda preferida define en que moneda se muestran los totales del dashboard.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>3. Agregar amigos</h4>
-          <p>Toca el boton <strong>"Amigos"</strong> arriba a la derecha.</p>
-          <ul>
-            <li>Escribi el <strong>email</strong> de tu amigo y toca <strong>"Enviar"</strong>.</li>
-            <li>Tu amigo recibira una solicitud. Cuando la acepte, aparecera en tu lista.</li>
-            <li>Tambien podes aceptar o rechazar solicitudes que te lleguen.</li>
-          </ul>
-          <p><strong>Ojo:</strong> tu amigo tiene que estar registrado con el mismo email que le pusiste.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>4. Crear un grupo</h4>
-          <p>En la pantalla principal, toca <strong>"+ Nuevo"</strong> arriba de "Mis Grupos".</p>
-          <ul>
-            <li><strong>Nombre:</strong> ej. "Viaje a Cancun", "Depto", "Cena del viernes".</li>
-            <li><strong>Tipo:</strong> viaje, depto, salidas u otro.</li>
-            <li><strong>Moneda:</strong> la moneda principal del grupo.</li>
-            <li><strong>Fecha de inicio y fin (opcional):</strong> ideal para viajes. Si no las pones, el grupo se crea igual.</li>
-          </ul>
-          <p>Toca <strong>"Crear Grupo"</strong> y listo. Vos quedas como miembro automaticamente.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>5. Agregar amigos al grupo</h4>
-          <p>Abri el grupo (tocandolo en la lista) y toca <strong>"+ Anadir miembro"</strong>.</p>
-          <p>Selecciona uno de tus amigos de la lista. Ya esta dentro del grupo.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>6. Cargar un gasto</h4>
-          <p>Toca el boton <strong>"+"</strong> (abajo a la derecha).</p>
-          <ul>
-            <li><strong>Que fue:</strong> ej. "Cena", "Taxi", "Supermercado".</li>
-            <li><strong>Monto:</strong> cuanto costo.</li>
-            <li><strong>Grupo:</strong> a que grupo pertenece.</li>
-            <li><strong>Quien pago:</strong> quien puso la plata.</li>
-            <li><strong>Moneda:</strong> en que moneda se pago (por defecto, la del grupo).</li>
-            <li><strong>Categoria:</strong> comida, transporte, alojamiento, etc.</li>
-            <li><strong>Tipo de division:</strong> como se reparte (ver siguiente seccion).</li>
-          </ul>
-        </section>
-
-        <section class="manual-section">
-          <h4>7. Tipos de division</h4>
-          <ul>
-            <li><strong>Partes iguales:</strong> se divide el total en partes iguales entre los seleccionados.</li>
-            <li><strong>Por porcentaje:</strong> a cada uno le asignas un %. Debe sumar 100%.</li>
-            <li><strong>Montos exactos:</strong> a cada uno le pones el monto exacto. Debe sumar el total.</li>
-            <li><strong>Por partes (shares):</strong> ej. uno tiene 2 partes y otro 1, entonces paga el doble.</li>
-          </ul>
-          <p>Podes <strong>tildar o destildar</strong> personas en la lista para incluir o excluir del reparto.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>8. Monedas multiples</h4>
-          <p>Cada grupo tiene su <strong>moneda principal</strong> (ej: EUR, MXN, ARS). Pero podes cargar gastos en <strong>cualquier otra moneda</strong>. La app convierte automaticamente a la moneda del grupo.</p>
-          <p><strong>Ejemplo:</strong> un grupo en MXN, y un gasto pagado en EUR. La app guarda la tasa de cambio del momento y muestra el monto convertido a MXN.</p>
-          <p>En tu <strong>Perfil</strong> elegis tu moneda preferida, que es la que se usa en el dashboard global.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>9. Ver el balance del grupo</h4>
-          <p>Al abrir un grupo, arriba de todo aparece el <strong>Balance</strong>. Ahi se muestra <strong>quien le debe a quien</strong> y cuanto, ya convertido a la moneda del grupo.</p>
-          <p>La app <strong>simplifica las deudas</strong>: si A le debe a B y B le debe a C, se muestra directamente que A le pague a C. Asi se hacen menos transferencias.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>10. Calcular en moneda de hoy</h4>
-          <p>En el detalle del grupo, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:</p>
-          <ul>
-            <li>El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.</li>
-            <li>El total que costaria <strong>con las tasas de hoy</strong>.</li>
-            <li>La <strong>diferencia</strong> (cuanto subio o bajo).</li>
-          </ul>
-          <p>Es solo informativo. <strong>No modifica ningun dato.</strong></p>
-        </section>
-
-        <section class="manual-section">
-          <h4>11. Cerrar el computo de un viaje</h4>
-          <p>Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. La app guarda:</p>
-          <ul>
-            <li>La <strong>fecha de cierre</strong> (automatica, no editable).</li>
-            <li>El <strong>total final</strong> del viaje en la moneda del grupo.</li>
-          </ul>
-          <p>Si te equivocaste, podes tocar <strong>"Reabrir"</strong> para volver atras.</p>
-          <p>Esto te sirve para dejar "congelado" el resultado del viaje.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>12. Saldar deudas</h4>
-          <p>Cuando alguien ya pago por fuera (efectivo, transferencia, etc.), toca el boton <strong>"Saldar"</strong> al lado de la deuda.</p>
-          <p>Confirmas y el balance se actualiza automaticamente.</p>
-          <p><strong>Aclaracion:</strong> la app NO mueve plata. Solo registra que la deuda ya fue saldada.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>13. Historial y graficos</h4>
-          <p>Dentro de cada grupo, mas abajo, vas a ver:</p>
-          <ul>
-            <li><strong>Graficos:</strong> cuanto pago cada persona y cuanto se gasto por categoria.</li>
-            <li><strong>Totales por categoria:</strong> desglose de cuanto se gasto en comida, transporte, etc.</li>
-            <li><strong>Historial:</strong> todos los movimientos (gastos + pagos) ordenados por fecha.</li>
-          </ul>
-        </section>
-
-        <section class="manual-section">
-          <h4>14. Filtros</h4>
-          <p>En la lista de gastos de un grupo, podes filtrar por <strong>categoria</strong> para ver solo lo que te interesa (comida, transporte, etc.).</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>15. Editar o eliminar un gasto</h4>
-          <p>Toca cualquier gasto de la lista. Se abre el detalle, con 2 botones:</p>
-          <ul>
-            <li><strong>Editar:</strong> cambia descripcion, monto, categoria, moneda o quien pago.</li>
-            <li><strong>Eliminar:</strong> borra el gasto definitivamente.</li>
-          </ul>
-        </section>
-
-        <section class="manual-section">
-          <h4>16. Archivar y restaurar grupos</h4>
-          <p>Cada grupo tiene un boton <strong>&#128230; (archivar)</strong>. Al tocarlo, el grupo desaparece de la lista principal pero <strong>NO se borra</strong>.</p>
-          <p>Para ver los grupos archivados, toca el boton <strong>"Archivados"</strong> arriba de la lista.</p>
-          <p>Ahi podes <strong>restaurarlos</strong> (boton &#8634;) o <strong>eliminarlos definitivamente</strong> (boton &#128465;).</p>
-          <p><strong>Ideal para:</strong> viajes terminados, departamentos que dejaste, etc.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>17. Eliminar un grupo</h4>
-          <p>Solo se puede eliminar un grupo <strong>despues de archivarlo</strong>. Esto evita borrar por error.</p>
-          <p><strong>Atencion:</strong> eliminar un grupo borra TODOS sus gastos, miembros, pagos e historial. <strong>No se puede deshacer.</strong></p>
-          <p>Si queres conservar el historico, usa <strong>archivar</strong> en vez de eliminar.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>18. Instalar como app en el celular</h4>
-          <p><strong>iPhone (Safari):</strong></p>
-          <ul>
-            <li>Abri la app.</li>
-            <li>Toca el boton Compartir (flecha hacia arriba).</li>
-            <li>Elegi "Anadir a pantalla de inicio".</li>
-          </ul>
-          <p><strong>Android (Chrome):</strong></p>
-          <ul>
-            <li>Abri la app.</li>
-            <li>Menu (3 puntos) &rarr; "Instalar app".</li>
-          </ul>
-          <p>Se va a ver como una app normal, con su icono.</p>
-        </section>
-
-        <section class="manual-section">
-          <h4>Libro de visitas</h4>
-          <p>Dejanos tu comentario, sugerencia o saludo. Todos los usuarios pueden leer los comentarios.</p>
-
-          <form id="form-guestbook" style="margin-top: 12px; margin-bottom: 20px;">
-            <div class="form-group">
-              <textarea id="guestbook-message" placeholder="Escribi tu comentario..." rows="3" maxlength="500" required style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; outline: none;"></textarea>
-              <small style="color: #a0aec0; font-size: 0.75rem; text-align: right; display: block; margin-top: 4px;">
-                Maximo 500 caracteres
-              </small>
-            </div>
-            <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-              <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px;">Publicar</button>
-            </div>
-            <p id="guestbook-error" class="error-msg" style="text-align: left;"></p>
-          </form>
-
-          <div id="guestbook-list" style="margin-top: 15px;">
-            <p class="placeholder-text">Cargando comentarios...</p>
-          </div>
-        </section>
-        
-        <section class="manual-section">
-          <h4>Preguntas frecuentes</h4>
-          <p><strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.</p>
-          <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.</p>
-          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o eliminarlo tocando el gasto en la lista.</p>
-          <p><strong>Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexion para cargar y guardar datos en Supabase.</p>
-          <p><strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mas.</p>
-          <p><strong>Cuanta gente puede estar en un grupo?</strong><br>No hay limite. Podes agregar a todos los amigos que quieras.</p>
-          <p><strong>Se puede usar la misma cuenta en varios dispositivos?</strong><br>Si. Inicias sesion con el mismo email y contrasena, y ves lo mismo en todos lados.</p>
-          <p><strong>La app funciona en iPhone y Android?</strong><br>Si. Es una PWA (app web progresiva), funciona en cualquier celular o PC con navegador moderno.</p>
-        </section>
-
-      </div>
-      <div class="modal-actions">
-        <button type="button" id="btn-close-manual" class="btn-secondary">Cerrar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: Mi Perfil -->
-  <div id="modal-profile" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h3>Mi Perfil</h3>
-      <form id="form-profile">
-        <div class="form-group">
-          <label for="profile-email">Email</label>
-          <input type="email" id="profile-email" disabled style="background: #f7fafc; color: #718096;">
-        </div>
-        <div class="form-group">
-          <label for="profile-name">Nombre</label>
-          <input type="text" id="profile-name" placeholder="Tu nombre completo">
-        </div>
-        <div class="form-group">
-          <label for="profile-phone">Telefono (opcional)</label>
-          <input type="tel" id="profile-phone" placeholder="+54 9 11 1234 5678">
-        </div>
-        <div class="form-group">
-          <label for="profile-currency">Moneda preferida</label>
-          <select id="profile-currency" required>
-            <option value="EUR">EUR - Euro</option>
-          </select>
-          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;">
-            El dashboard mostrara los totales en esta moneda.
+      <div style="background: #ffffff; border-radius: 12px; padding: 15px; border: 2px solid ${difColor}20;">
+        <p style="font-size: 0.8rem; color: #718096; margin-bottom: 4px;">Diferencia</p>
+        <p style="font-size: 1.2rem; font-weight: 700; color: ${difColor};">
+          ${difSigno}${resultado.diferencia.toFixed(2)} ${resultado.moneda}
+          <small style="font-size: 0.8rem; font-weight: 400;">
+            (${difSigno}${resultado.porcentaje.toFixed(1)}%)
           </small>
-        </div>
-        <p id="profile-error" class="error-msg"></p>
-        <p id="profile-success" class="success-msg" style="text-align: center; font-size: 0.85rem;"></p>
-        <div class="modal-actions">
-          <button type="button" id="btn-cancel-profile" class="btn-secondary">Cancelar</button>
-          <button type="submit" class="btn-primary">Guardar cambios</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- MODAL: Simulador "Calcular hoy" -->
-  <div id="modal-calculator" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 500px;">
-      <h3>Calculadora de hoy</h3>
-
-      <div id="calculator-body" style="padding: 15px 0;">
-        <p class="placeholder-text">Calculando...</p>
+        </p>
+        <p style="font-size: 0.75rem; color: #a0aec0; margin-top: 6px;">
+          La moneda ${flecha} respecto al momento del viaje.
+        </p>
       </div>
 
-      <div class="modal-actions">
-        <button type="button" id="btn-close-calculator" class="btn-secondary">Cerrar</button>
-      </div>
-    </div>
-  </div>
+      <p style="font-size: 0.75rem; color: #a0aec0; text-align: center; margin-top: 15px;">
+        Este calculo es solo informativo. No modifica ningun dato.
+      </p>
+    `;
 
-  <script type="module" src="js/ui.js"></script>
-</body>
-</html
+  } catch (error) {
+    console.error('Error calculadora:', error);
+    body.innerHTML = '<p class="error-msg">Error al calcular.</p>';
+  }
+}
+
+// ==========================================
+// 14. LISTENERS GLOBALES
+// ==========================================
+if (!window.__groupDetailListenersAttached) {
+  window.__groupDetailListenersAttached = true;
+
+  document.getElementById('btn-close-detail')?.addEventListener('click', () => {
+    document.getElementById('modal-group-detail').classList.add('hidden');
+  });
+
+  document.getElementById('modal-group-detail')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-group-detail') e.target.classList.add('hidden');
+  });
+
+  document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    document.getElementById('modal-group-detail').classList.add('hidden');
+    document.getElementById('fab-add').click();
+    setTimeout(() => {
+      const select = document.getElementById('expense-group');
+      if (select) {
+        select.value = groupId;
+        select.dispatchEvent(new Event('change'));
+      }
+    }, 300);
+  });
+
+  document.getElementById('btn-close-expense-detail')?.addEventListener('click', () => {
+    document.getElementById('modal-expense-detail').classList.add('hidden');
+  });
+
+  document.getElementById('modal-expense-detail')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-expense-detail') e.target.classList.add('hidden');
+  });
+
+  document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
+    const { eliminarGasto } = await import('./expenses.js');
+    await eliminarGasto();
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (groupId) {
+      const { cargarHistorial } = await import('./history.js');
+      const { cargarGraficos } = await import('./charts.js');
+      await cargarHistorial(groupId);
+      await cargarGraficos(groupId);
+    }
+  });
+
+  document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
+    const { cargarGastoParaEditar } = await import('./expenses.js');
+    await cargarGastoParaEditar();
+  });
+
+  document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
+    document.getElementById('modal-expense-edit').classList.add('hidden');
+  });
+
+  document.getElementById('modal-expense-edit')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-expense-edit') e.target.classList.add('hidden');
+  });
+
+  document.getElementById('form-expense-edit')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { guardarEdicionGasto } = await import('./expenses.js');
+    await guardarEdicionGasto();
+  });
+
+  document.getElementById('btn-calculate-today')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    const groupName = document.getElementById('modal-group-detail').dataset.groupName || 'Grupo';
+    if (!groupId) return;
+    await abrirCalculadora(groupId, groupName);
+  });
+
+  document.getElementById('btn-close-calculator')?.addEventListener('click', () => {
+    document.getElementById('modal-calculator').classList.add('hidden');
+  });
+
+  document.getElementById('modal-calculator')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-calculator') {
+      document.getElementById('modal-calculator').classList.add('hidden');
+    }
+  });
+
+  document.getElementById('btn-close-computo')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (!groupId) return;
+    if (!confirm('Cerrar el computo de este grupo? Se guardara la fecha y el total final.')) return;
+    await cerrarComputo(groupId);
+    await abrirDetalleGrupo(groupId);
+    await cargarGrupos();
+  });
+
+  document.getElementById('btn-reopen-computo')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (!groupId) return;
+    if (!confirm('Reabrir el computo? Se borrara la fecha de cierre y el total final guardado.')) return;
+    await reabrirComputo(groupId);
+    await abrirDetalleGrupo(groupId);
+    await cargarGrupos();
+  });
+}
