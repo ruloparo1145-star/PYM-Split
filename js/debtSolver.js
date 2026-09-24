@@ -156,7 +156,9 @@ export async function mostrarBalance(groupId) {
       <span class="debt-from">${nombres[t.from] || 'Alguien'}</span>
       <span class="debt-arrow">-></span>
       <span class="debt-to">${nombres[t.to] || 'Alguien'}</span>
-      <span class="debt-amount">${t.amount.toFixed(2)} EUR</span>
+      
+      <span class="debt-amount">${t.amount.toFixed(2)} ${monedaGrupo}</span>
+  
       <button class="btn-small btn-settle"
               data-group="${groupId}"
               data-from="${t.from}"
