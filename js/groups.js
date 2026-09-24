@@ -270,10 +270,21 @@ async function abrirDetalleGrupo(groupId) {
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
 
+document.getElementById('btn-calculate-today')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    const groupName = document.getElementById('modal-group-detail').dataset.groupName || 'Grupo';
+    if (!groupId) return;
+    await abrirCalculadora(groupId, groupName);
+  });
+
+  
   document.getElementById('btn-close-detail')?.addEventListener('click', () => {
     document.getElementById('modal-group-detail').classList.add('hidden');
   });
 
+
+
+  
   document.getElementById('modal-group-detail')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-group-detail') e.target.classList.add('hidden');
   });
