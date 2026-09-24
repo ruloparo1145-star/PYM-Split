@@ -24,14 +24,12 @@ export async function cargarGrupos() {
 
     if (error) throw error;
 
-    // Actualizar tÃ­tulo y botones segÃºn la vista
     if (headerTitle) {
       headerTitle.textContent = mostrarArchivados ? 'Grupos Archivados' : 'Mis Grupos';
     }
     if (btnToggle) {
       btnToggle.textContent = mostrarArchivados ? 'Ver activos' : 'Archivados';
     }
-    // Ocultar "+ Nuevo" cuando estamos en archivados
     if (btnNew) {
       btnNew.style.display = mostrarArchivados ? 'none' : 'inline-block';
     }
@@ -61,7 +59,6 @@ export async function cargarGrupos() {
       </div>
     `).join('');
 
-    // Listener: abrir detalle
     groupsList.querySelectorAll('.group-card').forEach(card => {
       card.addEventListener('click', (e) => {
         if (e.target.closest('.btn-archive') || e.target.closest('.btn-restore') || e.target.closest('.btn-delete')) return;
@@ -69,7 +66,6 @@ export async function cargarGrupos() {
       });
     });
 
-    // Listener: archivar
     groupsList.querySelectorAll('.btn-archive').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -78,7 +74,6 @@ export async function cargarGrupos() {
       });
     });
 
-    // Listener: restaurar
     groupsList.querySelectorAll('.btn-restore').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -87,7 +82,6 @@ export async function cargarGrupos() {
       });
     });
 
-    // Listener: eliminar
     groupsList.querySelectorAll('.btn-delete').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -121,7 +115,7 @@ export async function archivarGrupo(groupId, archivar) {
 }
 
 // ==========================================
-// 3. ELIMINAR GRUPO (con CASCADE automatico)
+// 3. ELIMINAR GRUPO
 // ==========================================
 export async function eliminarGrupo(groupId) {
   const { error } = await supabase
@@ -218,40 +212,6 @@ export function initGroupModal() {
 // ==========================================
 // 7. INICIALIZAR BOTON "ARCHIVADOS"
 // ==========================================
-
-/* ==========================================
-   23. BOTON CALCULAR HOY
-   ========================================== */
-.btn-calculate-today {
-  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(46, 204, 135, 0.3);
-}
-
-.btn-calculate-today:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.4);
-}
-
-.btn-calculate-today:active {
-  transform: translateY(0);
-}
-
-.expense-subtext {
-  display: block;
-  font-size: 0.7rem;
-  color: #a0aec0;
-  font-weight: 400;
-  margin-top: 2px;
-}
-
 export function initArchivedToggle() {
   const btn = document.getElementById('btn-toggle-archived');
   btn?.addEventListener('click', () => {
@@ -263,7 +223,7 @@ export function initArchivedToggle() {
 // 8. ABRIR DETALLE DEL GRUPO
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
-  const { cargarGastosDelGrupo, initFiltroCategoria } = await import('./expenses.js');
+  const { cargarGastosDelGrupo } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
   const { cargarMiembrosDelGrupo } = await import('./members.js');
   const { cargarHistorial } = await import('./history.js');
@@ -277,16 +237,10 @@ async function abrirDetalleGrupo(groupId) {
     .eq('id', groupId)
     .single();
 
-  
-  
-  
   document.getElementById('detail-group-name').textContent = grupo ? grupo.name : 'Detalle';
   modal.dataset.groupId = groupId;
-
-// Guardar nombre del grupo para el simulador
   modal.dataset.groupName = grupo ? grupo.name : 'Grupo';
-  
-  // Resetear filtro de categorÃ­a al abrir un grupo nuevo
+
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
 
@@ -299,84 +253,7 @@ async function abrirDetalleGrupo(groupId) {
 }
 
 // ==========================================
-// 9. LISTENERS GLOBALES DEL DETALLE
-// ==========================================
-if (!window.__groupDetailListenersAttached) {
-  window.__groupDetailListenersAttached = true;
-
-document.getElementById('btn-calculate-today')?.addEventListener('click', async () => {
-    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
-    const groupName = document.getElementById('modal-group-detail').dataset.groupName || 'Grupo';
-    if (!groupId) return;
-    await abrirCalculadora(groupId, groupName);
-  });
-
-  
-  document.getElementById('btn-close-detail')?.addEventListener('click', () => {
-    document.getElementById('modal-group-detail').classList.add('hidden');
-  });
-
-
-
-  
-  document.getElementById('modal-group-detail')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modal-group-detail') e.target.classList.add('hidden');
-  });
-
-  document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
-    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
-    document.getElementById('modal-group-detail').classList.add('hidden');
-    document.getElementById('fab-add').click();
-    setTimeout(() => {
-      const select = document.getElementById('expense-group');
-      if (select) {
-        select.value = groupId;
-        select.dispatchEvent(new Event('change'));
-      }
-    }, 300);
-  });
-
-  document.getElementById('btn-close-expense-detail')?.addEventListener('click', () => {
-    document.getElementById('modal-expense-detail').classList.add('hidden');
-  });
-
-  document.getElementById('modal-expense-detail')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modal-expense-detail') e.target.classList.add('hidden');
-  });
-
-  document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
-    const { eliminarGasto } = await import('./expenses.js');
-    await eliminarGasto();
-    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
-    if (groupId) {
-      const { cargarHistorial } = await import('./history.js');
-      const { cargarGraficos } = await import('./charts.js');
-      await cargarHistorial(groupId);
-      await cargarGraficos(groupId);
-    }
-  });
-
-  document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
-    const { cargarGastoParaEditar } = await import('./expenses.js');
-    await cargarGastoParaEditar();
-  });
-
-  document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
-    document.getElementById('modal-expense-edit').classList.add('hidden');
-  });
-
-  document.getElementById('modal-expense-edit')?.addEventListener('click', (e) => {
-    if (e.target.id === 'modal-expense-edit') e.target.classList.add('hidden');
-  });
-
-  document.getElementById('form-expense-edit')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const { guardarEdicionGasto } = await import('./expenses.js');
-    await guardarEdicionGasto();
-  });
-}
-// ==========================================
-// CALCULADORA "HOY"
+// 9. CALCULADORA "HOY"
 // ==========================================
 async function abrirCalculadora(groupId, groupName) {
   const modal = document.getElementById('modal-calculator');
@@ -385,7 +262,6 @@ async function abrirCalculadora(groupId, groupName) {
   modal.classList.remove('hidden');
 
   try {
-    // Obtener moneda del grupo
     const { data: grupoInfo } = await supabase
       .from('groups')
       .select('currency')
@@ -394,7 +270,6 @@ async function abrirCalculadora(groupId, groupName) {
 
     const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
-    // Traer gastos del grupo
     const { data: gastos } = await supabase
       .from('expenses')
       .select('amount, currency, exchange_rate')
@@ -455,4 +330,94 @@ async function abrirCalculadora(groupId, groupName) {
     console.error('Error calculadora:', error);
     body.innerHTML = '<p class="error-msg">Error al calcular.</p>';
   }
+}
+
+// ==========================================
+// 10. LISTENERS GLOBALES
+// ==========================================
+if (!window.__groupDetailListenersAttached) {
+  window.__groupDetailListenersAttached = true;
+
+  document.getElementById('btn-close-detail')?.addEventListener('click', () => {
+    document.getElementById('modal-group-detail').classList.add('hidden');
+  });
+
+  document.getElementById('modal-group-detail')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-group-detail') e.target.classList.add('hidden');
+  });
+
+  document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    document.getElementById('modal-group-detail').classList.add('hidden');
+    document.getElementById('fab-add').click();
+    setTimeout(() => {
+      const select = document.getElementById('expense-group');
+      if (select) {
+        select.value = groupId;
+        select.dispatchEvent(new Event('change'));
+      }
+    }, 300);
+  });
+
+  document.getElementById('btn-close-expense-detail')?.addEventListener('click', () => {
+    document.getElementById('modal-expense-detail').classList.add('hidden');
+  });
+
+  document.getElementById('modal-expense-detail')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-expense-detail') e.target.classList.add('hidden');
+  });
+
+  document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
+    const { eliminarGasto } = await import('./expenses.js');
+    await eliminarGasto();
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (groupId) {
+      const { cargarHistorial } = await import('./history.js');
+      const { cargarGraficos } = await import('./charts.js');
+      await cargarHistorial(groupId);
+      await cargarGraficos(groupId);
+    }
+  });
+
+  document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
+    const { cargarGastoParaEditar } = await import('./expenses.js');
+    await cargarGastoParaEditar();
+  });
+
+  document.getElementById('btn-cancel-edit')?.addEventListener('click', () => {
+    document.getElementById('modal-expense-edit').classList.add('hidden');
+  });
+
+  document.getElementById('modal-expense-edit')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-expense-edit') e.target.classList.add('hidden');
+  });
+
+  document.getElementById('form-expense-edit')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const { guardarEdicionGasto } = await import('./expenses.js');
+    await guardarEdicionGasto();
+  });
+
+  // ==========================================
+  // BOTON CALCULAR HOY
+  // ==========================================
+  document.getElementById('btn-calculate-today')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    const groupName = document.getElementById('modal-group-detail').dataset.groupName || 'Grupo';
+    if (!groupId) return;
+    await abrirCalculadora(groupId, groupName);
+  });
+
+  // ==========================================
+  // BOTON CERRAR CALCULADORA
+  // ==========================================
+  document.getElementById('btn-close-calculator')?.addEventListener('click', () => {
+    document.getElementById('modal-calculator').classList.add('hidden');
+  });
+
+  document.getElementById('modal-calculator')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-calculator') {
+      document.getElementById('modal-calculator').classList.add('hidden');
+    }
+  });
 }
