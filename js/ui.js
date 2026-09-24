@@ -5,6 +5,7 @@ import { initFriendsModal } from './friends.js';
 import { initExpenseModal, initFiltroCategoria } from './expenses.js';
 import { initAddMemberModal } from './members.js';
 import { cargarDashboard } from './dashboard.js';
+import { initProfileModal } from './profile.js';
 
 // ==========================================
 // 1. PROTEGER LA RUTA Y CARGAR DATOS
@@ -22,19 +23,46 @@ import { cargarDashboard } from './dashboard.js';
   const fullName = session.user.user_metadata?.full_name || 'Usuario';
   welcomeMessage.textContent = `Hola, ${fullName}`;
 
-  // Inicializar todos los modales y funcionalidades
+  // Cargar datos
   await cargarGrupos();
   await cargarDashboard();
+
+  // Inicializar modales y funcionalidades
   initGroupModal();
   initFriendsModal();
   initExpenseModal();
   initFiltroCategoria();
   initAddMemberModal();
   initArchivedToggle();
+  initProfileModal();
+  initManualModal();
 })();
 
 // ==========================================
-// 2. CERRAR SESION (Logout)
+// 2. MANUAL DE USO
+// ==========================================
+function initManualModal() {
+  const btnManual = document.getElementById('btn-manual');
+  const modal = document.getElementById('modal-manual');
+  const btnClose = document.getElementById('btn-close-manual');
+
+  btnManual?.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+  });
+
+  btnClose?.addEventListener('click', () => {
+    modal.classList.add('hidden');
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-manual') {
+      modal.classList.add('hidden');
+    }
+  });
+}
+
+// ==========================================
+// 3. CERRAR SESION (Logout)
 // ==========================================
 document.getElementById('btn-logout').addEventListener('click', async () => {
   const { error } = await supabase.auth.signOut();
@@ -42,21 +70,5 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     window.location.href = 'index.html';
   } else {
     alert('Error al cerrar sesion: ' + error.message);
-  }
-});
-// ==========================================
-// 3. MANUAL DE USO
-// ==========================================
-document.getElementById('btn-manual').addEventListener('click', () => {
-  document.getElementById('modal-manual').classList.remove('hidden');
-});
-
-document.getElementById('btn-close-manual').addEventListener('click', () => {
-  document.getElementById('modal-manual').classList.add('hidden');
-});
-
-document.getElementById('modal-manual').addEventListener('click', (e) => {
-  if (e.target.id === 'modal-manual') {
-    e.target.classList.add('hidden');
   }
 });
