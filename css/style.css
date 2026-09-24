@@ -1140,3 +1140,92 @@ body {
   font-weight: 400;
   margin-top: 2px;
 }
+/* ==========================================
+   24. FECHAS Y CIERRE DE COMPUTO
+   ========================================== */
+.group-dates {
+  display: block;
+  font-size: 0.75rem;
+  color: #2d3748;
+  background: #e6fffa;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.badge-closed {
+  display: inline-block;
+  font-size: 0.7rem;
+  background: #fed7d7;
+  color: #c53030;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-left: 6px;
+  margin-top: 4px;
+}
+
+.group-date-info {
+  font-size: 0.9rem;
+  color: #2d3748;
+  font-weight: 500;
+  margin-bottom: 6px;
+}
+
+.group-closed-info {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 12px;
+  padding: 10px 16px;
+  margin-top: 6px;
+}
+
+.group-closed-date {
+  font-size: 0.75rem;
+  color: #718096;
+}
+
+.group-closed-total {
+  font-size: 0.85rem;
+  color: #2d3748;
+  margin-top: 4px;
+}
+
+.btn-close-computo {
+  background: linear-gradient(135deg, #ed8936 0%, #c05621 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
+}
+
+.btn-close-computo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(237, 137, 54, 0.4);
+}
+
+.btn-reopen-computo {
+  background: #edf2f7;
+  color: #4a5568;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-reopen-computo:hover {
+  background: #e2e8f0;
+}
