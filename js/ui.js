@@ -49,6 +49,7 @@ import { initGuestbook } from './guestbook.js';
   initArchivedToggle();
   initProfileModal();
   initManualModal();
+  initGuestbook();
 })();
 
 // ==========================================
