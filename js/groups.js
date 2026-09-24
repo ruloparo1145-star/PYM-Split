@@ -218,6 +218,40 @@ export function initGroupModal() {
 // ==========================================
 // 7. INICIALIZAR BOTON "ARCHIVADOS"
 // ==========================================
+
+/* ==========================================
+   23. BOTON CALCULAR HOY
+   ========================================== */
+.btn-calculate-today {
+  background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(46, 204, 135, 0.3);
+}
+
+.btn-calculate-today:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(46, 204, 135, 0.4);
+}
+
+.btn-calculate-today:active {
+  transform: translateY(0);
+}
+
+.expense-subtext {
+  display: block;
+  font-size: 0.7rem;
+  color: #a0aec0;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
 export function initArchivedToggle() {
   const btn = document.getElementById('btn-toggle-archived');
   btn?.addEventListener('click', () => {
