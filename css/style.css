@@ -17,7 +17,7 @@ button { font-family: inherit; }
 input, select, textarea { font-family: inherit; }
 
 /* ==========================================
-   1. AUTENTICACIÃ“N
+   1. AUTENTICACIÃƒâ€œN
    ========================================== */
 body {
   background: linear-gradient(135deg, #2ecc87 0%, #14532d 100%);
@@ -652,7 +652,7 @@ body {
 .history-info small { font-size: 0.7rem; color: #a0aec0; }
 
 /* ==========================================
-   13. GRÃFICOS
+   13. GRÃƒÂFICOS
    ========================================== */
 .chart-container {
   position: relative;
