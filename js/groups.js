@@ -10,6 +10,7 @@ export async function cargarGrupos() {
   const groupsList = document.getElementById('groups-list');
   const headerTitle = document.querySelector('#groups-section h3');
   const btnToggle = document.getElementById('btn-toggle-archived');
+  const btnNew = document.getElementById('btn-new-group');
 
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -23,11 +24,16 @@ export async function cargarGrupos() {
 
     if (error) throw error;
 
+    // Actualizar tÃ­tulo y botones segÃºn la vista
     if (headerTitle) {
       headerTitle.textContent = mostrarArchivados ? 'Grupos Archivados' : 'Mis Grupos';
     }
     if (btnToggle) {
       btnToggle.textContent = mostrarArchivados ? 'Ver activos' : 'Archivados';
+    }
+    // Ocultar "+ Nuevo" cuando estamos en archivados
+    if (btnNew) {
+      btnNew.style.display = mostrarArchivados ? 'none' : 'inline-block';
     }
 
     if (!grupos || grupos.length === 0) {
@@ -44,22 +50,21 @@ export async function cargarGrupos() {
           <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.currency || 'EUR'}</span>
           ${grupo.archived ? '<span class="badge-archived">Archivado</span>' : ''}
         </div>
-
-<div class="group-actions">
+        <div class="group-actions">
           ${grupo.archived 
             ? `<button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${grupo.name}" title="Eliminar">&#128465;</button>
                <button class="btn-small btn-restore" data-id="${grupo.id}" title="Restaurar">&#8634;</button>` 
             : `<button class="btn-small btn-archive" data-id="${grupo.id}" title="Archivar">&#128230;</button>`
           }
           <span class="group-arrow">></span>
-        </div>       
+        </div>
       </div>
     `).join('');
 
     // Listener: abrir detalle
     groupsList.querySelectorAll('.group-card').forEach(card => {
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-archive') || e.target.closest('.btn-restore')) return;
+        if (e.target.closest('.btn-archive') || e.target.closest('.btn-restore') || e.target.closest('.btn-delete')) return;
         abrirDetalleGrupo(card.dataset.id);
       });
     });
@@ -68,7 +73,6 @@ export async function cargarGrupos() {
     groupsList.querySelectorAll('.btn-archive').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        // if (!confirm('Archivar este grupo? No se mostrara en la lista principal.')) return;
         await archivarGrupo(btn.dataset.id, true);
         await cargarGrupos();
       });
@@ -83,7 +87,7 @@ export async function cargarGrupos() {
       });
     });
 
-// Listener: eliminar
+    // Listener: eliminar
     groupsList.querySelectorAll('.btn-delete').forEach(btn => {
       btn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -94,7 +98,7 @@ export async function cargarGrupos() {
         await cargarGrupos();
       });
     });
-    
+
   } catch (error) {
     console.error('Error detallado:', error);
     groupsList.innerHTML = `<p class="error-msg">Error: ${error.message || 'No se pudo conectar con Supabase'}</p>`;
@@ -117,7 +121,22 @@ export async function archivarGrupo(groupId, archivar) {
 }
 
 // ==========================================
-// 3. TOGGLE ARCHIVADOS
+// 3. ELIMINAR GRUPO (con CASCADE automatico)
+// ==========================================
+export async function eliminarGrupo(groupId) {
+  const { error } = await supabase
+    .from('groups')
+    .delete()
+    .eq('id', groupId);
+
+  if (error) {
+    alert('Error al eliminar el grupo: ' + error.message);
+    throw error;
+  }
+}
+
+// ==========================================
+// 4. TOGGLE ARCHIVADOS
 // ==========================================
 export function toggleArchivados() {
   mostrarArchivados = !mostrarArchivados;
@@ -125,58 +144,7 @@ export function toggleArchivados() {
 }
 
 // ==========================================
-// ELIMINAR GRUPO Y TODOS SUS DATOS
-// ==========================================
-export async function eliminarGrupo(groupId) {
-  try {
-    // 1. Borrar splits (dependen de expenses)
-    const { data: gastos } = await supabase
-      .from('expenses')
-      .select('id')
-      .eq('group_id', groupId);
-
-    if (gastos && gastos.length > 0) {
-      const expenseIds = gastos.map(g => g.id);
-      await supabase
-        .from('expense_splits')
-        .delete()
-        .in('expense_id', expenseIds);
-    }
-
-    // 2. Borrar settlements
-    await supabase
-      .from('settlements')
-      .delete()
-      .eq('group_id', groupId);
-
-    // 3. Borrar expenses
-    await supabase
-      .from('expenses')
-      .delete()
-      .eq('group_id', groupId);
-
-    // 4. Borrar group_members
-    await supabase
-      .from('group_members')
-      .delete()
-      .eq('group_id', groupId);
-
-    // 5. Borrar el grupo
-    const { error } = await supabase
-      .from('groups')
-      .delete()
-      .eq('id', groupId);
-
-    if (error) throw error;
-
-  } catch (error) {
-    alert('Error al eliminar el grupo: ' + error.message);
-    throw error;
-  }
-}
-
-// ==========================================
-// 4. CREAR GRUPO
+// 5. CREAR GRUPO
 // ==========================================
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -200,7 +168,7 @@ export async function crearGrupo(nombre, tipo, moneda) {
 }
 
 // ==========================================
-// 5. MODAL CREAR GRUPO
+// 6. MODAL CREAR GRUPO
 // ==========================================
 export function initGroupModal() {
   const modal = document.getElementById('modal-group');
@@ -248,7 +216,7 @@ export function initGroupModal() {
 }
 
 // ==========================================
-// 6. INICIALIZAR BOTON "ARCHIVADOS"
+// 7. INICIALIZAR BOTON "ARCHIVADOS"
 // ==========================================
 export function initArchivedToggle() {
   const btn = document.getElementById('btn-toggle-archived');
@@ -258,10 +226,10 @@ export function initArchivedToggle() {
 }
 
 // ==========================================
-// 7. ABRIR DETALLE DEL GRUPO
+// 8. ABRIR DETALLE DEL GRUPO
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
-  const { cargarGastosDelGrupo } = await import('./expenses.js');
+  const { cargarGastosDelGrupo, initFiltroCategoria } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
   const { cargarMiembrosDelGrupo } = await import('./members.js');
   const { cargarHistorial } = await import('./history.js');
@@ -278,6 +246,10 @@ async function abrirDetalleGrupo(groupId) {
   document.getElementById('detail-group-name').textContent = grupo ? grupo.name : 'Detalle';
   modal.dataset.groupId = groupId;
 
+  // Resetear filtro de categorÃ­a al abrir un grupo nuevo
+  const selectFiltro = document.getElementById('filter-category');
+  if (selectFiltro) selectFiltro.value = '';
+
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
@@ -287,7 +259,7 @@ async function abrirDetalleGrupo(groupId) {
 }
 
 // ==========================================
-// 8. LISTENERS GLOBALES DEL DETALLE
+// 9. LISTENERS GLOBALES DEL DETALLE
 // ==========================================
 if (!window.__groupDetailListenersAttached) {
   window.__groupDetailListenersAttached = true;
