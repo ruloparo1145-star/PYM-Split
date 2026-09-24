@@ -276,7 +276,6 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   const categoria = document.getElementById('expense-category')?.value || 'otros';
   const monedaGasto = (document.getElementById('expense-currency')?.value || 'EUR').toUpperCase();
 
-  // Obtener info del grupo (moneda + cotizacion manual)
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency, manual_exchange_rate')
@@ -286,7 +285,6 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
   const manualRateUSD = grupoInfo?.manual_exchange_rate;
 
-  // Calcular exchange_rate del momento (con fallback a manual)
   let exchangeRate = 1;
   if (monedaGasto !== monedaGrupo) {
     const resultado = await convertirMontoConGrupo(1, monedaGasto, monedaGrupo, manualRateUSD);
@@ -513,6 +511,10 @@ export function initExpenseModal() {
         await cargarGraficos(groupId);
         await cargarHistorial(groupId);
       }
+
+      const { cargarDashboard } = await import('./dashboard.js');
+      await cargarDashboard();
+
     } catch (error) {
       errorMsg.textContent = 'Error: ' + error.message;
     } finally {
@@ -647,6 +649,9 @@ export async function eliminarGasto() {
   await mostrarBalance(groupId);
   await cargarHistorial(groupId);
   await cargarGraficos(groupId);
+
+  const { cargarDashboard } = await import('./dashboard.js');
+  await cargarDashboard();
 }
 
 // ==========================================
@@ -784,6 +789,9 @@ export async function guardarEdicionGasto() {
     await mostrarBalance(groupId);
     await cargarHistorial(groupId);
     await cargarGraficos(groupId);
+
+    const { cargarDashboard } = await import('./dashboard.js');
+    await cargarDashboard();
 
   } catch (error) {
     errorMsg.textContent = 'Error: ' + error.message;
