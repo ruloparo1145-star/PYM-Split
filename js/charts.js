@@ -1,24 +1,31 @@
 // js/charts.js
 import { supabase } from './supabase.js';
+import { t, tCategoria } from './i18n.js';
 
 let chartPersonaInstance = null;
 let chartCategoriaInstance = null;
 
 const CATEGORIAS_CHART = {
-  comida:       { label: 'Comida',       icono: '\u{1F355}', color: '#e53e3e' },
-  transporte:   { label: 'Transporte',   icono: '\u{1F697}', color: '#3182ce' },
-  alojamiento:  { label: 'Alojamiento',  icono: '\u{1F3E0}', color: '#38a169' },
-  supermercado: { label: 'Supermercado', icono: '\u{1F6D2}', color: '#d69e2e' },
-  ocio:         { label: 'Ocio',         icono: '\u{1F389}', color: '#9f7aea' },
-  salud:        { label: 'Salud',        icono: '\u{1F48A}', color: '#e53e9e' },
-  servicios:    { label: 'Servicios',    icono: '\u{1F4F1}', color: '#38b2ac' },
-  compras:      { label: 'Compras',      icono: '\u{1F6CD}', color: '#ed8936' },
-  viajes:       { label: 'Viajes',       icono: '\u2708',    color: '#4299e1' },
-  otros:        { label: 'Otros',        icono: '\u{1F4B0}', color: '#718096' }
+  comida:       { icono: '\u{1F355}', color: '#e53e3e' },
+  transporte:   { icono: '\u{1F697}', color: '#3182ce' },
+  alojamiento:  { icono: '\u{1F3E0}', color: '#38a169' },
+  supermercado: { icono: '\u{1F6D2}', color: '#d69e2e' },
+  ocio:         { icono: '\u{1F389}', color: '#9f7aea' },
+  salud:        { icono: '\u{1F48A}', color: '#e53e9e' },
+  servicios:    { icono: '\u{1F4F1}', color: '#38b2ac' },
+  compras:      { icono: '\u{1F6CD}', color: '#ed8936' },
+  viajes:       { icono: '\u2708',    color: '#4299e1' },
+  otros:        { icono: '\u{1F4B0}', color: '#718096' }
 };
 
 function getCat(c) {
-  return CATEGORIAS_CHART[c] || CATEGORIAS_CHART.otros;
+  const key = c || 'otros';
+  const info = CATEGORIAS_CHART[key] || CATEGORIAS_CHART.otros;
+  return {
+    label: tCategoria(key),
+    icono: info.icono,
+    color: info.color
+  };
 }
 
 // Convierte el monto de un gasto a la moneda del grupo
@@ -35,7 +42,7 @@ function montoEnMonedaGrupo(gasto, monedaGrupo) {
 export async function cargarGraficos(groupId, monedaGrupo = 'EUR') {
   monedaGrupo = (monedaGrupo || 'EUR').toUpperCase();
 
-const { data: gastos, error } = await supabase
+  const { data: gastos, error } = await supabase
     .from('expenses')
     .select('amount, paid_by, category, currency, exchange_rate')
     .eq('group_id', groupId)
@@ -52,7 +59,7 @@ const { data: gastos, error } = await supabase
     limpiarCanvas('chart-by-category', chartCategoriaInstance);
     chartCategoriaInstance = null;
     const totales = document.getElementById('group-category-totals');
-    if (totales) totales.innerHTML = '<p class="placeholder-text">Sin datos.</p>';
+    if (totales) totales.innerHTML = `<p class="placeholder-text">${t('group.detail.no_data')}</p>`;
     return;
   }
 
@@ -64,11 +71,11 @@ const { data: gastos, error } = await supabase
     .in('id', paidByIds);
 
   const nombres = {};
-  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Desconocido');
+  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || t('debt.user'));
 
   const porPersona = {};
   gastos.forEach(g => {
-    const nombre = nombres[g.paid_by] || 'Desconocido';
+    const nombre = nombres[g.paid_by] || t('debt.user');
     porPersona[nombre] = (porPersona[nombre] || 0) + montoEnMonedaGrupo(g, monedaGrupo);
   });
 
