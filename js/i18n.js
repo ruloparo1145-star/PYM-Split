@@ -445,7 +445,7 @@ export const TRADUCCIONES = {
     'manual.s12.li1': '<strong>Total del viaje:</strong> cuanto se gasto en total.',
     'manual.s12.li2': '<strong>Mi parte:</strong> cuanto te corresponde a vos segun las divisiones de cada gasto.',
     'manual.s12.p2': 'Si tu moneda preferida es distinta a la del grupo, se muestra tambien la conversion entre parentesis.'
-
+,
     'manual.s13.title': '13. Calcular en moneda de hoy',
     'manual.s13.p1': 'En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:',
     'manual.s13.li1': 'El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.',
