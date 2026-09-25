@@ -3,7 +3,7 @@ import { supabase } from './supabase.js';
 import { sumarConvertido, formatearMonto } from './currency.js';
 
 let chartHistoryInstance = null;
-let rangoActual = 'month';
+let rangoActual = 'active';
 
 // ==========================================
 // CARGAR DASHBOARD
@@ -29,10 +29,19 @@ export async function cargarDashboard() {
   const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
 
   try {
-    const { data: grupos } = await supabase
+    // Grupos segun el tab seleccionado
+    let queryGrupos = supabase
       .from('groups')
-      .select('id, currency')
-      .eq('archived', false);
+      .select('id, currency');
+
+    if (rangoActual === 'active') {
+      queryGrupos = queryGrupos.eq('archived', false);
+    } else if (rangoActual === 'archived') {
+      queryGrupos = queryGrupos.eq('archived', true);
+    }
+    // Si es 'all', no filtramos
+
+    const { data: grupos } = await queryGrupos;
 
     const groupIds = (grupos || []).map(g => g.id);
     const monedaPorGrupo = {};
@@ -43,24 +52,13 @@ export async function cargarDashboard() {
       return;
     }
 
-    const rango = calcularRango(rangoActual);
-
-    // Solo gastos activos
-    let query = supabase
+    // Gastos del rango (todos los gastos activos de esos grupos)
+    const { data: gastosRango } = await supabase
       .from('expenses')
       .select('id, description, amount, currency, date, paid_by, group_id, category')
       .in('group_id', groupIds)
       .eq('archived', false)
       .order('created_at', { ascending: false });
-
-    if (rango.desde) {
-      query = query.gte('date', rango.desde);
-    }
-    if (rango.hasta) {
-      query = query.lte('date', rango.hasta);
-    }
-
-    const { data: gastosRango } = await query;
 
     const itemsRango = (gastosRango || []).map(g => ({
       monto: parseFloat(g.amount),
@@ -69,18 +67,12 @@ export async function cargarDashboard() {
 
     const resultado = await sumarConvertido(itemsRango, monedaUsuario);
 
-    // Balance global (solo gastos activos)
-    const { data: gastosTodos } = await supabase
-      .from('expenses')
-      .select('id, amount, currency, paid_by, group_id')
-      .in('group_id', groupIds)
-      .eq('archived', false);
-
+    // Balance global
     const balance = {};
 
-    if (gastosTodos && gastosTodos.length > 0) {
+    if (gastosRango && gastosRango.length > 0) {
       const sumasPorPersona = {};
-      gastosTodos.forEach(g => {
+      gastosRango.forEach(g => {
         const moneda = g.currency || monedaPorGrupo[g.group_id] || 'EUR';
         if (!sumasPorPersona[g.paid_by]) sumasPorPersona[g.paid_by] = [];
         sumasPorPersona[g.paid_by].push({ monto: parseFloat(g.amount), moneda });
@@ -91,14 +83,14 @@ export async function cargarDashboard() {
         balance[userId] = (balance[userId] || 0) + total;
       }
 
-      const expIds = gastosTodos.map(g => g.id);
+      const expIds = gastosRango.map(g => g.id);
       const { data: splits } = await supabase
         .from('expense_splits')
         .select('user_id, amount_owed, expense_id')
         .in('expense_id', expIds);
 
       const monedaPorExpense = {};
-      gastosTodos.forEach(g => monedaPorExpense[g.id] = g.currency || monedaPorGrupo[g.group_id] || 'EUR');
+      gastosRango.forEach(g => monedaPorExpense[g.id] = g.currency || monedaPorGrupo[g.group_id] || 'EUR');
 
       if (splits && splits.length > 0) {
         const splitsPorPersona = {};
@@ -145,9 +137,16 @@ export async function cargarDashboard() {
     const teDeben = miBalance > 0 ? miBalance : 0;
     const debes = miBalance < 0 ? Math.abs(miBalance) : 0;
 
+    // Label dinamico segun el tab
     const labelTotal = document.getElementById('stat-total-label');
     if (labelTotal) {
-      labelTotal.textContent = rango.label;
+      if (rangoActual === 'active') {
+        labelTotal.textContent = 'Total gastado en grupos activos';
+      } else if (rangoActual === 'archived') {
+        labelTotal.textContent = 'Total gastado en grupos archivados';
+      } else {
+        labelTotal.textContent = 'Total gastado (todos los grupos)';
+      }
     }
 
     document.getElementById('stat-total-mes').textContent = formatearMonto(resultado.total, monedaUsuario);
@@ -159,37 +158,11 @@ export async function cargarDashboard() {
     const ultimos = (gastosRango || []).slice(0, 5);
     await renderizarUltimos(ultimos, groupIds, monedaPorGrupo, monedaUsuario);
 
-    await cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario);
+    await cargarHistorico(monedaUsuario);
 
   } catch (error) {
     console.error('Error dashboard:', error);
   }
-}
-
-// ==========================================
-// CALCULAR RANGO
-// ==========================================
-function calcularRango(rango) {
-  const hoy = new Date();
-  const y = hoy.getFullYear();
-  const m = hoy.getMonth();
-
-  if (rango === 'month') {
-    const desde = new Date(y, m, 1).toISOString().split('T')[0];
-    return { desde, hasta: null, label: 'Total gastado este mes' };
-  }
-
-  if (rango === '3months') {
-    const desde = new Date(y, m - 2, 1).toISOString().split('T')[0];
-    return { desde, hasta: null, label: 'Total ultimos 3 meses' };
-  }
-
-  if (rango === 'year') {
-    const desde = new Date(y, 0, 1).toISOString().split('T')[0];
-    return { desde, hasta: null, label: 'Total este ano' };
-  }
-
-  return { desde: null, hasta: null, label: 'Total historico' };
 }
 
 // ==========================================
@@ -229,7 +202,7 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
   if (!container) return;
 
   if (!gastos || gastos.length === 0) {
-    container.innerHTML = '<p class="placeholder-text">No hay movimientos en este rango.</p>';
+    container.innerHTML = '<p class="placeholder-text">No hay movimientos.</p>';
     return;
   }
 
@@ -294,9 +267,9 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
 }
 
 // ==========================================
-// HISTORICO POR MES
+// HISTORICO POR MES (siempre con todos los grupos)
 // ==========================================
-async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
+async function cargarHistorico(monedaUsuario) {
   const tableContainer = document.getElementById('history-table');
   if (!tableContainer) return;
 
@@ -306,7 +279,22 @@ async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
   const hace12 = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1);
   const desdeHistorico = hace12.toISOString().split('T')[0];
 
-  // Solo gastos activos
+  // Todos los grupos (activos + archivados)
+  const { data: grupos } = await supabase
+    .from('groups')
+    .select('id, currency');
+
+  const groupIds = (grupos || []).map(g => g.id);
+  const monedaPorGrupo = {};
+  (grupos || []).forEach(g => monedaPorGrupo[g.id] = g.currency || 'EUR');
+
+  if (groupIds.length === 0) {
+    tableContainer.innerHTML = '<p class="placeholder-text">No hay datos historicos.</p>';
+    if (chartHistoryInstance) { chartHistoryInstance.destroy(); chartHistoryInstance = null; }
+    return;
+  }
+
+  // Gastos activos (no archivados) de todos los grupos
   const { data: gastos } = await supabase
     .from('expenses')
     .select('amount, currency, date, group_id')
@@ -422,9 +410,20 @@ function renderizarVacio(monedaUsuario) {
   document.getElementById('stat-te-deben').textContent = formatearMonto(0, monedaUsuario);
   document.getElementById('stat-debes').textContent = formatearMonto(0, monedaUsuario);
 
+  const labelTotal = document.getElementById('stat-total-label');
+  if (labelTotal) {
+    if (rangoActual === 'active') {
+      labelTotal.textContent = 'Total gastado en grupos activos';
+    } else if (rangoActual === 'archived') {
+      labelTotal.textContent = 'Total gastado en grupos archivados';
+    } else {
+      labelTotal.textContent = 'Total gastado (todos los grupos)';
+    }
+  }
+
   const container = document.getElementById('dashboard-recent');
   if (container) {
-    container.innerHTML = '<p class="placeholder-text">No hay movimientos aun.</p>';
+    container.innerHTML = '<p class="placeholder-text">No hay movimientos.</p>';
   }
 
   const table = document.getElementById('history-table');
@@ -442,7 +441,7 @@ export function initDashboardTabs() {
 
   tabs.forEach(tab => {
     tab.addEventListener('click', async () => {
-      rangoActual = tab.dataset.range || 'month';
+      rangoActual = tab.dataset.range || 'active';
 
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
