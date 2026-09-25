@@ -318,7 +318,7 @@
       <div id="group-info-badges" style="text-align: center; margin-bottom: 10px;"></div>
 
       <div id="group-action-buttons" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
-        <button id="btn-calculate-today" class="btn-calculate-today">
+        <button id="btn-calculate-today" class="btn-calculate-today" style="display: none;">
           Calcular en moneda de hoy
         </button>
         <button id="btn-edit-manual-rate" class="btn-edit-manual-rate" style="display: none;">
@@ -384,24 +384,32 @@
         <div id="group-members-list"><p class="placeholder-text">Cargando miembros...</p></div>
       </div>
 
-      <div class="charts-section">
-        <div class="section-header"><h4>Grafico por persona</h4></div>
-        <div class="chart-container"><canvas id="chart-by-person"></canvas></div>
+      <div class="extras-toggle-wrap">
+        <button type="button" id="btn-toggle-extras" class="btn-toggle-extras">
+          &#128202; Ver graficos, totales e historial
+        </button>
       </div>
 
-      <div class="charts-section">
-        <div class="section-header"><h4>Grafico por categoria</h4></div>
-        <div class="chart-container"><canvas id="chart-by-category"></canvas></div>
-      </div>
+      <div id="group-extras" class="group-extras hidden">
+        <div class="charts-section">
+          <div class="section-header"><h4>Grafico por persona</h4></div>
+          <div class="chart-container"><canvas id="chart-by-person"></canvas></div>
+        </div>
 
-      <div class="totals-section">
-        <div class="section-header"><h4>Totales por categoria</h4></div>
-        <div id="group-category-totals"><p class="placeholder-text">Sin datos.</p></div>
-      </div>
+        <div class="charts-section">
+          <div class="section-header"><h4>Grafico por categoria</h4></div>
+          <div class="chart-container"><canvas id="chart-by-category"></canvas></div>
+        </div>
 
-      <div class="history-section">
-        <div class="section-header"><h4>Historial</h4></div>
-        <div id="group-history-list"><p class="placeholder-text">Cargando historial...</p></div>
+        <div class="totals-section">
+          <div class="section-header"><h4>Totales por categoria</h4></div>
+          <div id="group-category-totals"><p class="placeholder-text">Sin datos.</p></div>
+        </div>
+
+        <div class="history-section">
+          <div class="section-header"><h4>Historial</h4></div>
+          <div id="group-history-list"><p class="placeholder-text">Cargando historial...</p></div>
+        </div>
       </div>
 
       <div class="modal-actions">
@@ -496,7 +504,6 @@
   </div>
 
   <!-- MODAL: Manual de uso -->
-<!-- MODAL: Manual de uso -->
   <div id="modal-manual" class="modal-overlay hidden">
     <div class="modal-content manual-content">
       <h3>Manual de uso</h3>
@@ -622,7 +629,7 @@
 
         <section class="manual-section">
           <h4>13. Calcular en moneda de hoy</h4>
-          <p>En el detalle del grupo, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:</p>
+          <p>En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:</p>
           <ul>
             <li>El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.</li>
             <li>El total que costaria <strong>con las tasas de hoy</strong>.</li>
@@ -674,12 +681,13 @@
 
         <section class="manual-section">
           <h4>18. Historial y graficos del grupo</h4>
-          <p>Dentro de cada grupo, mas abajo, vas a ver:</p>
+          <p>Dentro de cada grupo, mas abajo, vas a ver un boton <strong>"Ver graficos, totales e historial"</strong>. Al tocarlo se despliegan:</p>
           <ul>
             <li><strong>Graficos:</strong> cuanto pago cada persona y cuanto se gasto por categoria.</li>
             <li><strong>Totales por categoria:</strong> desglose de cuanto se gasto en comida, transporte, etc.</li>
             <li><strong>Historial:</strong> todos los movimientos (gastos + pagos) ordenados por fecha.</li>
           </ul>
+          <p>Tocalo de nuevo para ocultarlos y ocupar menos espacio.</p>
         </section>
 
         <section class="manual-section">
@@ -769,7 +777,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- MODAL: Mi Perfil -->
   <div id="modal-profile" class="modal-overlay hidden">
     <div class="modal-content">
