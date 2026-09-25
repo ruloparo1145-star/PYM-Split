@@ -1,7 +1,23 @@
 // js/i18n.js
 
 export const TRADUCCIONES = {
-  es: {
+  es: {,
+
+    'manual.faq.title': 'Preguntas frecuentes',
+    'manual.faq.q1': '<strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.',
+    'manual.faq.q2': '<strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.',
+    'manual.faq.q3': '<strong>Que pasa si la moneda no esta en la web?</strong><br>Podes cargar una cotizacion manual al crear el grupo. La app la usa como respaldo cuando las APIs fallan.',
+    'manual.faq.q4': '<strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo tocando el gasto en la lista.',
+    'manual.faq.q5': '<strong>Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexion para cargar y guardar datos en Supabase.',
+    'manual.faq.q6': '<strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mas.',
+    'manual.faq.q7': '<strong>Cuanta gente puede estar en un grupo?</strong><br>No hay limite. Podes agregar a todos los amigos que quieras.',
+    'manual.faq.q8': '<strong>Se puede usar la misma cuenta en varios dispositivos?</strong><br>Si. Inicias sesion con el mismo email y contrasena, y ves lo mismo en todos lados.',
+    'manual.faq.q9': '<strong>La app funciona en iPhone y Android?</strong><br>Si. Es una PWA (app web progresiva), funciona en cualquier celular o PC con navegador moderno.',
+
+    'manual.guestbook.title': 'Libro de visitas',
+    'manual.guestbook.p1': 'Dejanos tu comentario, sugerencia o saludo. Todos los usuarios pueden leer los comentarios.',
+
+    'manual.close': 'Cerrar'
     // ---------- INDEX ----------
     'index.title': 'PYM Split - Iniciar sesion',
     'index.subtitle': 'Divide gastos, no amistades',
@@ -1050,6 +1066,23 @@ export const TRADUCCIONES = {
     'manual.s23.android_li1': 'Open the app.',
     'manual.s23.android_li2': 'Menu (3 dots) - "Install app".',
     'manual.s23.p1': 'It will look like a normal app, with its icon.'
+    ,
+
+    'manual.faq.title': 'Frequently asked questions',
+    'manual.faq.q1': '<strong>Does the app move money?</strong><br>No. It only records expenses and calculates who owes whom. Transfers are made outside the app.',
+    'manual.faq.q2': '<strong>Can I use multiple currencies?</strong><br>Yes. Each group has its currency, and you can add expenses in any other. The app converts automatically.',
+    'manual.faq.q3': '<strong>What if the currency is not available online?</strong><br>You can set a manual rate when creating the group. The app uses it as a fallback when the APIs fail.',
+    'manual.faq.q4': '<strong>What if I make a mistake when adding an expense?</strong><br>You can edit or archive it by tapping the expense in the list.',
+    'manual.faq.q5': '<strong>Can I use the app without internet?</strong><br>Partially. The app stays installed, but it needs a connection to load and save data in Supabase.',
+    'manual.faq.q6': '<strong>Who can see my expenses?</strong><br>Only the members of each group. No one else.',
+    'manual.faq.q7': '<strong>How many people can be in a group?</strong><br>No limit. You can add as many friends as you want.',
+    'manual.faq.q8': '<strong>Can I use the same account on multiple devices?</strong><br>Yes. Sign in with the same email and password, and you will see the same on all of them.',
+    'manual.faq.q9': '<strong>Does the app work on iPhone and Android?</strong><br>Yes. It is a PWA (progressive web app), it works on any phone or PC with a modern browser.',
+
+    'manual.guestbook.title': 'Guestbook',
+    'manual.guestbook.p1': 'Leave us your comment, suggestion or greeting. All users can read the comments.',
+
+    'manual.close': 'Close'
   }
 };
 
