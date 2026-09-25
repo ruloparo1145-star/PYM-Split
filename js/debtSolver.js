@@ -15,10 +15,12 @@ export async function calcularBalance(groupId) {
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
+  // Solo gastos activos (no archivados)
   const { data: gastos } = await supabase
     .from('expenses')
     .select('id, amount, paid_by, currency, exchange_rate')
-    .eq('group_id', groupId);
+    .eq('group_id', groupId)
+    .eq('archived', false);
 
   if (gastos) {
     gastos.forEach(g => {
@@ -183,8 +185,13 @@ export async function mostrarBalance(groupId) {
       try {
         await saldarDeuda(gId, fromId, toId, amount, monedaGrupo);
         await mostrarBalance(gId);
-        const { cargarHistorial } = await import('./history.js');
-        await cargarHistorial(gId);
+
+        // Refrescar historial solo si esta abierto
+        const extras = document.getElementById('group-extras');
+        if (extras && !extras.classList.contains('hidden')) {
+          const { cargarHistorial } = await import('./history.js');
+          await cargarHistorial(gId);
+        }
       } catch (error) {
         alert('Error al saldar: ' + error.message);
       }
