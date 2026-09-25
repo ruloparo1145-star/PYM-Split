@@ -479,7 +479,7 @@ export const TRADUCCIONES = {
     'group.detail.history_loading': 'Loading history...',
     'group.detail.no_activity': 'No activity yet.',
     'group.detail.close': 'Close',
-    'group.detail.add_member_title': 'Add member to ' group',
+    'group.detail.add_member_title': 'Add member to group',
     'group.detail.add_member_hint': 'Select a friend to add to this group',
     'group.detail.add_member_loading': 'Loading friends...',
     'group.detail.add_member_no_friends': 'You have no friends yet. Add one from the "Friends" button.',
