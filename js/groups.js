@@ -318,19 +318,10 @@ export async function crearGrupo(nombre, tipo, moneda) {
     const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
 
     if (monedaUsuario === 'USD') {
-      // 1 USD = manualRate [monedaGrupo]
-      // Queremos: cuantos USD vale 1 [monedaGrupo]
-      // 1 [monedaGrupo] = 1 / manualRate USD
       manualRateUSD = 1 / manualRate;
     } else {
       const tasaUsuarioAUSD = await obtenerTasa(monedaUsuario, 'USD');
       if (tasaUsuarioAUSD !== null) {
-        // manualRate = cuantos [monedaGrupo] vale 1 [monedaUsuario]
-        // tasaUsuarioAUSD = cuantos USD vale 1 [monedaUsuario]
-        // Queremos: cuantos USD vale 1 [monedaGrupo]
-        // 1 [monedaUsuario] = manualRate [monedaGrupo]
-        // 1 [monedaUsuario] = tasaUsuarioAUSD USD
-        // Entonces: 1 [monedaGrupo] = tasaUsuarioAUSD / manualRate USD
         manualRateUSD = tasaUsuarioAUSD / manualRate;
       } else {
         manualRateUSD = 1 / manualRate;
@@ -446,8 +437,6 @@ async function abrirDetalleGrupo(groupId) {
   const { cargarGastosDelGrupo } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
   const { cargarMiembrosDelGrupo } = await import('./members.js');
-  const { cargarHistorial } = await import('./history.js');
-  const { cargarGraficos } = await import('./charts.js');
 
   const modal = document.getElementById('modal-group-detail');
 
@@ -490,12 +479,28 @@ async function abrirDetalleGrupo(groupId) {
 
   document.getElementById('manual-rate-editor')?.classList.add('hidden');
 
+  // Resetear acordeon de extras a colapsado
+  const extras = document.getElementById('group-extras');
+  const btnExtras = document.getElementById('btn-toggle-extras');
+  if (extras) extras.classList.add('hidden');
+  if (btnExtras) {
+    btnExtras.classList.remove('abierto');
+    btnExtras.innerHTML = '&#128202; Ver graficos, totales e historial';
+  }
+  modal.dataset.extrasCargados = 'false';
+
+  // Mostrar calculadora solo si el grupo esta archivado
+  const estaArchivado = !!(grupo?.archived);
+  const btnCalc = document.getElementById('btn-calculate-today');
+  if (btnCalc) {
+    btnCalc.style.display = estaArchivado ? 'inline-block' : 'none';
+  }
+
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
   await cargarMiembrosDelGrupo(groupId);
-  await cargarHistorial(groupId);
-  await cargarGraficos(groupId);
+  // Graficos e historial se cargan on-demand cuando el usuario toca el boton
 }
 
 // ==========================================
@@ -554,10 +559,7 @@ function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = 
     html += `<p class="group-closed-date">Cerrado el ${formatearFecha(grupo.date_closed)}</p>`;
   }
 
-  // Mostrar informacion de cotizacion
   if (grupo.manual_exchange_rate) {
-    // manualRateUSD = cuantos USD vale 1 [monedaGrupo]
-    // Mostrar: 1 [monedaGrupo] = X USD
     const rateUSD = parseFloat(grupo.manual_exchange_rate);
     html += `
       <div class="group-rate-info group-rate-manual">
@@ -789,16 +791,43 @@ if (!window.__groupDetailListenersAttached) {
     if (e.target.id === 'modal-expense-detail') e.target.classList.add('hidden');
   });
 
+  // Toggle acordeon de graficos/historial (carga on-demand)
+  document.getElementById('btn-toggle-extras')?.addEventListener('click', async () => {
+    const extras = document.getElementById('group-extras');
+    const btn = document.getElementById('btn-toggle-extras');
+    const modal = document.getElementById('modal-group-detail');
+    if (!extras || !btn || !modal) return;
+
+    const groupId = modal.dataset.groupId;
+    const abierto = !extras.classList.contains('hidden');
+
+    if (abierto) {
+      extras.classList.add('hidden');
+      btn.classList.remove('abierto');
+      btn.innerHTML = '&#128202; Ver graficos, totales e historial';
+      return;
+    }
+
+    // Abrir
+    extras.classList.remove('hidden');
+    btn.classList.add('abierto');
+    btn.innerHTML = '&#128200; Ocultar graficos e historial';
+
+    // Cargar on-demand la primera vez
+    if (modal.dataset.extrasCargados !== 'true' && groupId) {
+      const { cargarHistorial } = await import('./history.js');
+      const { cargarGraficos } = await import('./charts.js');
+      const monedaGrupo = modal.dataset.groupCurrency || 'EUR';
+
+      await cargarGraficos(groupId, monedaGrupo);
+      await cargarHistorial(groupId);
+      modal.dataset.extrasCargados = 'true';
+    }
+  });
+
   document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
     const { eliminarGasto } = await import('./expenses.js');
     await eliminarGasto();
-    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
-    if (groupId) {
-      const { cargarHistorial } = await import('./history.js');
-      const { cargarGraficos } = await import('./charts.js');
-      await cargarHistorial(groupId);
-      await cargarGraficos(groupId);
-    }
   });
 
   document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
@@ -883,8 +912,6 @@ if (!window.__groupDetailListenersAttached) {
     const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
     const rateUSD = grupoInfo?.manual_exchange_rate;
 
-    // rateUSD = cuantos USD vale 1 [monedaGrupo]
-    // Queremos mostrar: cuantos [monedaGrupo] vale 1 [monedaUsuario]
     let rateMostrar = '';
     if (rateUSD && rateUSD > 0) {
       if (monedaUsuario === 'USD') {
@@ -892,9 +919,6 @@ if (!window.__groupDetailListenersAttached) {
       } else {
         const tasa = await obtenerTasa(monedaUsuario, 'USD');
         if (tasa !== null) {
-          // 1 [monedaUsuario] = tasa USD
-          // 1 [monedaGrupo] = rateUSD USD
-          // 1 [monedaUsuario] = tasa / rateUSD [monedaGrupo]
           rateMostrar = (tasa / rateUSD).toFixed(2);
         } else {
           rateMostrar = (1 / rateUSD).toFixed(2);
@@ -949,8 +973,6 @@ if (!window.__groupDetailListenersAttached) {
       if (monedaUsuario !== 'USD') {
         const tasa = await obtenerTasa(monedaUsuario, 'USD');
         if (tasa !== null) {
-          // valor = cuantos [monedaGrupo] vale 1 [monedaUsuario]
-          // Queremos: cuantos USD vale 1 [monedaGrupo]
           valorUSD = tasa / valor;
         }
       }
