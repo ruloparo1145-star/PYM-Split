@@ -10,8 +10,8 @@ const APP_ASSETS = [
   './icon-512.png',
   './js/config.js',
   './js/supabase.js',
-  './js/auth.js',
   './js/i18n.js',
+  './js/auth.js',
   './js/ui.js',
   './js/groups.js',
   './js/expenses.js',
@@ -22,10 +22,12 @@ const APP_ASSETS = [
   './js/charts.js',
   './js/dashboard.js',
   './js/profile.js',
+  './js/export.js',
   './js/currency.js',
   './js/guestbook.js'
 ];
 
+// Instalacion
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -35,6 +37,7 @@ self.addEventListener('install', event => {
   self.skipWaiting();
 });
 
+// Activacion
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
@@ -44,9 +47,11 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
+// Fetch
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
+  // No cachear peticiones a Supabase, Frankfurter ni DolarAPI
   if (event.request.url.includes('supabase.co')) return;
   if (event.request.url.includes('frankfurter.app')) return;
   if (event.request.url.includes('dolarapi.com')) return;
