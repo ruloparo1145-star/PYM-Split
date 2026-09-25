@@ -1,5 +1,6 @@
 // js/ui.js
 import { supabase } from './supabase.js';
+import { initI18n, t, setIdioma, getIdioma, aplicarTraducciones } from './i18n.js';
 import { cargarGrupos, initGroupModal, initArchivedToggle } from './groups.js';
 import { initFriendsModal } from './friends.js';
 import { initExpenseModal, initFiltroCategoria } from './expenses.js';
@@ -19,28 +20,41 @@ import { initGuestbook } from './guestbook.js';
     return;
   }
 
-  // Mostrar nombre del usuario (desde profiles)
-  const welcomeMessage = document.getElementById('welcome-message');
-  
+  // 1. Cargar perfil PRIMERO para saber su idioma preferido
   const { data: perfil } = await supabase
     .from('profiles')
-    .select('full_name, email')
+    .select('full_name, email, language')
     .eq('id', session.user.id)
     .single();
 
+  // 2. Determinar idioma: perfil > localStorage > navegador
+  let idioma = perfil?.language || null;
+
+  if (!idioma) {
+    idioma = localStorage.getItem('pym_idioma')
+      || ((navigator.language || 'en').toLowerCase().startsWith('es') ? 'es' : 'en');
+  }
+
+  setIdioma(idioma);
+  aplicarTraducciones();
+
+  // 3. Mostrar nombre del usuario
+  const welcomeMessage = document.getElementById('welcome-message');
   const fullName = perfil?.full_name
     || session.user.user_metadata?.full_name
     || perfil?.email
     || session.user.email
-    || 'Usuario';
+    || 'User';
 
-  welcomeMessage.textContent = `Hola, ${fullName}`;
+  if (welcomeMessage) {
+    welcomeMessage.textContent = t('dashboard.welcome', { nombre: fullName });
+  }
 
-  // Cargar datos
+  // 4. Cargar datos
   await cargarGrupos();
   await cargarDashboard();
 
-  // Inicializar modales y funcionalidades
+  // 5. Inicializar modales y funcionalidades
   initGroupModal();
   initFriendsModal();
   initExpenseModal();
@@ -52,12 +66,12 @@ import { initGuestbook } from './guestbook.js';
   initGuestbook();
   initDashboardTabs();
 
-  // Inicializar el modal del historico (con delay para asegurar que el DOM este listo)
+  // 6. Inicializar modal del historico
   setTimeout(() => {
     initChartHistoryModal();
   }, 100);
 
-  console.log('PYM Split iniciado correctamente');
+  console.log('PYM Split iniciado correctamente en idioma:', getIdioma());
 })();
 
 // ==========================================
@@ -91,28 +105,17 @@ function initChartHistoryModal() {
   const modal = document.getElementById('modal-chart-history');
   const btnClose = document.getElementById('btn-close-chart-history');
 
-  console.log('Inicializando modal historico...');
-  console.log('btn-ver-historico:', btnVer);
-  console.log('modal-chart-history:', modal);
-
-  if (!btnVer) {
-    console.warn('Boton "Ver historico" no encontrado');
+  if (!btnVer || !modal) {
+    console.warn('Modal historico no encontrado');
     return;
   }
 
-  if (!modal) {
-    console.warn('Modal "modal-chart-history" no encontrado');
-    return;
-  }
-
-  // Remover listeners previos (por si se llama 2 veces)
+  // Remover listeners previos
   const nuevoBtn = btnVer.cloneNode(true);
   btnVer.parentNode.replaceChild(nuevoBtn, btnVer);
 
   nuevoBtn.addEventListener('click', () => {
-    console.log('Click en Ver historico');
     modal.classList.remove('hidden');
-    // Forzar resize del chart despues de abrir
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
     }, 200);
@@ -129,18 +132,16 @@ function initChartHistoryModal() {
       modal.classList.add('hidden');
     }
   });
-
-  console.log('Modal historico inicializado OK');
 }
 
 // ==========================================
-// 4. CERRAR SESION (Logout)
+// 4. CERRAR SESION
 // ==========================================
 document.getElementById('btn-logout').addEventListener('click', async () => {
   const { error } = await supabase.auth.signOut();
   if (!error) {
     window.location.href = 'index.html';
   } else {
-    alert('Error al cerrar sesion: ' + error.message);
+    alert('Error: ' + error.message);
   }
 });
