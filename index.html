@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PYM Split - Iniciar sesión</title>
+  <title>PYM Split</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="css/style.css">
 
-  <!-- âš ï¸ IMPORT MAP PARA SUPABASE (esto faltaba) -->
   <script type="importmap">
   {
     "imports": {
@@ -23,43 +22,41 @@
       <div class="auth-header">
         <img src="icon-192.png" alt="PYM Split" class="auth-logo">
         <h1>PYM Split</h1>
-        <p class="auth-subtitle">Divide gastos, no amistades</p>
+        <p class="auth-subtitle" data-i18n="index.subtitle">Split expenses, not friendships</p>
       </div>
 
       <div class="auth-tabs">
-        <button id="tab-login" class="tab-btn active" type="button">Iniciar sesión</button>
-        <button id="tab-register" class="tab-btn" type="button">Crear cuenta</button>
+        <button id="tab-login" class="tab-btn active" type="button" data-i18n="index.tab_login">Sign in</button>
+        <button id="tab-register" class="tab-btn" type="button" data-i18n="index.tab_register">Create account</button>
       </div>
 
-      <!-- Formulario de Login -->
       <form id="form-login" class="auth-form">
         <div class="form-group">
-          <label for="login-email">Email</label>
-          <input type="email" id="login-email" placeholder="tu@email.com" required autocomplete="email">
+          <label for="login-email" data-i18n="index.email">Email</label>
+          <input type="email" id="login-email" data-i18n-placeholder="index.email_placeholder" placeholder="you@email.com" required autocomplete="email">
         </div>
         <div class="form-group">
-          <label for="login-password">Contraseña</label>
+          <label for="login-password" data-i18n="index.password">Password</label>
           <input type="password" id="login-password" placeholder="                        " required autocomplete="current-password">
         </div>
-        <button type="submit" class="btn-primary">Entrar</button>
+        <button type="submit" class="btn-primary" id="btn-login" data-i18n="index.login_button">Sign in</button>
         <p id="login-error" class="error-msg"></p>
       </form>
 
-      <!-- Formulario de Registro -->
       <form id="form-register" class="auth-form hidden">
         <div class="form-group">
-          <label for="register-name">Nombre completo</label>
-          <input type="text" id="register-name" placeholder="Juan PÃ©rez" required autocomplete="name">
+          <label for="register-name" data-i18n="index.register_name">Full name</label>
+          <input type="text" id="register-name" data-i18n-placeholder="index.register_name_placeholder" placeholder="John Smith" required autocomplete="name">
         </div>
         <div class="form-group">
-          <label for="register-email">Email</label>
-          <input type="email" id="register-email" placeholder="tu@email.com" required autocomplete="email">
+          <label for="register-email" data-i18n="index.email">Email</label>
+          <input type="email" id="register-email" data-i18n-placeholder="index.email_placeholder" placeholder="you@email.com" required autocomplete="email">
         </div>
         <div class="form-group">
-          <label for="register-password">Contraseña</label>
-          <input type="password" id="register-password" placeholder="MÃ­nimo 6 caracteres" required minlength="6" autocomplete="new-password">
+          <label for="register-password" data-i18n="index.password">Password</label>
+          <input type="password" id="register-password" data-i18n-placeholder="index.password_placeholder" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
         </div>
-        <button type="submit" class="btn-primary">Crear cuenta</button>
+        <button type="submit" class="btn-primary" id="btn-register" data-i18n="index.register_button">Create account</button>
         <p id="register-error" class="error-msg"></p>
       </form>
     </div>
