@@ -178,33 +178,34 @@
   </div>
 
   <!-- MODAL: Amigos -->
+<!-- MODAL: Amigos -->
   <div id="modal-friends" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
-      <h3>Gestion de Amigos</h3>
+      <h3 data-i18n="friends.title">Friends Management</h3>
       <form id="form-add-friend" style="margin-bottom: 20px;">
         <div class="form-group">
-          <label for="friend-email">Agregar amigo por email</label>
+          <label for="friend-email" data-i18n="friends.add_label">Add friend by email</label>
           <div style="display: flex; gap: 10px;">
-            <input type="email" id="friend-email" placeholder="amigo@email.com" required style="flex:1;">
-            <button type="submit" class="btn-primary" style="width: auto; padding: 0 20px;">Enviar</button>
+            <input type="email" id="friend-email" data-i18n-placeholder="friends.add_placeholder" placeholder="friend@email.com" required style="flex:1;">
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0 20px;" data-i18n="friends.add_button">Send</button>
           </div>
           <p id="friend-error" class="error-msg" style="text-align: left; margin-top: 5px;"></p>
         </div>
       </form>
       <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
-        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Solicitudes Pendientes</h4>
-        <div id="friend-requests-list"><p class="placeholder-text">Cargando...</p></div>
+        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;" data-i18n="friends.requests_title">Pending Requests</h4>
+        <div id="friend-requests-list"><p class="placeholder-text" data-i18n="friends.requests_loading">Loading...</p></div>
       </div>
       <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
-        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Mis Amigos</h4>
-        <div id="friends-list"><p class="placeholder-text">Cargando...</p></div>
+        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;" data-i18n="friends.list_title">My Friends</h4>
+        <div id="friends-list"><p class="placeholder-text" data-i18n="friends.list_loading">Loading...</p></div>
       </div>
       <div class="modal-actions">
-        <button type="button" id="btn-cancel-friends" class="btn-secondary">Cerrar</button>
+        <button type="button" id="btn-cancel-friends" class="btn-secondary" data-i18n="friends.close">Close</button>
       </div>
     </div>
   </div>
-
+  
   <!-- MODAL: Anadir Gasto -->
   <div id="modal-expense" class="modal-overlay hidden">
     <div class="modal-content">
