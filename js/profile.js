@@ -1,6 +1,7 @@
 // js/profile.js
 import { supabase } from './supabase.js';
 import { t, setIdioma, getIdioma, aplicarTraducciones } from './i18n.js';
+import { exportarDatos } from './export.js';
 
 // ==========================================
 // MONEDAS DISPONIBLES
@@ -67,13 +68,11 @@ export async function cargarPerfil() {
   const idioma = getIdioma();
   const labelKey = idioma === 'es' ? 'label_es' : 'label_en';
 
-  // Selector de moneda
   const selectMoneda = document.getElementById('profile-currency');
   selectMoneda.innerHTML = MONEDAS.map(m =>
     `<option value="${m.code}" ${m.code === (perfil.preferred_currency || 'EUR') ? 'selected' : ''}>${m.code} - ${m[labelKey]}</option>`
   ).join('');
 
-  // Selector de idioma
   const selectIdioma = document.getElementById('profile-language');
   if (selectIdioma) {
     selectIdioma.innerHTML = IDIOMAS.map(i =>
@@ -113,18 +112,15 @@ export async function guardarPerfil() {
 
   if (error) throw error;
 
-  // Si cambio el idioma, aplicarlo ya
   if (language !== getIdioma()) {
     setIdioma(language);
     aplicarTraducciones();
 
-    // Actualizar welcome message
     const welcomeMessage = document.getElementById('welcome-message');
     if (welcomeMessage && fullName) {
       welcomeMessage.textContent = t('dashboard.welcome', { nombre: fullName });
     }
 
-    // Recargar la app despues de un momento para que todo se retraduzca
     setTimeout(() => {
       window.location.reload();
     }, 800);
@@ -148,6 +144,7 @@ export function initProfileModal() {
   const form = document.getElementById('form-profile');
   const errorMsg = document.getElementById('profile-error');
   const successMsg = document.getElementById('profile-success');
+  const btnExport = document.getElementById('btn-export-data');
 
   btnOpen?.addEventListener('click', async () => {
     modal.classList.remove('hidden');
@@ -185,6 +182,31 @@ export function initProfileModal() {
     } finally {
       btnSubmit.disabled = false;
       btnSubmit.textContent = t('profile.save');
+    }
+  });
+
+  // Exportar datos
+  btnExport?.addEventListener('click', async () => {
+    const textoOriginal = btnExport.textContent;
+    btnExport.disabled = true;
+    btnExport.textContent = t('profile.export_loading');
+    errorMsg.textContent = '';
+    successMsg.textContent = '';
+
+    try {
+      await exportarDatos();
+      successMsg.style.color = '#38a169';
+      successMsg.textContent = t('profile.export_success');
+
+      setTimeout(() => {
+        successMsg.textContent = '';
+      }, 4000);
+
+    } catch (error) {
+      errorMsg.textContent = t('profile.export_error', { mensaje: error.message });
+    } finally {
+      btnExport.disabled = false;
+      btnExport.textContent = textoOriginal;
     }
   });
 }
