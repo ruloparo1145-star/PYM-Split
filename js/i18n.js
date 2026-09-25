@@ -442,7 +442,7 @@ export const TRADUCCIONES = {
     'group.action.delete_title': 'Delete',
     'group.action.restore_title': 'Restore',
     'group.action.archive_confirm': 'Archive group "{nombre}"? You can see it from the "Archived" button.',
-    'group.action.need_close_computo': 'You must first close the group\'s calculation before archiving it. Go to the group details and tap "Close calculation".',
+    'group.action.need_close_computo': 'You must first close the group calculation before archiving it. Go to the group details and tap "Close calculation".',
     'group.action.delete_confirm': 'Delete group "{nombre}" and ALL its data? This action cannot be undone.',
     'group.action.archive_error': 'Error archiving: {mensaje}',
     'group.action.restore_error': 'Error restoring: {mensaje}',
@@ -489,17 +489,17 @@ export const TRADUCCIONES = {
     'group.detail.add_member_error': 'Error adding: {mensaje}',
 
     // ---------- GROUPS: DETAIL BUTTONS ----------
-    'group.btn.calc_today': 'Calculate in today\'s rate',
+    'group.btn.calc_today': 'Calculate in today rate',
     'group.btn.edit_rate': 'Edit rate',
     'group.btn.close_computo': 'Close calculation',
     'group.btn.reopen_computo': 'Reopen',
     'group.btn.view_extras': 'View charts, totals and history',
-    'group.btn.hide_extras':Hide charts and history',
+    'group.btn.hide_extras': 'Hide charts and history',
     'group.btn.view_archived_expenses': 'View archived expenses',
     'group.btn.hide_archived_expenses': 'Hide archived expenses',
 
     // ---------- GROUPS: CLOSE/REOPEN ----------
-    'group.computo.close_confirm': 'Close this group\'s calculation? The date and final total will be saved.',
+    'group.computo.close_confirm': 'Close this group calculation? The date and final total will be saved.',
     'group.computo.reopen_confirm': 'Reopen the calculation? The closing date and saved final total will be deleted.',
     'group.computo.close_error': 'Error closing calculation: {mensaje}',
     'group.computo.reopen_error': 'Error reopening calculation: {mensaje}',
@@ -513,7 +513,7 @@ export const TRADUCCIONES = {
     'group.rate.no_auth': 'Not authenticated',
 
     // ---------- GROUPS: TODAY CALCULATOR ----------
-    'group.calc.title': 'Today\'s calculator',
+    'group.calc.title': 'Today calculator',
     'group.calc.group': 'Group: {nombre}',
     'group.calc.historic_label': 'Total spent (with rates at the time)',
     'group.calc.today_label': 'If you did it TODAY',
@@ -573,7 +573,7 @@ export const TRADUCCIONES = {
     'expense.create.exact_sum': 'Adds up to {total} {moneda}, should add up to {esperado} {moneda}.',
     'expense.create.exact_ok': 'OK. Correct sum.',
     'expense.create.shares_need': 'Assign at least one share to someone.',
-    'expense.create.shares_line': '{shares} shares -> {monto} {moneda}',
+    'expense.create.shares_line': '{shares} shares, {monto} {moneda}',
     'expense.create.shares_ok': 'OK. Total: {total} shares.',
     'expense.create.percent_error': 'Percentages add up to {total}%, they must add up to 100%.',
     'expense.create.exact_error': 'Amounts add up to {total}, they must add up to {esperado}.',
@@ -593,16 +593,16 @@ export const TRADUCCIONES = {
     'expense.detail.split': 'Split:',
     'expense.detail.no_split': 'No splits.',
     'expense.detail.unknown': 'Unknown',
-    'expense.detail.archived_notice': 'This expense is archived and is not part of the group\'s calculations.',
+    'expense.detail.archived_notice': 'This expense is archived and is not part of the group calculations.',
     'expense.detail.edit': 'Edit',
     'expense.detail.archive': 'Archive',
     'expense.detail.close': 'Close',
 
     // ---------- EXPENSES: ARCHIVE ----------
-    'expense.archive.confirm': 'Archive this expense? It will stop being part of the group\'s calculations. You can restore it later.',
-    'expense.archive.need_close': 'You must first close the group\'s calculation to archive expenses.',
+    'expense.archive.confirm': 'Archive this expense? It will stop being part of the group calculations. You can restore it later.',
+    'expense.archive.need_close': 'You must first close the group calculation to archive expenses.',
     'expense.archive.error': 'Error archiving: {mensaje}',
-    'expense.archive.restore_confirm': 'Restore this expense? It will be part of the group\'s calculations again.',
+    'expense.archive.restore_confirm': 'Restore this expense? It will be part of the group calculations again.',
     'expense.archive.restore_error': 'Error restoring: {mensaje}',
     'expense.archive.badge_one': '{count} archived expense',
     'expense.archive.badge_many': '{count} archived expenses',
@@ -650,7 +650,7 @@ export function t(clave, params = {}) {
   let texto = textos[clave] || TRADUCCIONES.en[clave] || clave;
 
   Object.entries(params).forEach(([k, v]) => {
-    texto = texto.replace(new RegExp(`\\{${k}\\}`, 'g'), v);
+    texto = texto.replace(new RegExp('\\{' + k + '\\}', 'g'), v);
   });
 
   return texto;
@@ -686,7 +686,7 @@ export function initI18n() {
 }
 
 export function tCategoria(cat) {
-  return t(`cat.${cat}`) || cat;
+  return t('cat.' + cat) || cat;
 }
 
 export function tMes(mesNumero) {
