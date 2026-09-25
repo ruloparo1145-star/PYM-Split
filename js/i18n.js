@@ -58,6 +58,7 @@ export const TRADUCCIONES = {
     'dashboard.btn_active': 'Ver activos',
     'dashboard.btn_new': '+ Nuevo',
     'dashboard.loading': 'Cargando...',
+    'dashboard.cat_filter_all': 'Todas las categorias',
 
     // ---------- PERFIL ----------
     'profile.title': 'Mi Perfil',
@@ -89,7 +90,192 @@ export const TRADUCCIONES = {
     'cat.servicios': 'Servicios',
     'cat.compras': 'Compras',
     'cat.viajes': 'Viajes',
-    'cat.otros': 'Otros'
+    'cat.otros': 'Otros',
+
+    // ---------- GRUPOS: CREAR MODAL ----------
+    'group.create.title': 'Crear Nuevo Grupo',
+    'group.create.name': 'Nombre del Grupo',
+    'group.create.name_placeholder': 'Ej: Viaje a Bariloche',
+    'group.create.type': 'Tipo',
+    'group.create.type.trip': 'Viaje',
+    'group.create.type.flat': 'Departamento',
+    'group.create.type.outings': 'Salidas',
+    'group.create.type.other': 'Otro',
+    'group.create.currency': 'Moneda',
+    'group.create.date_start': 'Fecha de inicio (opcional)',
+    'group.create.date_end': 'Fecha de fin (opcional)',
+    'group.create.manual_rate': 'Cotizacion manual (opcional)',
+    'group.create.manual_rate_label': '1 {moneda} =',
+    'group.create.manual_rate_currency': 'Moneda grupo',
+    'group.create.manual_rate_placeholder': 'Ej: 1200',
+    'group.create.manual_rate_hint': 'Si la cotizacion no esta en la web, se usara esta. Si esta vacio, queda en 0.',
+    'group.create.cancel': 'Cancelar',
+    'group.create.submit': 'Crear Grupo',
+    'group.create.creating': 'Creando...',
+    'group.create.error': 'Error al crear el grupo: {mensaje}',
+    'group.create.no_auth': 'Usuario no autenticado',
+
+    // ---------- GRUPOS: LISTA ----------
+    'group.list.type_suffix': 'TIPO',
+    'group.list.total': 'Total',
+    'group.list.my_share': 'Mi parte',
+    'group.list.expenses_count': '{count} gastos',
+    'group.list.badge_archived': 'Archivado',
+    'group.list.badge_closed': 'Cerrado',
+    'group.list.dates_from': 'Desde {fecha}',
+    'group.list.dates_until': 'Hasta {fecha}',
+    'group.list.dates_range': '{inicio} - {fin}',
+
+    // ---------- GRUPOS: ACCIONES ----------
+    'group.action.archive_title': 'Archivar',
+    'group.action.delete_title': 'Eliminar',
+    'group.action.restore_title': 'Restaurar',
+    'group.action.archive_confirm': 'Archivar el grupo "{nombre}"? Podras verlo desde el boton "Archivados".',
+    'group.action.delete_confirm': 'Eliminar el grupo "{nombre}" y TODOS sus datos? Esta accion no se puede deshacer.',
+    'group.action.archive_error': 'Error al archivar: {mensaje}',
+    'group.action.restore_error': 'Error al restaurar: {mensaje}',
+    'group.action.delete_error': 'Error al eliminar el grupo: {mensaje}',
+    'group.action.load_error': 'Error: {mensaje}',
+    'group.action.db_error': 'No se pudo conectar con Supabase',
+
+    // ---------- GRUPOS: DETALLE ----------
+    'group.detail.title': 'Detalle del Grupo',
+    'group.detail.total_final': 'Total final',
+    'group.detail.total_trip': 'Total del viaje',
+    'group.detail.my_part': 'Mi parte',
+    'group.detail.closed_on': 'Cerrado el {fecha}',
+    'group.detail.manual_rate_badge': 'Cotizacion manual',
+    'group.detail.manual_rate_value': '1 {moneda} = {rate} USD',
+    'group.detail.no_rate_badge': 'Sin cotizacion automatica',
+    'group.detail.no_rate_hint': 'Carga una cotizacion manual',
+
+    // ---------- GRUPOS: BOTONES DETALLE ----------
+    'group.btn.calc_today': 'Calcular en moneda de hoy',
+    'group.btn.edit_rate': 'Editar cotizacion',
+    'group.btn.close_computo': 'Cerrar computo',
+    'group.btn.reopen_computo': 'Reabrir',
+    'group.btn.view_extras': 'Ver graficos, totales e historial',
+    'group.btn.hide_extras': 'Ocultar graficos e historial',
+    'group.btn.view_archived_expenses': 'Ver gastos archivados',
+    'group.btn.hide_archived_expenses': 'Ocultar gastos archivados',
+
+    // ---------- GRUPOS: CERRAR/REABRIR COMPUTO ----------
+    'group.computo.close_confirm': 'Cerrar el computo de este grupo? Se guardara la fecha y el total final.',
+    'group.computo.reopen_confirm': 'Reabrir el computo? Se borrara la fecha de cierre y el total final guardado.',
+    'group.computo.close_error': 'Error al cerrar computo: {mensaje}',
+    'group.computo.reopen_error': 'Error al reabrir computo: {mensaje}',
+
+    // ---------- GRUPOS: COTIZACION MANUAL ----------
+    'group.rate.label': 'Cotizacion manual',
+    'group.rate.save': 'Guardar',
+    'group.rate.cancel': 'Cancelar',
+    'group.rate.invalid': 'Ingresa un numero valido.',
+    'group.rate.save_error': 'Error al guardar: {mensaje}',
+    'group.rate.no_auth': 'No autenticado',
+
+    // ---------- GRUPOS: CALCULADORA HOY ----------
+    'group.calc.title': 'Calculadora de hoy',
+    'group.calc.group': 'Grupo: {nombre}',
+    'group.calc.historic_label': 'Total gastado (con tasas del momento)',
+    'group.calc.today_label': 'Si lo hicieras HOY',
+    'group.calc.diff_label': 'Diferencia',
+    'group.calc.diff_note_up': 'La moneda subio respecto al momento del viaje.',
+    'group.calc.diff_note_down': 'La moneda bajo respecto al momento del viaje.',
+    'group.calc.diff_note_same': 'La moneda esta igual respecto al momento del viaje.',
+    'group.calc.footer': 'Este calculo es solo informativo. No modifica ningun dato.',
+    'group.calc.empty': 'Este grupo no tiene gastos.',
+    'group.calc.error': 'Error al calcular.',
+    'group.calc.loading': 'Calculando...',
+
+    // ---------- GASTOS: MODAL CREAR ----------
+    'expense.create.title': 'Nuevo Gasto',
+    'expense.create.description': 'Que fue?',
+    'expense.create.description_placeholder': 'Ej: Cena en el restaurante',
+    'expense.create.amount': 'Monto',
+    'expense.create.amount_placeholder': '0.00',
+    'expense.create.group': 'Grupo',
+    'expense.create.group_placeholder': 'Seleccionar grupo...',
+    'expense.create.paid_by': 'Quien pago?',
+    'expense.create.paid_by_placeholder': 'Seleccionar quien pago...',
+    'expense.create.currency': 'Moneda',
+    'expense.create.category': 'Categoria',
+    'expense.create.split_type': 'Tipo de division:',
+    'expense.create.split_equal': 'Partes iguales',
+    'expense.create.split_percentage': 'Por porcentaje (%)',
+    'expense.create.split_exact': 'Montos exactos',
+    'expense.create.split_shares': 'Por partes (shares)',
+    'expense.create.split_between': 'Dividir entre:',
+    'expense.create.split_summary': 'Resumen de la division:',
+    'expense.create.split_no_group': 'Selecciona un grupo para ver los miembros...',
+    'expense.create.split_no_group_hint': 'Selecciona un grupo y ajusta los valores.',
+    'expense.create.cancel': 'Cancelar',
+    'expense.create.submit': 'Guardar Gasto',
+    'expense.create.saving': 'Guardando...',
+    'expense.create.success': 'Gasto guardado con exito!',
+    'expense.create.error': 'Error: {mensaje}',
+    'expense.create.no_members': 'Error al cargar miembros.',
+    'expense.create.need_one': 'Selecciona al menos una persona.',
+    'expense.create.need_group': 'Debes seleccionar al menos una persona para dividir.',
+    'expense.create.equal_summary': '{monto} {moneda} por persona ({count} personas)',
+    'expense.create.percent_sum': 'Los porcentajes suman {total}%, deberian sumar 100%.',
+    'expense.create.percent_ok': 'OK. Suma 100%.',
+    'expense.create.exact_sum': 'Suma {total} {moneda}, deberia sumar {esperado} {moneda}.',
+    'expense.create.exact_ok': 'OK. Suma correcta.',
+    'expense.create.shares_need': 'Asigna al menos una parte a alguien.',
+    'expense.create.shares_line': '{shares} partes -> {monto} {moneda}',
+    'expense.create.shares_ok': 'OK. Total: {total} partes.',
+    'expense.create.percent_error': 'Los porcentajes suman {total}%, deben sumar 100%.',
+    'expense.create.exact_error': 'Los montos suman {total}, deben sumar {esperado}.',
+    'expense.create.shares_error': 'Debes asignar al menos una parte.',
+
+    // ---------- GASTOS: LISTA ----------
+    'expense.list.empty': 'No hay gastos aun. Anade el primero!',
+    'expense.list.empty_filter': 'No hay gastos con esa categoria.',
+    'expense.list.error': 'Error al cargar gastos.',
+    'expense.list.paid_by': 'Pago: {nombre} - {fecha}',
+
+    // ---------- GASTOS: DETALLE ----------
+    'expense.detail.title': 'Detalle del Gasto',
+    'expense.detail.loading': 'Cargando...',
+    'expense.detail.error': 'Error al cargar el gasto.',
+    'expense.detail.paid_by': 'Pago:',
+    'expense.detail.split': 'Division:',
+    'expense.detail.no_split': 'Sin divisiones.',
+    'expense.detail.unknown': 'Desconocido',
+    'expense.detail.archived_notice': 'Este gasto esta archivado y no forma parte de los calculos del grupo.',
+    'expense.detail.edit': 'Editar',
+    'expense.detail.archive': 'Archivar',
+    'expense.detail.close': 'Cerrar',
+
+    // ---------- GASTOS: ARCHIVAR ----------
+    'expense.archive.confirm': 'Archivar este gasto? Dejara de formar parte de los calculos del grupo. Podes restaurarlo despues.',
+    'expense.archive.need_close': 'Primero debes cerrar el computo del grupo para poder archivar gastos.',
+    'expense.archive.error': 'Error al archivar: {mensaje}',
+    'expense.archive.restore_confirm': 'Restaurar este gasto? Volvera a formar parte de los calculos del grupo.',
+    'expense.archive.restore_error': 'Error al restaurar: {mensaje}',
+    'expense.archive.badge_one': '{count} gasto archivado',
+    'expense.archive.badge_many': '{count} gastos archivados',
+    'expense.archive.badge_amount': '({monto} {moneda} no incluidos)',
+    'expense.archive.archived_on': 'Archivado el {fecha}',
+    'expense.archive.restore': 'Restaurar',
+    'expense.archive.empty': 'No hay gastos archivados en este grupo.',
+    'expense.archive.error_load': 'Error al cargar gastos archivados.',
+
+    // ---------- GASTOS: EDITAR ----------
+    'expense.edit.title': 'Editar Gasto',
+    'expense.edit.description': 'Que fue?',
+    'expense.edit.amount': 'Monto',
+    'expense.edit.category': 'Categoria',
+    'expense.edit.currency': 'Moneda',
+    'expense.edit.paid_by': 'Quien pago?',
+    'expense.edit.cancel': 'Cancelar',
+    'expense.edit.submit': 'Guardar cambios',
+    'expense.edit.saving': 'Guardando...',
+    'expense.edit.error': 'Error: {mensaje}',
+    'expense.edit.cant_archived': 'No se puede editar un gasto archivado. Restauralo primero.',
+
+    // ---------- CATEGORIA: FILTRO ----------
+    'category.filter.all': 'Todas las categorias'
   },
 
   en: {
@@ -146,6 +332,7 @@ export const TRADUCCIONES = {
     'dashboard.btn_active': 'See active',
     'dashboard.btn_new': '+ New',
     'dashboard.loading': 'Loading...',
+    'dashboard.cat_filter_all': 'All categories',
 
     // ---------- PROFILE ----------
     'profile.title': 'My Profile',
@@ -177,7 +364,192 @@ export const TRADUCCIONES = {
     'cat.servicios': 'Services',
     'cat.compras': 'Shopping',
     'cat.viajes': 'Travel',
-    'cat.otros': 'Other'
+    'cat.otros': 'Other',
+
+    // ---------- GROUPS: CREATE MODAL ----------
+    'group.create.title': 'Create New Group',
+    'group.create.name': 'Group Name',
+    'group.create.name_placeholder': 'Ex: Trip to Bariloche',
+    'group.create.type': 'Type',
+    'group.create.type.trip': 'Trip',
+    'group.create.type.flat': 'Apartment',
+    'group.create.type.outings': 'Outings',
+    'group.create.type.other': 'Other',
+    'group.create.currency': 'Currency',
+    'group.create.date_start': 'Start date (optional)',
+    'group.create.date_end': 'End date (optional)',
+    'group.create.manual_rate': 'Manual exchange rate (optional)',
+    'group.create.manual_rate_label': '1 {moneda} =',
+    'group.create.manual_rate_currency': 'Group currency',
+    'group.create.manual_rate_placeholder': 'Ex: 1200',
+    'group.create.manual_rate_hint': 'If the rate is not available online, this will be used. If empty, it stays at 0.',
+    'group.create.cancel': 'Cancel',
+    'group.create.submit': 'Create Group',
+    'group.create.creating': 'Creating...',
+    'group.create.error': 'Error creating group: {mensaje}',
+    'group.create.no_auth': 'User not authenticated',
+
+    // ---------- GROUPS: LIST ----------
+    'group.list.type_suffix': 'TYPE',
+    'group.list.total': 'Total',
+    'group.list.my_share': 'My share',
+    'group.list.expenses_count': '{count} expenses',
+    'group.list.badge_archived': 'Archived',
+    'group.list.badge_closed': 'Closed',
+    'group.list.dates_from': 'From {fecha}',
+    'group.list.dates_until': 'Until {fecha}',
+    'group.list.dates_range': '{inicio} - {fin}',
+
+    // ---------- GROUPS: ACTIONS ----------
+    'group.action.archive_title': 'Archive',
+    'group.action.delete_title': 'Delete',
+    'group.action.restore_title': 'Restore',
+    'group.action.archive_confirm': 'Archive group "{nombre}"? You can see it from the "Archived" button.',
+    'group.action.delete_confirm': 'Delete group "{nombre}" and ALL its data? This action cannot be undone.',
+    'group.action.archive_error': 'Error archiving: {mensaje}',
+    'group.action.restore_error': 'Error restoring: {mensaje}',
+    'group.action.delete_error': 'Error deleting group: {mensaje}',
+    'group.action.load_error': 'Error: {mensaje}',
+    'group.action.db_error': 'Could not connect to Supabase',
+
+    // ---------- GROUPS: DETAIL ----------
+    'group.detail.title': 'Group Details',
+    'group.detail.total_final': 'Final total',
+    'group.detail.total_trip': 'Trip total',
+    'group.detail.my_part': 'My share',
+    'group.detail.closed_on': 'Closed on {fecha}',
+    'group.detail.manual_rate_badge': 'Manual rate',
+    'group.detail.manual_rate_value': '1 {moneda} = {rate} USD',
+    'group.detail.no_rate_badge': 'No automatic rate',
+    'group.detail.no_rate_hint': 'Set a manual rate',
+
+    // ---------- GROUPS: DETAIL BUTTONS ----------
+    'group.btn.calc_today': 'Calculate in today\'s rate',
+    'group.btn.edit_rate': 'Edit rate',
+    'group.btn.close_computo': 'Close calculation',
+    'group.btn.reopen_computo': 'Reopen',
+    'group.btn.view_extras': 'View charts, totals and history',
+    'group.btn.hide_extras': 'Hide charts and history',
+    'group.btn.view_archived_expenses': 'View archived expenses',
+    'group.btn.hide_archived_expenses': 'Hide archived expenses',
+
+    // ---------- GROUPS: CLOSE/REOPEN ----------
+    'group.computo.close_confirm': 'Close this group\'s calculation? The date and final total will be saved.',
+    'group.computo.reopen_confirm': 'Reopen the calculation? The closing date and saved final total will be deleted.',
+    'group.computo.close_error': 'Error closing calculation: {mensaje}',
+    'group.computo.reopen_error': 'Error reopening calculation: {mensaje}',
+
+    // ---------- GROUPS: MANUAL RATE ----------
+    'group.rate.label': 'Manual rate',
+    'group.rate.save': 'Save',
+    'group.rate.cancel': 'Cancel',
+    'group.rate.invalid': 'Enter a valid number.',
+    'group.rate.save_error': 'Error saving: {mensaje}',
+    'group.rate.no_auth': 'Not authenticated',
+
+    // ---------- GROUPS: TODAY CALCULATOR ----------
+    'group.calc.title': 'Today\'s calculator',
+    'group.calc.group': 'Group: {nombre}',
+    'group.calc.historic_label': 'Total spent (with rates at the time)',
+    'group.calc.today_label': 'If you did it TODAY',
+    'group.calc.diff_label': 'Difference',
+    'group.calc.diff_note_up': 'The currency went up compared to the trip time.',
+    'group.calc.diff_note_down': 'The currency went down compared to the trip time.',
+    'group.calc.diff_note_same': 'The currency is the same as at the trip time.',
+    'group.calc.footer': 'This calculation is informative only. It does not modify any data.',
+    'group.calc.empty': 'This group has no expenses.',
+    'group.calc.error': 'Error calculating.',
+    'group.calc.loading': 'Calculating...',
+
+    // ---------- EXPENSES: CREATE MODAL ----------
+    'expense.create.title': 'New Expense',
+    'expense.create.description': 'What was it?',
+    'expense.create.description_placeholder': 'Ex: Dinner at the restaurant',
+    'expense.create.amount': 'Amount',
+    'expense.create.amount_placeholder': '0.00',
+    'expense.create.group': 'Group',
+    'expense.create.group_placeholder': 'Select group...',
+    'expense.create.paid_by': 'Who paid?',
+    'expense.create.paid_by_placeholder': 'Select who paid...',
+    'expense.create.currency': 'Currency',
+    'expense.create.category': 'Category',
+    'expense.create.split_type': 'Split type:',
+    'expense.create.split_equal': 'Equal parts',
+    'expense.create.split_percentage': 'By percentage (%)',
+    'expense.create.split_exact': 'Exact amounts',
+    'expense.create.split_shares': 'By shares',
+    'expense.create.split_between': 'Split between:',
+    'expense.create.split_summary': 'Split summary:',
+    'expense.create.split_no_group': 'Select a group to see members...',
+    'expense.create.split_no_group_hint': 'Select a group and adjust the values.',
+    'expense.create.cancel': 'Cancel',
+    'expense.create.submit': 'Save Expense',
+    'expense.create.saving': 'Saving...',
+    'expense.create.success': 'Expense saved successfully!',
+    'expense.create.error': 'Error: {mensaje}',
+    'expense.create.no_members': 'Error loading members.',
+    'expense.create.need_one': 'Select at least one person.',
+    'expense.create.need_group': 'You must select at least one person to split.',
+    'expense.create.equal_summary': '{monto} {moneda} per person ({count} people)',
+    'expense.create.percent_sum': 'Percentages add up to {total}%, they should add up to 100%.',
+    'expense.create.percent_ok': 'OK. Adds up to 100%.',
+    'expense.create.exact_sum': 'Adds up to {total} {moneda}, should add up to {esperado} {moneda}.',
+    'expense.create.exact_ok': 'OK. Correct sum.',
+    'expense.create.shares_need': 'Assign at least one share to someone.',
+    'expense.create.shares_line': '{shares} shares -> {monto} {moneda}',
+    'expense.create.shares_ok': 'OK. Total: {total} shares.',
+    'expense.create.percent_error': 'Percentages add up to {total}%, they must add up to 100%.',
+    'expense.create.exact_error': 'Amounts add up to {total}, they must add up to {esperado}.',
+    'expense.create.shares_error': 'You must assign at least one share.',
+
+    // ---------- EXPENSES: LIST ----------
+    'expense.list.empty': 'No expenses yet. Add the first one!',
+    'expense.list.empty_filter': 'No expenses with that category.',
+    'expense.list.error': 'Error loading expenses.',
+    'expense.list.paid_by': 'Paid: {nombre} - {fecha}',
+
+    // ---------- EXPENSES: DETAIL ----------
+    'expense.detail.title': 'Expense Details',
+    'expense.detail.loading': 'Loading...',
+    'expense.detail.error': 'Error loading expense.',
+    'expense.detail.paid_by': 'Paid:',
+    'expense.detail.split': 'Split:',
+    'expense.detail.no_split': 'No splits.',
+    'expense.detail.unknown': 'Unknown',
+    'expense.detail.archived_notice': 'This expense is archived and is not part of the group\'s calculations.',
+    'expense.detail.edit': 'Edit',
+    'expense.detail.archive': 'Archive',
+    'expense.detail.close': 'Close',
+
+    // ---------- EXPENSES: ARCHIVE ----------
+    'expense.archive.confirm': 'Archive this expense? It will stop being part of the group\'s calculations. You can restore it later.',
+    'expense.archive.need_close': 'You must first close the group\'s calculation to archive expenses.',
+    'expense.archive.error': 'Error archiving: {mensaje}',
+    'expense.archive.restore_confirm': 'Restore this expense? It will be part of the group\'s calculations again.',
+    'expense.archive.restore_error': 'Error restoring: {mensaje}',
+    'expense.archive.badge_one': '{count} archived expense',
+    'expense.archive.badge_many': '{count} archived expenses',
+    'expense.archive.badge_amount': '({monto} {moneda} not included)',
+    'expense.archive.archived_on': 'Archived on {fecha}',
+    'expense.archive.restore': 'Restore',
+    'expense.archive.empty': 'No archived expenses in this group.',
+    'expense.archive.error_load': 'Error loading archived expenses.',
+
+    // ---------- EXPENSES: EDIT ----------
+    'expense.edit.title': 'Edit Expense',
+    'expense.edit.description': 'What was it?',
+    'expense.edit.amount': 'Amount',
+    'expense.edit.category': 'Category',
+    'expense.edit.currency': 'Currency',
+    'expense.edit.paid_by': 'Who paid?',
+    'expense.edit.cancel': 'Cancel',
+    'expense.edit.submit': 'Save changes',
+    'expense.edit.saving': 'Saving...',
+    'expense.edit.error': 'Error: {mensaje}',
+    'expense.edit.cant_archived': 'Cannot edit an archived expense. Restore it first.',
+
+    // ---------- CATEGORY: FILTER ----------
+    'category.filter.all': 'All categories'
   }
 };
 
@@ -256,4 +628,16 @@ export function initI18n() {
 // ==========================================
 export function tCategoria(cat) {
   return t(`cat.${cat}`) || cat;
+}
+
+// ==========================================
+// TRADUCIR MESES
+// ==========================================
+export function tMes(mesNumero) {
+  const meses = {
+    es: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+    en: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  };
+  const idioma = idiomaActual || 'en';
+  return meses[idioma][mesNumero - 1] || '';
 }
