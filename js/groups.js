@@ -46,7 +46,8 @@ async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed)
   const { data: gastos } = await supabase
     .from('expenses')
     .select('id, amount, currency, exchange_rate')
-    .eq('group_id', groupId);
+    .eq('group_id', groupId)
+    .eq('archived', false);
 
   if (!gastos || gastos.length === 0) {
     return { total: 0, miParte: 0, count: 0, congelado: false };
@@ -295,7 +296,7 @@ export function toggleArchivados() {
 }
 
 // ==========================================
-// 5. CREAR GRUPO (con cotizacion manual)
+// 5. CREAR GRUPO
 // ==========================================
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -306,7 +307,6 @@ export async function crearGrupo(nombre, tipo, moneda) {
   const manualRateInput = document.getElementById('group-manual-rate')?.value;
   const manualRate = manualRateInput ? parseFloat(manualRateInput) : null;
 
-  // Convertir la cotizacion manual a USD (referencia universal)
   let manualRateUSD = null;
   if (manualRate && manualRate > 0) {
     const { data: perfil } = await supabase
@@ -434,7 +434,7 @@ export function initArchivedToggle() {
 // 8. ABRIR DETALLE DEL GRUPO
 // ==========================================
 async function abrirDetalleGrupo(groupId) {
-  const { cargarGastosDelGrupo } = await import('./expenses.js');
+  const { cargarGastosDelGrupo, actualizarBadgeArchivados } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
   const { cargarMiembrosDelGrupo } = await import('./members.js');
 
@@ -451,9 +451,11 @@ async function abrirDetalleGrupo(groupId) {
   modal.dataset.groupName = grupo ? grupo.name : 'Grupo';
   modal.dataset.groupCurrency = (grupo?.currency || 'EUR').toUpperCase();
   modal.dataset.manualRate = grupo?.manual_exchange_rate || '';
+  modal.dataset.groupArchived = grupo?.archived ? 'true' : 'false';
 
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
+  filtroCategoriaActual = '';
 
   const monedaGrupo = (grupo?.currency || 'EUR').toUpperCase();
   const infoTotal = await calcularTotalGrupo(
@@ -479,7 +481,7 @@ async function abrirDetalleGrupo(groupId) {
 
   document.getElementById('manual-rate-editor')?.classList.add('hidden');
 
-  // Resetear acordeon de extras a colapsado
+  // Resetear acordeon de extras
   const extras = document.getElementById('group-extras');
   const btnExtras = document.getElementById('btn-toggle-extras');
   if (extras) extras.classList.add('hidden');
@@ -488,6 +490,15 @@ async function abrirDetalleGrupo(groupId) {
     btnExtras.innerHTML = '&#128202; Ver graficos, totales e historial';
   }
   modal.dataset.extrasCargados = 'false';
+
+  // Resetear acordeon de archivados
+  const archivedExtras = document.getElementById('group-archived-expenses');
+  const btnArchived = document.getElementById('btn-toggle-archived-expenses');
+  if (archivedExtras) archivedExtras.classList.add('hidden');
+  if (btnArchived) {
+    btnArchived.classList.remove('abierto');
+    btnArchived.innerHTML = '&#128230; Ver gastos archivados';
+  }
 
   // Mostrar calculadora solo si el grupo esta archivado
   const estaArchivado = !!(grupo?.archived);
@@ -500,8 +511,11 @@ async function abrirDetalleGrupo(groupId) {
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
   await cargarMiembrosDelGrupo(groupId);
-  // Graficos e historial se cargan on-demand cuando el usuario toca el boton
+  await actualizarBadgeArchivados(groupId);
 }
+
+// Variable auxiliar (evita error de referencia)
+let filtroCategoriaActual = '';
 
 // ==========================================
 // 9. ACTUALIZAR INFO DEL GRUPO
@@ -588,6 +602,14 @@ function actualizarBotonesComputo(grupo, groupId) {
   if (!btnClose || !btnReopen) return;
 
   const cerrado = grupo && !!grupo.date_closed;
+  const grupoArchivado = grupo && !!grupo.archived;
+
+  // Si el grupo esta archivado, no permitir cerrar/reabrir computo
+  if (grupoArchivado) {
+    btnClose.style.display = 'none';
+    btnReopen.style.display = 'none';
+    return;
+  }
 
   if (cerrado) {
     btnClose.style.display = 'none';
@@ -627,7 +649,8 @@ async function cerrarComputo(groupId) {
   const { data: gastos } = await supabase
     .from('expenses')
     .select('amount, currency, exchange_rate')
-    .eq('group_id', groupId);
+    .eq('group_id', groupId)
+    .eq('archived', false);
 
   let total = 0;
   (gastos || []).forEach(g => {
@@ -697,7 +720,8 @@ async function abrirCalculadora(groupId, groupName) {
     const { data: gastos } = await supabase
       .from('expenses')
       .select('amount, currency, exchange_rate')
-      .eq('group_id', groupId);
+      .eq('group_id', groupId)
+      .eq('archived', false);
 
     if (!gastos || gastos.length === 0) {
       body.innerHTML = '<p class="placeholder-text">Este grupo no tiene gastos.</p>';
@@ -791,7 +815,7 @@ if (!window.__groupDetailListenersAttached) {
     if (e.target.id === 'modal-expense-detail') e.target.classList.add('hidden');
   });
 
-  // Toggle acordeon de graficos/historial (carga on-demand)
+  // Toggle acordeon de graficos/historial
   document.getElementById('btn-toggle-extras')?.addEventListener('click', async () => {
     const extras = document.getElementById('group-extras');
     const btn = document.getElementById('btn-toggle-extras');
@@ -808,12 +832,10 @@ if (!window.__groupDetailListenersAttached) {
       return;
     }
 
-    // Abrir
     extras.classList.remove('hidden');
     btn.classList.add('abierto');
     btn.innerHTML = '&#128200; Ocultar graficos e historial';
 
-    // Cargar on-demand la primera vez
     if (modal.dataset.extrasCargados !== 'true' && groupId) {
       const { cargarHistorial } = await import('./history.js');
       const { cargarGraficos } = await import('./charts.js');
@@ -825,9 +847,36 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
+  // Toggle acordeon de gastos archivados
+  document.getElementById('btn-toggle-archived-expenses')?.addEventListener('click', async () => {
+    const extras = document.getElementById('group-archived-expenses');
+    const btn = document.getElementById('btn-toggle-archived-expenses');
+    const modal = document.getElementById('modal-group-detail');
+    if (!extras || !btn || !modal) return;
+
+    const groupId = modal.dataset.groupId;
+    const abierto = !extras.classList.contains('hidden');
+
+    if (abierto) {
+      extras.classList.add('hidden');
+      btn.classList.remove('abierto');
+      btn.innerHTML = '&#128230; Ver gastos archivados';
+      return;
+    }
+
+    extras.classList.remove('hidden');
+    btn.classList.add('abierto');
+    btn.innerHTML = '&#128230; Ocultar gastos archivados';
+
+    if (groupId) {
+      const { cargarGastosArchivados } = await import('./expenses.js');
+      await cargarGastosArchivados(groupId);
+    }
+  });
+
   document.getElementById('btn-delete-expense')?.addEventListener('click', async () => {
-    const { eliminarGasto } = await import('./expenses.js');
-    await eliminarGasto();
+    const { accionGasto } = await import('./expenses.js');
+    await accionGasto();
   });
 
   document.getElementById('btn-edit-expense')?.addEventListener('click', async () => {
