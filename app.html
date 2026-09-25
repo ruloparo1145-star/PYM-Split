@@ -178,7 +178,6 @@
   </div>
 
   <!-- MODAL: Amigos -->
-<!-- MODAL: Amigos -->
   <div id="modal-friends" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
       <h3 data-i18n="friends.title">Friends Management</h3>
@@ -205,7 +204,7 @@
       </div>
     </div>
   </div>
-  
+
   <!-- MODAL: Anadir Gasto -->
   <div id="modal-expense" class="modal-overlay hidden">
     <div class="modal-content">
@@ -520,187 +519,253 @@
   <!-- MODAL: Manual de uso -->
   <div id="modal-manual" class="modal-overlay hidden">
     <div class="modal-content manual-content">
-      <h3>Manual de uso</h3>
+      <h3 data-i18n="manual.title">User manual</h3>
       <div class="manual-body">
 
         <section class="manual-section">
-          <h4>Que es PYM Split?</h4>
-          <p>PYM Split es una app para <strong>dividir gastos</strong> entre amigos, familia o companeros de piso. Cargas quien pago que, y la app calcula automaticamente <strong>quien le debe a quien</strong>. Ademas, <strong>simplifica las deudas</strong> para que se hagan la menor cantidad de transferencias posible.</p>
+          <h4 data-i18n="manual.what_is.title">What is PYM Split?</h4>
+          <p data-i18n-html="manual.what_is.p1">PYM Split is an app to split expenses...</p>
         </section>
 
         <section class="manual-section">
-          <h4>1. Crear una cuenta</h4>
-          <p>En la pantalla de inicio, toca <strong>"Crear cuenta"</strong>, completa tu nombre, email y una contrasena (minimo 6 caracteres). Listo, ya estas dentro.</p>
-          <p>Despues de registrarte, revisa tu email: puede que tengas que confirmar la cuenta antes de poder entrar.</p>
+          <h4 data-i18n="manual.s1.title">1. Create an account</h4>
+          <p data-i18n-html="manual.s1.p1">On the home screen, tap Create account...</p>
+          <p data-i18n-html="manual.s1.p2">After registering, check your email...</p>
         </section>
 
         <section class="manual-section">
-          <h4>2. Completar tu Perfil</h4>
-          <p>Toca el boton <strong>"Perfil"</strong> arriba a la derecha. Ahi podes:</p>
+          <h4 data-i18n="manual.s2.title">2. Complete your Profile</h4>
+          <p data-i18n-html="manual.s2.p1">Tap the Profile button at the top right...</p>
           <ul>
-            <li>Editar tu <strong>nombre</strong>.</li>
-            <li>Agregar tu <strong>telefono</strong> (opcional).</li>
-            <li>Elegir tu <strong>moneda preferida</strong> (ej: MXN, EUR, ARS).</li>
-            <li>Elegir el <strong>idioma</strong> de la app (Espanol o Ingles).</li>
+            <li data-i18n-html="manual.s2.li1">Edit your name.</li>
+            <li data-i18n-html="manual.s2.li2">Add your phone (optional).</li>
+            <li data-i18n-html="manual.s2.li3">Choose your preferred currency.</li>
+            <li data-i18n-html="manual.s2.li4">Choose the app language.</li>
           </ul>
-          <p>La moneda preferida define en que moneda se muestran los totales del dashboard. Si viajas a otro pais, podes cambiarla cuando quieras.</p>
+          <p data-i18n-html="manual.s2.p2">The preferred currency defines...</p>
         </section>
 
         <section class="manual-section">
-          <h4>3. Agregar amigos</h4>
-          <p>Toca el boton <strong>"Amigos"</strong> arriba a la derecha.</p>
+          <h4 data-i18n="manual.s3.title">3. Add friends</h4>
+          <p data-i18n-html="manual.s3.p1">Tap the Friends button at the top right.</p>
           <ul>
-            <li>Escribi el <strong>email</strong> de tu amigo y toca <strong>"Enviar"</strong>.</li>
-            <li>Tu amigo recibira una solicitud. Cuando la acepte, aparecera en tu lista.</li>
-            <li>Tambien podes aceptar o rechazar solicitudes que te lleguen.</li>
+            <li data-i18n-html="manual.s3.li1">Type your friend email and tap Send.</li>
+            <li data-i18n-html="manual.s3.li2">Your friend will receive a request...</li>
+            <li data-i18n-html="manual.s3.li3">You can also accept or reject requests...</li>
           </ul>
-          <p><strong>Ojo:</strong> tu amigo tiene que estar registrado con el mismo email que le pusiste.</p>
+          <p data-i18n-html="manual.s3.p2">Note: your friend must be registered...</p>
         </section>
 
         <section class="manual-section">
-          <h4>4. Crear un grupo</h4>
-          <p>En la pantalla principal, toca <strong>"+ Nuevo"</strong> arriba de "Mis Grupos".</p>
+          <h4 data-i18n="manual.s4.title">4. Create a group</h4>
+          <p data-i18n-html="manual.s4.p1">On the home screen, tap + New above My Groups.</p>
           <ul>
-            <li><strong>Nombre:</strong> ej. "Viaje a Cancun", "Depto", "Cena del viernes".</li>
-            <li><strong>Tipo:</strong> viaje, depto, salidas u otro.</li>
-            <li><strong>Moneda:</strong> la moneda principal del grupo.</li>
-            <li><strong>Fecha de inicio y fin (opcional):</strong> ideal para viajes.</li>
-            <li><strong>Cotizacion manual (opcional):</strong> si usas una moneda que no esta en la web.</li>
+            <li data-i18n-html="manual.s4.li1">Name: e.g. Trip to Cancun...</li>
+            <li data-i18n-html="manual.s4.li2">Type: trip, apartment, outings or other.</li>
+            <li data-i18n-html="manual.s4.li3">Currency: the group main currency.</li>
+            <li data-i18n-html="manual.s4.li4">Start and end date (optional).</li>
+            <li data-i18n-html="manual.s4.li5">Manual rate (optional).</li>
           </ul>
+          <p data-i18n-html="manual.s4.p2">Tap Create Group and that is it...</p>
         </section>
 
         <section class="manual-section">
-          <h4>5. Agregar amigos al grupo</h4>
-          <p>Abri el grupo (tocandolo en la lista) y toca <strong>"+ Anadir miembro"</strong>.</p>
+          <h4 data-i18n="manual.s5.title">5. Add friends to the group</h4>
+          <p data-i18n-html="manual.s5.p1">Open the group and tap + Add member.</p>
+          <p data-i18n-html="manual.s5.p2">Select one of your friends from the list...</p>
         </section>
 
         <section class="manual-section">
-          <h4>6. Cargar un gasto</h4>
-          <p>Toca el boton <strong>"+"</strong> (abajo a la derecha).</p>
+          <h4 data-i18n="manual.s6.title">6. Add an expense</h4>
+          <p data-i18n-html="manual.s6.p1">Tap the + button (bottom right).</p>
           <ul>
-            <li><strong>Que fue:</strong> ej. "Cena", "Taxi", "Supermercado".</li>
-            <li><strong>Monto:</strong> cuanto costo.</li>
-            <li><strong>Grupo:</strong> a que grupo pertenece.</li>
-            <li><strong>Quien pago:</strong> quien puso la plata.</li>
-            <li><strong>Moneda:</strong> en que moneda se pago.</li>
-            <li><strong>Categoria:</strong> comida, transporte, alojamiento, etc.</li>
-            <li><strong>Tipo de division:</strong> como se reparte.</li>
+            <li data-i18n-html="manual.s6.li1">What was it: e.g. Dinner, Taxi...</li>
+            <li data-i18n-html="manual.s6.li2">Amount: how much it cost.</li>
+            <li data-i18n-html="manual.s6.li3">Group: which group it belongs to.</li>
+            <li data-i18n-html="manual.s6.li4">Who paid: who put in the money.</li>
+            <li data-i18n-html="manual.s6.li5">Currency: in which currency it was paid.</li>
+            <li data-i18n-html="manual.s6.li6">Category: food, transport, etc.</li>
+            <li data-i18n-html="manual.s6.li7">Split type: how it is divided.</li>
           </ul>
+          <p data-i18n-html="manual.s6.p2">After saving, the main dashboard updates...</p>
         </section>
 
         <section class="manual-section">
-          <h4>7. Tipos de division</h4>
+          <h4 data-i18n="manual.s7.title">7. Split types</h4>
           <ul>
-            <li><strong>Partes iguales:</strong> se divide el total en partes iguales.</li>
-            <li><strong>Por porcentaje:</strong> a cada uno le asignas un %.</li>
-            <li><strong>Montos exactos:</strong> a cada uno le pones el monto exacto.</li>
-            <li><strong>Por partes (shares):</strong> uno tiene 2 partes y otro 1.</li>
+            <li data-i18n-html="manual.s7.li1">Equal parts: the total is divided equally...</li>
+            <li data-i18n-html="manual.s7.li2">By percentage: you assign a % to each...</li>
+            <li data-i18n-html="manual.s7.li3">Exact amounts: you enter the exact amount...</li>
+            <li data-i18n-html="manual.s7.li4">By shares: e.g. one has 2 shares...</li>
           </ul>
+          <p data-i18n-html="manual.s7.p1">You can check or uncheck people...</p>
         </section>
 
         <section class="manual-section">
-          <h4>8. Monedas multiples</h4>
-          <p>Cada grupo tiene su moneda principal. Pero podes cargar gastos en cualquier otra moneda.</p>
+          <h4 data-i18n="manual.s8.title">8. Multiple currencies</h4>
+          <p data-i18n-html="manual.s8.p1">Each group has its main currency...</p>
+          <p data-i18n-html="manual.s8.p2">Example: a group in MXN...</p>
+          <p data-i18n-html="manual.s8.p3">In your Profile you choose your preferred currency...</p>
         </section>
 
         <section class="manual-section">
-          <h4>9. Cotizacion automatica y manual</h4>
-          <p>La app intenta obtener la cotizacion de <strong>Frankfurter</strong> y <strong>DolarAPI</strong>. Si fallan, usa la cotizacion manual del grupo.</p>
+          <h4 data-i18n="manual.s9.title">9. Automatic and manual rates</h4>
+          <p data-i18n-html="manual.s9.p1">The app tries to get the rate from 2 automatic sources:</p>
+          <ul>
+            <li data-i18n-html="manual.s9.li1">Frankfurter (European Central Bank): EUR, USD, MXN, BRL, CLP, etc.</li>
+            <li data-i18n-html="manual.s9.li2">DolarAPI (Argentina): ARS, and other Latin American currencies.</li>
+          </ul>
+          <p data-i18n-html="manual.s9.p2">If the currency is not in either of them...</p>
+          <p data-i18n-html="manual.s9.p3">Important: the manual rate is always saved against USD...</p>
         </section>
 
         <section class="manual-section">
-          <h4>10. Editar la cotizacion manual</h4>
-          <p>Si un grupo tiene cotizacion manual, aparece el boton <strong>"Editar cotizacion"</strong>.</p>
+          <h4 data-i18n="manual.s10.title">10. Edit the manual rate</h4>
+          <p data-i18n-html="manual.s10.p1">If a group has a manual rate, the Edit rate button appears...</p>
+          <p data-i18n-html="manual.s10.p2">When you tap it, you can change the value...</p>
         </section>
 
         <section class="manual-section">
-          <h4>11. Ver el balance del grupo</h4>
-          <p>Al abrir un grupo, arriba de todo aparece el <strong>Balance</strong> con quien le debe a quien.</p>
+          <h4 data-i18n="manual.s11.title">11. View the group balance</h4>
+          <p data-i18n-html="manual.s11.p1">When you open a group, the Balance appears at the top...</p>
+          <p data-i18n-html="manual.s11.p2">The app simplifies debts: if A owes B...</p>
         </section>
 
         <section class="manual-section">
-          <h4>12. Total del viaje y Mi parte</h4>
-          <p>Se muestran 2 numeros: <strong>Total del viaje</strong> y <strong>Mi parte</strong>.</p>
+          <h4 data-i18n="manual.s12.title">12. Trip total and My share</h4>
+          <p data-i18n-html="manual.s12.p1">In the group details, above the balance, 2 numbers are shown:</p>
+          <ul>
+            <li data-i18n-html="manual.s12.li1">Trip total: how much was spent in total.</li>
+            <li data-i18n-html="manual.s12.li2">My share: how much corresponds to you...</li>
+          </ul>
+          <p data-i18n-html="manual.s12.p2">If your preferred currency differs from the group...</p>
         </section>
 
         <section class="manual-section">
           <h4>13. Calcular en moneda de hoy</h4>
-          <p>En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. Es solo informativo.</p>
+          <p>En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:</p>
+          <ul>
+            <li>El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.</li>
+            <li>El total que costaria <strong>con las tasas de hoy</strong>.</li>
+            <li>La <strong>diferencia</strong> (cuanto subio o bajo).</li>
+          </ul>
+          <p>Es solo informativo. <strong>No modifica ningun dato.</strong></p>
         </section>
 
         <section class="manual-section">
           <h4>14. Cerrar el computo de un viaje</h4>
-          <p>Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. Guarda la fecha y el total final.</p>
+          <p>Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. La app guarda:</p>
+          <ul>
+            <li>La <strong>fecha de cierre</strong> (automatica, no editable).</li>
+            <li>El <strong>total final</strong> del viaje en la moneda del grupo.</li>
+          </ul>
+          <p>Si te equivocaste, podes tocar <strong>"Reabrir"</strong> para volver atras.</p>
+          <p>Esto te sirve para dejar "congelado" el resultado del viaje.</p>
         </section>
 
         <section class="manual-section">
           <h4>15. Saldar deudas</h4>
-          <p>Cuando alguien ya pago por fuera, toca <strong>"Saldar"</strong> al lado de la deuda.</p>
+          <p>Cuando alguien ya pago por fuera (efectivo, transferencia, etc.), toca el boton <strong>"Saldar"</strong> al lado de la deuda.</p>
+          <p>Confirmas y el balance se actualiza automaticamente.</p>
+          <p><strong>Aclaracion:</strong> la app NO mueve plata. Solo registra que la deuda ya fue saldada.</p>
         </section>
 
         <section class="manual-section">
           <h4>16. Dashboard principal</h4>
+          <p>La pantalla principal muestra:</p>
           <ul>
-            <li><strong>Tabs:</strong> Grupos activos / Grupos archivados / Todos.</li>
-            <li><strong>3 tarjetas:</strong> Total gastado, Te deben, Debes.</li>
+            <li><strong>Tabs de rango:</strong> Grupos activos / Grupos archivados / Todos.</li>
+            <li><strong>3 tarjetas:</strong> Total gastado, Te deben, Debes (en tu moneda preferida).</li>
             <li><strong>Ultimos movimientos:</strong> los 5 gastos mas recientes.</li>
-            <li><strong>Boton "Ver historico":</strong> grafico + tabla de los ultimos 12 meses.</li>
+            <li><strong>Boton "Ver historico":</strong> abre el grafico + tabla de los ultimos 12 meses.</li>
           </ul>
+          <p>Todos los montos se convierten automaticamente a <strong>tu moneda preferida</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>17. Historico por mes</h4>
-          <p>Toca <strong>"Ver historico"</strong> para ver el grafico de barras y la tabla.</p>
+          <p>Toca el boton <strong>"Ver historico"</strong> (arriba del dashboard, al lado de "Hola, tu nombre").</p>
+          <p>Se abre un modal con:</p>
+          <ul>
+            <li><strong>Grafico de barras:</strong> cuanto se gasto cada mes.</li>
+            <li><strong>Tabla:</strong> mes, cantidad de gastos y total.</li>
+            <li><strong>Fila final:</strong> total de los ultimos 12 meses.</li>
+          </ul>
         </section>
 
         <section class="manual-section">
           <h4>18. Historial y graficos del grupo</h4>
-          <p>Dentro de cada grupo, toca <strong>"Ver graficos, totales e historial"</strong>.</p>
+          <p>Dentro de cada grupo, mas abajo, vas a ver un boton <strong>"Ver graficos, totales e historial"</strong>. Al tocarlo se despliegan:</p>
+          <ul>
+            <li><strong>Graficos:</strong> cuanto pago cada persona y cuanto se gasto por categoria.</li>
+            <li><strong>Totales por categoria:</strong> desglose de cuanto se gasto en comida, transporte, etc.</li>
+            <li><strong>Historial:</strong> todos los movimientos (gastos + pagos) ordenados por fecha.</li>
+          </ul>
+          <p>Tocalo de nuevo para ocultarlos y ocupar menos espacio.</p>
         </section>
 
         <section class="manual-section">
           <h4>19. Filtros</h4>
-          <p>En la lista de gastos, podes filtrar por <strong>categoria</strong>.</p>
+          <p>En la lista de gastos de un grupo, podes filtrar por <strong>categoria</strong> para ver solo lo que te interesa (comida, transporte, etc.).</p>
         </section>
 
         <section class="manual-section">
           <h4>20. Editar o archivar un gasto</h4>
+          <p>Toca cualquier gasto de la lista. Se abre el detalle, con 2 botones:</p>
           <ul>
             <li><strong>Editar:</strong> cambia descripcion, monto, categoria, moneda o quien pago.</li>
-            <li><strong>Archivar:</strong> el gasto deja de formar parte de los calculos del grupo.</li>
+            <li><strong>Archivar:</strong> el gasto deja de formar parte de los calculos del grupo. Se puede restaurar despues.</li>
           </ul>
-          <p>Los gastos archivados aparecen en el boton <strong>"Ver gastos archivados"</strong> desde donde podes restaurarlos.</p>
+          <p>Los gastos archivados aparecen en un boton especial <strong>"Ver gastos archivados"</strong>, desde donde podes restaurarlos.</p>
         </section>
 
         <section class="manual-section">
           <h4>21. Archivar y restaurar grupos</h4>
-          <p>Cada grupo tiene un boton <strong>&#128230;</strong> para archivarlo. <strong>Para archivar un grupo primero tenes que cerrar su computo.</strong></p>
-          <p>Para ver los grupos archivados, toca el boton <strong>"Archivados"</strong>.</p>
+          <p>Cada grupo tiene un boton <strong>&#128230; (archivar)</strong>. Al tocarlo, el grupo desaparece de la lista principal pero <strong>NO se borra</strong>.</p>
+          <p><strong>Importante:</strong> para archivar un grupo primero tenes que <strong>cerrar el computo</strong>.</p>
+          <p>Para ver los grupos archivados, toca el boton <strong>"Archivados"</strong> arriba de la lista.</p>
+          <p>Ahi podes <strong>restaurarlos</strong> (boton &#8634;) o <strong>eliminarlos definitivamente</strong> (boton &#128465;).</p>
         </section>
 
         <section class="manual-section">
           <h4>22. Eliminar un grupo</h4>
-          <p>Solo se puede eliminar un grupo <strong>despues de archivarlo</strong>.</p>
+          <p>Solo se puede eliminar un grupo <strong>despues de archivarlo</strong>. Esto evita borrar por error.</p>
+          <p><strong>Atencion:</strong> eliminar un grupo borra TODOS sus gastos, miembros, pagos e historial. <strong>No se puede deshacer.</strong></p>
+          <p>Si queres conservar el historico, usa <strong>archivar</strong> en vez de eliminar.</p>
         </section>
 
         <section class="manual-section">
           <h4>23. Instalar como app en el celular</h4>
-          <p><strong>iPhone (Safari):</strong> Compartir, luego "Anadir a pantalla de inicio".</p>
-          <p><strong>Android (Chrome):</strong> Menu, luego "Instalar app".</p>
+          <p><strong>iPhone (Safari):</strong></p>
+          <ul>
+            <li>Abri la app.</li>
+            <li>Toca el boton Compartir (flecha hacia arriba).</li>
+            <li>Elegi "Anadir a pantalla de inicio".</li>
+          </ul>
+          <p><strong>Android (Chrome):</strong></p>
+          <ul>
+            <li>Abri la app.</li>
+            <li>Menu (3 puntos) &rarr; "Instalar app".</li>
+          </ul>
+          <p>Se va a ver como una app normal, con su icono.</p>
         </section>
 
         <section class="manual-section">
           <h4>Preguntas frecuentes</h4>
-          <p><strong>La app mueve plata?</strong><br>No. Solo registra y calcula.</p>
-          <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda.</p>
-          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo.</p>
-          <p><strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo.</p>
-          <p><strong>Se puede usar en varios dispositivos?</strong><br>Si, con la misma cuenta.</p>
+          <p><strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.</p>
+          <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.</p>
+          <p><strong>Que pasa si la moneda no esta en la web?</strong><br>Podes cargar una cotizacion manual al crear el grupo. La app la usa como respaldo cuando las APIs fallan.</p>
+          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo tocando el gasto en la lista.</p>
+          <p><strong>Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexion para cargar y guardar datos en Supabase.</p>
+          <p><strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mas.</p>
+          <p><strong>Cuanta gente puede estar en un grupo?</strong><br>No hay limite. Podes agregar a todos los amigos que quieras.</p>
+          <p><strong>Se puede usar la misma cuenta en varios dispositivos?</strong><br>Si. Inicias sesion con el mismo email y contrasena, y ves lo mismo en todos lados.</p>
+          <p><strong>La app funciona en iPhone y Android?</strong><br>Si. Es una PWA (app web progresiva), funciona en cualquier celular o PC con navegador moderno.</p>
         </section>
 
         <section class="manual-section">
           <h4>Libro de visitas</h4>
-          <p>Dejanos tu comentario, sugerencia o saludo.</p>
+          <p>Dejanos tu comentario, sugerencia o saludo. Todos los usuarios pueden leer los comentarios.</p>
 
           <form id="form-guestbook" style="margin-top: 12px; margin-bottom: 20px;">
             <div class="form-group">
@@ -774,7 +839,6 @@
   </div>
 
   <!-- MODAL: Historico (grafico + tabla) -->
-<!-- MODAL: Historico (grafico + tabla) -->
   <div id="modal-chart-history" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 700px;">
       <h3 data-i18n="dashboard.history_title">Monthly history</h3>
@@ -799,7 +863,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Simulador Calcular hoy -->
+  <!-- MODAL: Simulador "Calcular hoy" -->
   <div id="modal-calculator" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
       <h3>Calculadora de hoy</h3>
@@ -816,4 +880,4 @@
 
   <script type="module" src="js/ui.js"></script>
 </body>
-</html
+</html>
