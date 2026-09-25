@@ -1,25 +1,30 @@
 // js/expenses.js
 import { supabase } from './supabase.js';
 import { obtenerTasa, convertirMontoConGrupo } from './currency.js';
+import { t, tCategoria } from './i18n.js';
 
 // ==========================================
 // CATEGORIAS E ICONOS
 // ==========================================
 const CATEGORIAS = {
-  comida:       { label: 'Comida',       icono: '&#127829;' },
-  transporte:   { label: 'Transporte',   icono: '&#128663;' },
-  alojamiento:  { label: 'Alojamiento',  icono: '&#127968;' },
-  supermercado: { label: 'Supermercado', icono: '&#128722;' },
-  ocio:         { label: 'Ocio',         icono: '&#127881;' },
-  salud:        { label: 'Salud',        icono: '&#128138;' },
-  servicios:    { label: 'Servicios',    icono: '&#128241;' },
-  compras:      { label: 'Compras',      icono: '&#128717;' },
-  viajes:       { label: 'Viajes',       icono: '&#9992;' },
-  otros:        { label: 'Otros',        icono: '&#128176;' }
+  comida:       { icono: '&#127829;' },
+  transporte:   { icono: '&#128663;' },
+  alojamiento:  { icono: '&#127968;' },
+  supermercado: { icono: '&#128722;' },
+  ocio:         { icono: '&#127881;' },
+  salud:        { icono: '&#128138;' },
+  servicios:    { icono: '&#128241;' },
+  compras:      { icono: '&#128717;' },
+  viajes:       { icono: '&#9992;' },
+  otros:        { icono: '&#128176;' }
 };
 
 function getCategoria(cat) {
-  return CATEGORIAS[cat] || CATEGORIAS.otros;
+  const key = cat || 'otros';
+  return {
+    label: tCategoria(key),
+    icono: (CATEGORIAS[key] || CATEGORIAS.otros).icono
+  };
 }
 
 let filtroCategoriaActual = '';
@@ -38,7 +43,7 @@ export async function cargarGruposParaGasto() {
     .order('name');
 
   const selectGrupo = document.getElementById('expense-group');
-  selectGrupo.innerHTML = '<option value="">Seleccionar grupo...</option>' + 
+  selectGrupo.innerHTML = `<option value="">${t('expense.create.group_placeholder')}</option>` +
     (grupos || []).map(g => `<option value="${g.id}">${g.name}</option>`).join('');
 }
 
@@ -50,9 +55,9 @@ export async function cargarMiembrosDelGrupo(groupId) {
   const selectPaidBy = document.getElementById('expense-paid-by');
   
   if (!groupId) {
-    splitList.innerHTML = '<p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>';
-    selectPaidBy.innerHTML = '<option value="">Seleccionar quien pago...</option>';
-    document.getElementById('split-summary').innerHTML = '<p>Selecciona un grupo y ajusta los valores.</p>';
+    splitList.innerHTML = `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
+    selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
+    document.getElementById('split-summary').innerHTML = `<p>${t('expense.create.split_no_group_hint')}</p>`;
     return;
   }
 
@@ -62,11 +67,11 @@ export async function cargarMiembrosDelGrupo(groupId) {
     .eq('group_id', groupId);
 
   if (error || !miembros) {
-    splitList.innerHTML = '<p class="error-msg">Error al cargar miembros.</p>';
+    splitList.innerHTML = `<p class="error-msg">${t('expense.create.no_members')}</p>`;
     return;
   }
 
-  selectPaidBy.innerHTML = '<option value="">Seleccionar quien pago...</option>' +
+  selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>` +
     miembros.map(m => `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`).join('');
 
   const { data: grupoInfo } = await supabase
@@ -99,9 +104,9 @@ function renderizarSplitInputs(miembros, preserveValues = {}) {
     if (splitType === 'percentage') {
       extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="%" step="0.01" min="0" max="100" value="${valorActual}" style="width: 80px;">`;
     } else if (splitType === 'exact') {
-      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="Monto" step="0.01" min="0" value="${valorActual}" style="width: 90px;">`;
+      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="Amount" step="0.01" min="0" value="${valorActual}" style="width: 90px;">`;
     } else if (splitType === 'shares') {
-      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="partes" step="1" min="0" value="${valorActual}" style="width: 80px;">`;
+      extraInput = `<input type="number" class="split-value" data-user="${userId}" placeholder="shares" step="1" min="0" value="${valorActual}" style="width: 80px;">`;
     }
 
     return `
@@ -134,13 +139,13 @@ function actualizarResumenSplit() {
 
   const checkboxes = document.querySelectorAll('#expense-split-members .split-checkbox:checked');
   if (checkboxes.length === 0) {
-    summary.innerHTML = '<p style="color: #e53e3e;">Selecciona al menos una persona.</p>';
+    summary.innerHTML = `<p style="color: #e53e3e;">${t('expense.create.need_one')}</p>`;
     return;
   }
 
   if (splitType === 'equal') {
     const montoPorPersona = (monto / checkboxes.length).toFixed(2);
-    summary.innerHTML = `<p><strong>${montoPorPersona} ${moneda}</strong> por persona (${checkboxes.length} personas)</p>`;
+    summary.innerHTML = `<p><strong>${montoPorPersona} ${moneda}</strong> - ${t('expense.create.equal_summary', { monto: montoPorPersona, moneda, count: checkboxes.length })}</p>`;
     return;
   }
 
@@ -155,8 +160,8 @@ function actualizarResumenSplit() {
       lineas.push(`<p>${pct}% -> <strong>${montoPct} ${moneda}</strong></p>`);
     });
     const aviso = Math.abs(total - 100) > 0.01 
-      ? `<p style="color: #e53e3e; margin-top: 5px;">Los porcentajes suman ${total.toFixed(2)}%, deberian sumar 100%.</p>` 
-      : '<p style="color: #38a169; margin-top: 5px;">OK. Suma 100%.</p>';
+      ? `<p style="color: #e53e3e; margin-top: 5px;">${t('expense.create.percent_sum', { total: total.toFixed(2) })}</p>` 
+      : `<p style="color: #38a169; margin-top: 5px;">${t('expense.create.percent_ok')}</p>`;
     summary.innerHTML = lineas.join('') + aviso;
     return;
   }
@@ -171,8 +176,8 @@ function actualizarResumenSplit() {
       lineas.push(`<p>${val.toFixed(2)} ${moneda}</p>`);
     });
     const aviso = Math.abs(total - monto) > 0.01 
-      ? `<p style="color: #e53e3e; margin-top: 5px;">Suma ${total.toFixed(2)} ${moneda}, deberia sumar ${monto.toFixed(2)} ${moneda}.</p>` 
-      : '<p style="color: #38a169; margin-top: 5px;">OK. Suma correcta.</p>';
+      ? `<p style="color: #e53e3e; margin-top: 5px;">${t('expense.create.exact_sum', { total: total.toFixed(2), moneda, esperado: monto.toFixed(2) })}</p>` 
+      : `<p style="color: #38a169; margin-top: 5px;">${t('expense.create.exact_ok')}</p>`;
     summary.innerHTML = lineas.join('') + aviso;
     return;
   }
@@ -188,15 +193,15 @@ function actualizarResumenSplit() {
     });
 
     if (totalShares === 0) {
-      summary.innerHTML = '<p style="color: #e53e3e;">Asigna al menos una parte a alguien.</p>';
+      summary.innerHTML = `<p style="color: #e53e3e;">${t('expense.create.shares_need')}</p>`;
       return;
     }
 
     const lineas = inputs.map(i => {
       const montoParte = (monto * i.shares / totalShares).toFixed(2);
-      return `<p>${i.shares} partes -> <strong>${montoParte} ${moneda}</strong></p>`;
+      return `<p>${t('expense.create.shares_line', { shares: i.shares, monto: montoParte, moneda })}</p>`;
     });
-    summary.innerHTML = lineas.join('') + `<p style="color: #38a169; margin-top: 5px;">OK. Total: ${totalShares} partes.</p>`;
+    summary.innerHTML = lineas.join('') + `<p style="color: #38a169; margin-top: 5px;">${t('expense.create.shares_ok', { total: totalShares })}</p>`;
   }
 }
 
@@ -205,14 +210,14 @@ function actualizarResumenSplit() {
 // ==========================================
 export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuario no autenticado');
+  if (!user) throw new Error('Not authenticated');
 
   const splitType = document.getElementById('split-type').value;
   const checkboxes = document.querySelectorAll('#expense-split-members .split-checkbox:checked');
   const usuariosSplit = Array.from(checkboxes).map(cb => cb.value);
 
   if (usuariosSplit.length === 0) {
-    throw new Error('Debes seleccionar al menos una persona para dividir.');
+    throw new Error(t('expense.create.need_group'));
   }
 
   let splits = [];
@@ -238,7 +243,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       };
     });
     if (Math.abs(totalPct - 100) > 0.01) {
-      throw new Error(`Los porcentajes suman ${totalPct.toFixed(2)}%, deben sumar 100%.`);
+      throw new Error(t('expense.create.percent_error', { total: totalPct.toFixed(2) }));
     }
   } 
   else if (splitType === 'exact') {
@@ -254,7 +259,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       };
     });
     if (Math.abs(totalExacto - monto) > 0.01) {
-      throw new Error(`Los montos suman ${totalExacto.toFixed(2)}, deben sumar ${monto.toFixed(2)}.`);
+      throw new Error(t('expense.create.exact_error', { total: totalExacto.toFixed(2), esperado: monto.toFixed(2) }));
     }
   } 
   else if (splitType === 'shares') {
@@ -265,7 +270,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       totalShares += shares;
       return { user_id: userId, shares, split_type: 'shares' };
     });
-    if (totalShares === 0) throw new Error('Debes asignar al menos una parte.');
+    if (totalShares === 0) throw new Error(t('expense.create.shares_error'));
     splits = tempSplits.map(s => ({
       user_id: s.user_id,
       amount_owed: parseFloat((monto * s.shares / totalShares).toFixed(2)),
@@ -342,12 +347,12 @@ export async function cargarGastosDelGrupo(groupId) {
 
   if (error) {
     console.error('Error gastos:', error);
-    listContainer.innerHTML = '<p class="error-msg">Error al cargar gastos.</p>';
+    listContainer.innerHTML = `<p class="error-msg">${t('expense.list.error')}</p>`;
     return;
   }
 
   if (!gastos || gastos.length === 0) {
-    listContainer.innerHTML = '<p class="placeholder-text">No hay gastos aun. Anade el primero!</p>';
+    listContainer.innerHTML = `<p class="placeholder-text">${t('expense.list.empty')}</p>`;
     return;
   }
 
@@ -356,7 +361,7 @@ export async function cargarGastosDelGrupo(groupId) {
     : gastos;
 
   if (gastosFiltrados.length === 0) {
-    listContainer.innerHTML = '<p class="placeholder-text">No hay gastos con esa categoria.</p>';
+    listContainer.innerHTML = `<p class="placeholder-text">${t('expense.list.empty_filter')}</p>`;
     return;
   }
 
@@ -399,7 +404,7 @@ export async function cargarGastosDelGrupo(groupId) {
         <div class="expense-category-icon" title="${cat.label}">${cat.icono}</div>
         <div class="expense-info">
           <h5>${g.description}</h5>
-          <span>Pago: ${nombres[g.paid_by] || 'Desconocido'} - ${g.date}</span>
+          <span>${t('expense.list.paid_by', { nombre: nombres[g.paid_by] || t('expense.detail.unknown'), fecha: g.date })}</span>
         </div>
         <div class="expense-amount">
           ${montoMostrar}
@@ -423,7 +428,7 @@ export async function cargarGastosArchivados(groupId) {
   const listContainer = document.getElementById('group-archived-expenses');
   if (!listContainer) return;
 
-  listContainer.innerHTML = '<p class="placeholder-text">Cargando...</p>';
+  listContainer.innerHTML = `<p class="placeholder-text">${t('dashboard.loading')}</p>`;
 
   const { data: gastos, error } = await supabase
     .from('expenses')
@@ -434,12 +439,12 @@ export async function cargarGastosArchivados(groupId) {
 
   if (error) {
     console.error('Error gastos archivados:', error);
-    listContainer.innerHTML = '<p class="error-msg">Error al cargar gastos archivados.</p>';
+    listContainer.innerHTML = `<p class="error-msg">${t('expense.archive.error_load')}</p>`;
     return;
   }
 
   if (!gastos || gastos.length === 0) {
-    listContainer.innerHTML = '<p class="placeholder-text">No hay gastos archivados en este grupo.</p>';
+    listContainer.innerHTML = `<p class="placeholder-text">${t('expense.archive.empty')}</p>`;
     return;
   }
 
@@ -481,20 +486,19 @@ export async function cargarGastosArchivados(groupId) {
     let fechaArchivado = '';
     if (g.archived_at) {
       const d = new Date(g.archived_at);
-      fechaArchivado = `Archivado el ${d.toLocaleDateString('es-ES')}`;
+      fechaArchivado = t('expense.archive.archived_on', { fecha: d.toLocaleDateString() });
     }
 
-    // Solo mostrar boton Restaurar si el grupo NO esta archivado
     const btnRestaurar = grupoArchivado
       ? ''
-      : `<button class="btn-small btn-restore-expense" data-expense-id="${g.id}" title="Restaurar">&#8634; Restaurar</button>`;
+      : `<button class="btn-small btn-restore-expense" data-expense-id="${g.id}" title="${t('expense.archive.restore')}">&#8634; ${t('expense.archive.restore')}</button>`;
 
     return `
       <div class="expense-card expense-card-archived clickable-expense" data-expense-id="${g.id}">
         <div class="expense-category-icon expense-icon-archived" title="${cat.label}">&#128230;</div>
         <div class="expense-info">
           <h5>${g.description}</h5>
-          <span>Pago: ${nombres[g.paid_by] || 'Desconocido'} - ${g.date}</span>
+          <span>${t('expense.list.paid_by', { nombre: nombres[g.paid_by] || t('expense.detail.unknown'), fecha: g.date })}</span>
           ${fechaArchivado ? `<small class="expense-archived-date">${fechaArchivado}</small>` : ''}
         </div>
         <div class="expense-amount expense-amount-archived">
@@ -506,7 +510,6 @@ export async function cargarGastosArchivados(groupId) {
     `;
   }).join('');
 
-  // Listener: click en card -> abrir detalle (solo lectura)
   listContainer.querySelectorAll('.clickable-expense').forEach(card => {
     card.addEventListener('click', (e) => {
       if (e.target.closest('.btn-restore-expense')) return;
@@ -514,12 +517,11 @@ export async function cargarGastosArchivados(groupId) {
     });
   });
 
-  // Listener: boton restaurar
   listContainer.querySelectorAll('.btn-restore-expense').forEach(btn => {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const expenseId = btn.dataset.expenseId;
-      if (!confirm('Restaurar este gasto? Volvera a formar parte de los calculos del grupo.')) return;
+      if (!confirm(t('expense.archive.restore_confirm'))) return;
       await restaurarGasto(expenseId, groupId);
     });
   });
@@ -559,11 +561,11 @@ export function initExpenseModal() {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
     form.reset();
-    document.getElementById('split-summary').innerHTML = '<p>Selecciona un grupo y ajusta los valores.</p>';
+    document.getElementById('split-summary').innerHTML = `<p>${t('expense.create.split_no_group_hint')}</p>`;
     await cargarGruposParaGasto();
     document.getElementById('expense-split-members').innerHTML = 
-      '<p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>';
-    document.getElementById('expense-paid-by').innerHTML = '<option value="">Seleccionar quien pago...</option>';
+      `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
+    document.getElementById('expense-paid-by').innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
   });
 
   btnCancel.addEventListener('click', () => {
@@ -600,7 +602,7 @@ export function initExpenseModal() {
     errorMsg.textContent = '';
     const btnSubmit = form.querySelector('button[type="submit"]');
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Guardando...';
+    btnSubmit.textContent = t('expense.create.saving');
 
     const descripcion = document.getElementById('expense-description').value.trim();
     const monto = parseFloat(document.getElementById('expense-amount').value);
@@ -610,19 +612,18 @@ export function initExpenseModal() {
     try {
       await guardarGasto(descripcion, monto, groupId, paidBy);
       modal.classList.add('hidden');
-      alert('Gasto guardado con exito!');
+      alert(t('expense.create.success'));
       const groupIdDetail = document.getElementById('modal-group-detail').dataset.groupId;
       if (groupIdDetail && groupIdDetail === groupId) {
         const { cargarGastosDelGrupo } = await import('./expenses.js');
         const { mostrarBalance } = await import('./debtSolver.js');
-        const { cargarHistorial } = await import('./history.js');
-        const { cargarGraficos } = await import('./charts.js');
         await cargarGastosDelGrupo(groupId);
         await mostrarBalance(groupId);
-        // Solo recargar extras si estan abiertos
         const modalDetail = document.getElementById('modal-group-detail');
         const extras = document.getElementById('group-extras');
         if (extras && !extras.classList.contains('hidden')) {
+          const { cargarGraficos } = await import('./charts.js');
+          const { cargarHistorial } = await import('./history.js');
           const monedaGrupo = modalDetail.dataset.groupCurrency || 'EUR';
           await cargarGraficos(groupId, monedaGrupo);
           await cargarHistorial(groupId);
@@ -633,10 +634,10 @@ export function initExpenseModal() {
       await cargarDashboard();
 
     } catch (error) {
-      errorMsg.textContent = 'Error: ' + error.message;
+      errorMsg.textContent = t('expense.create.error', { mensaje: error.message });
     } finally {
       btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Guardar Gasto';
+      btnSubmit.textContent = t('expense.create.submit');
     }
   });
 }
@@ -647,7 +648,7 @@ export function initExpenseModal() {
 export async function abrirDetalleGasto(expenseId, groupId) {
   const modal = document.getElementById('modal-expense-detail');
   const container = document.getElementById('expense-detail-content');
-  container.innerHTML = '<p class="placeholder-text">Cargando...</p>';
+  container.innerHTML = `<p class="placeholder-text">${t('expense.detail.loading')}</p>`;
   
   modal.dataset.expenseId = expenseId;
   modal.dataset.groupId = groupId;
@@ -659,7 +660,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
     .single();
 
   if (error || !gasto) {
-    container.innerHTML = '<p class="error-msg">Error al cargar el gasto.</p>';
+    container.innerHTML = `<p class="error-msg">${t('expense.detail.error')}</p>`;
     return;
   }
 
@@ -709,12 +710,11 @@ export async function abrirDetalleGasto(expenseId, groupId) {
     montoSub = `(${monto.toFixed(2)} ${monedaGasto})`;
   }
 
-  // Aviso si esta archivado
   let avisoArchivado = '';
   if (gastoArchivado) {
     avisoArchivado = `
       <div class="expense-archived-notice">
-        &#128230; Este gasto esta archivado y no forma parte de los calculos del grupo.
+        &#128230; ${t('expense.detail.archived_notice')}
       </div>
     `;
   }
@@ -731,46 +731,43 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
       <p style="font-size: 0.85rem; color: #4a5568;">
-        <strong>Pago:</strong> ${pagador?.full_name || pagador?.email || 'Desconocido'}
+        <strong>${t('expense.detail.paid_by')}</strong> ${pagador?.full_name || pagador?.email || t('expense.detail.unknown')}
       </p>
     </div>
 
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
-      <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;"><strong>Division:</strong></p>
+      <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 10px;"><strong>${t('expense.detail.split')}</strong></p>
       ${splits && splits.length > 0 ? splits.map(s => `
         <div style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.9rem;">
-          <span>${nombres[s.user_id] || 'Desconocido'}</span>
+          <span>${nombres[s.user_id] || t('expense.detail.unknown')}</span>
           <span style="font-weight: 600; color: #2d3748;">${parseFloat(s.amount_owed).toFixed(2)} ${monedaGasto}</span>
         </div>
-      `).join('') : '<p class="placeholder-text">Sin divisiones.</p>'}
+      `).join('') : `<p class="placeholder-text">${t('expense.detail.no_split')}</p>`}
     </div>
   `;
 
-  // Configurar botones del modal segun el estado
   const btnEdit = document.getElementById('btn-edit-expense');
   const btnDelete = document.getElementById('btn-delete-expense');
 
-  if (gastoArchivado || grupoArchivado) {
-    // Ocultar ambos botones si el gasto esta archivado o el grupo esta archivado
+  if (gastoArchivado || grupoArchivado || computoCerrado) {
+    // Ocultar ambos botones si:
+    // - el gasto esta archivado, o
+    // - el grupo esta archivado, o
+    // - el computo esta cerrado (no tiene sentido archivar/editar despues de cerrar)
     if (btnEdit) btnEdit.style.display = 'none';
     if (btnDelete) btnDelete.style.display = 'none';
   } else {
-    // Mostrar botones. "Archivar" si el computo esta cerrado, "Cerrar computo" si no
-    if (btnEdit) btnEdit.style.display = '';
-
+    // Grupo activo y computo NO cerrado: mostrar Editar y Archivar
+    if (btnEdit) {
+      btnEdit.style.display = '';
+      btnEdit.textContent = t('expense.detail.edit');
+    }
     if (btnDelete) {
       btnDelete.style.display = '';
-      if (computoCerrado) {
-        btnDelete.textContent = 'Archivar';
-        btnDelete.style.background = '#fefcbf';
-        btnDelete.style.color = '#b7791f';
-        btnDelete.dataset.action = 'archivar';
-      } else {
-        btnDelete.textContent = 'Archivar';
-        btnDelete.style.background = '#edf2f7';
-        btnDelete.style.color = '#a0aec0';
-        btnDelete.dataset.action = 'cerrar-computo-primero';
-      }
+      btnDelete.textContent = t('expense.detail.archive');
+      btnDelete.style.background = '#fefcbf';
+      btnDelete.style.color = '#b7791f';
+      btnDelete.dataset.action = 'archivar';
     }
   }
 
@@ -778,7 +775,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 }
 
 // ==========================================
-// 9. ARCHIVAR / ELIMINAR GASTO (boton principal)
+// 9. ARCHIVAR GASTO (boton principal)
 // ==========================================
 export async function accionGasto() {
   const modal = document.getElementById('modal-expense-detail');
@@ -788,13 +785,11 @@ export async function accionGasto() {
 
   const accion = btnDelete?.dataset.action;
 
-  // Si el computo no esta cerrado, avisar
-  if (accion === 'cerrar-computo-primero') {
-    alert('Primero debes cerrar el computo del grupo para poder archivar gastos.\n\nAnda al detalle del grupo y toca "Cerrar computo".');
+  if (accion !== 'archivar') {
     return;
   }
 
-  if (!confirm('Archivar este gasto? Dejara de formar parte de los calculos del grupo. Podes restaurarlo despues.')) return;
+  if (!confirm(t('expense.archive.confirm'))) return;
 
   const { error } = await supabase
     .from('expenses')
@@ -805,7 +800,7 @@ export async function accionGasto() {
     .eq('id', expenseId);
 
   if (error) {
-    alert('Error al archivar: ' + error.message);
+    alert(t('expense.archive.error', { mensaje: error.message }));
     return;
   }
 
@@ -827,7 +822,7 @@ export async function restaurarGasto(expenseId, groupId) {
     .eq('id', expenseId);
 
   if (error) {
-    alert('Error al restaurar: ' + error.message);
+    alert(t('expense.archive.restore_error', { mensaje: error.message }));
     return;
   }
 
@@ -844,16 +839,13 @@ async function recargarDetalleGrupo(groupId) {
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
 
-  // Recargar archivados solo si el acordeon esta abierto
   const archivedContainer = document.getElementById('group-archived-expenses');
   if (archivedContainer && !archivedContainer.classList.contains('hidden')) {
     await cargarGastosArchivados(groupId);
   }
 
-  // Actualizar badge de archivados
   await actualizarBadgeArchivados(groupId);
 
-  // Recargar extras solo si estan abiertos
   const extras = document.getElementById('group-extras');
   if (extras && !extras.classList.contains('hidden')) {
     const { cargarGraficos } = await import('./charts.js');
@@ -907,11 +899,13 @@ export async function actualizarBadgeArchivados(groupId) {
     }
   });
 
+  const claveCount = gastos.length === 1 ? 'expense.archive.badge_one' : 'expense.archive.badge_many';
+
   badge.classList.remove('hidden');
   badge.innerHTML = `
     <span class="group-archived-badge-text">
-      &#9888; ${gastos.length} ${gastos.length === 1 ? 'gasto archivado' : 'gastos archivados'} 
-      (${totalArchivado.toFixed(2)} ${monedaGrupo} no incluidos)
+      &#9888; ${t(claveCount, { count: gastos.length })} 
+      ${t('expense.archive.badge_amount', { monto: totalArchivado.toFixed(2), moneda: monedaGrupo })}
     </span>
   `;
 }
@@ -932,9 +926,8 @@ export async function cargarGastoParaEditar() {
 
   if (!gasto) return;
 
-  // Bloquear edicion si esta archivado
   if (gasto.archived) {
-    alert('No se puede editar un gasto archivado. Restauralo primero.');
+    alert(t('expense.edit.cant_archived'));
     return;
   }
 
@@ -984,7 +977,7 @@ export async function guardarEdicionGasto() {
   const monedaGasto = (document.getElementById('edit-expense-currency')?.value || 'EUR').toUpperCase();
 
   btnSubmit.disabled = true;
-  btnSubmit.textContent = 'Guardando...';
+  btnSubmit.textContent = t('expense.edit.saving');
   errorMsg.textContent = '';
 
   try {
@@ -1051,9 +1044,9 @@ export async function guardarEdicionGasto() {
     await recargarDetalleGrupo(groupId);
 
   } catch (error) {
-    errorMsg.textContent = 'Error: ' + error.message;
+    errorMsg.textContent = t('expense.edit.error', { mensaje: error.message });
   } finally {
     btnSubmit.disabled = false;
-    btnSubmit.textContent = 'Guardar cambios';
+    btnSubmit.textContent = t('expense.edit.submit');
   }
 }
