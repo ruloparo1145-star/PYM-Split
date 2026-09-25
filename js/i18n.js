@@ -56,6 +56,15 @@ export const TRADUCCIONES = {
     'dashboard.btn_new': '+ Nuevo',
     'dashboard.loading': 'Cargando...',
     'dashboard.cat_filter_all': 'Todas las categorias',
+    'dashboard.no_activity_range': 'No hay movimientos.',
+    'dashboard.history_title': 'Historico por mes',
+    'dashboard.history_subtitle': 'Ultimos 12 meses, convertidos a tu moneda preferida.',
+    'dashboard.history_loading': 'Cargando historial...',
+    'dashboard.history_empty': 'No hay datos historicos.',
+    'dashboard.history_total_12m': 'Total 12 meses',
+    'dashboard.history_month': 'Mes',
+    'dashboard.history_expenses_count': '{count} gastos',
+    'dashboard.close': 'Cerrar',
 
     // ---------- PERFIL ----------
     'profile.title': 'Mi Perfil',
@@ -259,7 +268,7 @@ export const TRADUCCIONES = {
     'expense.create.exact_sum': 'Suma {total} {moneda}, deberia sumar {esperado} {moneda}.',
     'expense.create.exact_ok': 'OK. Suma correcta.',
     'expense.create.shares_need': 'Asigna al menos una parte a alguien.',
-    'expense.create.shares_line': '{shares} partes -> {monto} {moneda}',
+    'expense.create.shares_line': '{shares} partes, {monto} {moneda}',
     'expense.create.shares_ok': 'OK. Total: {total} partes.',
     'expense.create.percent_error': 'Los porcentajes suman {total}%, deben sumar 100%.',
     'expense.create.exact_error': 'Los montos suman {total}, deben sumar {esperado}.',
@@ -312,7 +321,49 @@ export const TRADUCCIONES = {
     'expense.edit.cant_archived': 'No se puede editar un gasto archivado. Restauralo primero.',
 
     // ---------- CATEGORIA: FILTRO ----------
-    'category.filter.all': 'Todas las categorias'
+    'category.filter.all': 'Todas las categorias',
+
+    // ---------- AMIGOS ----------
+    'friends.title': 'Gestion de Amigos',
+    'friends.add_label': 'Agregar amigo por email',
+    'friends.add_placeholder': 'amigo@email.com',
+    'friends.add_button': 'Enviar',
+    'friends.add_sending': '...',
+    'friends.requests_title': 'Solicitudes Pendientes',
+    'friends.requests_empty': 'No hay solicitudes pendientes.',
+    'friends.requests_loading': 'Cargando...',
+    'friends.list_title': 'Mis Amigos',
+    'friends.list_empty': 'Aun no tienes amigos agregados.',
+    'friends.list_loading': 'Cargando...',
+    'friends.load_error': 'Error al cargar.',
+    'friends.sent_to': 'Solicitud enviada a {nombre}!',
+    'friends.user_not_found': 'No se encontro ningun usuario con ese email.',
+    'friends.cant_add_self': 'No puedes agregarte a ti mismo.',
+    'friends.already_friends': 'Ya son amigos.',
+    'friends.already_pending': 'Ya hay una solicitud pendiente.',
+    'friends.incoming_request': 'Te envio solicitud',
+    'friends.outgoing_request': 'Solicitud enviada',
+    'friends.pending_badge': 'Pendiente',
+    'friends.accept': 'Aceptar',
+    'friends.reject': 'Rechazar',
+    'friends.accept_error': 'Error al aceptar: {mensaje}',
+    'friends.reject_error': 'Error al rechazar: {mensaje}',
+    'friends.close': 'Cerrar',
+
+    // ---------- LIBRO DE VISITAS ----------
+    'guestbook.loading': 'Cargando comentarios...',
+    'guestbook.empty': 'Todavia no hay comentarios. Se el primero!',
+    'guestbook.load_error': 'Error al cargar los comentarios.',
+    'guestbook.placeholder': 'Escribi tu comentario...',
+    'guestbook.max_chars': 'Maximo 500 caracteres',
+    'guestbook.publish': 'Publicar',
+    'guestbook.publishing': 'Publicando...',
+    'guestbook.delete_confirm': 'Eliminar este comentario?',
+    'guestbook.delete_error': 'Error al eliminar: {mensaje}',
+    'guestbook.need_message': 'Escribi un mensaje.',
+    'guestbook.too_long': 'El mensaje es demasiado largo (maximo 500 caracteres).',
+    'guestbook.publish_error': 'Error: {mensaje}',
+    'guestbook.user': 'Usuario'
   },
 
   en: {
@@ -370,6 +421,15 @@ export const TRADUCCIONES = {
     'dashboard.btn_new': '+ New',
     'dashboard.loading': 'Loading...',
     'dashboard.cat_filter_all': 'All categories',
+    'dashboard.no_activity_range': 'No activity.',
+    'dashboard.history_title': 'Monthly history',
+    'dashboard.history_subtitle': 'Last 12 months, converted to your preferred currency.',
+    'dashboard.history_loading': 'Loading history...',
+    'dashboard.history_empty': 'No historical data.',
+    'dashboard.history_total_12m': 'Total 12 months',
+    'dashboard.history_month': 'Month',
+    'dashboard.history_expenses_count': '{count} expenses',
+    'dashboard.close': 'Close',
 
     // ---------- PROFILE ----------
     'profile.title': 'My Profile',
@@ -626,7 +686,49 @@ export const TRADUCCIONES = {
     'expense.edit.cant_archived': 'Cannot edit an archived expense. Restore it first.',
 
     // ---------- CATEGORY: FILTER ----------
-    'category.filter.all': 'All categories'
+    'category.filter.all': 'All categories',
+
+    // ---------- FRIENDS ----------
+    'friends.title': 'Friends Management',
+    'friends.add_label': 'Add friend by email',
+    'friends.add_placeholder': 'friend@email.com',
+    'friends.add_button': 'Send',
+    'friends.add_sending': '...',
+    'friends.requests_title': 'Pending Requests',
+    'friends.requests_empty': 'No pending requests.',
+    'friends.requests_loading': 'Loading...',
+    'friends.list_title': 'My Friends',
+    'friends.list_empty': 'You have no friends added yet.',
+    'friends.list_loading': 'Loading...',
+    'friends.load_error': 'Error loading.',
+    'friends.sent_to': 'Request sent to {nombre}!',
+    'friends.user_not_found': 'No user found with that email.',
+    'friends.cant_add_self': 'You cannot add yourself.',
+    'friends.already_friends': 'You are already friends.',
+    'friends.already_pending': 'There is already a pending request.',
+    'friends.incoming_request': 'Sent you a request',
+    'friends.outgoing_request': 'Request sent',
+    'friends.pending_badge': 'Pending',
+    'friends.accept': 'Accept',
+    'friends.reject': 'Reject',
+    'friends.accept_error': 'Error accepting: {mensaje}',
+    'friends.reject_error': 'Error rejecting: {mensaje}',
+    'friends.close': 'Close',
+
+    // ---------- GUESTBOOK ----------
+    'guestbook.loading': 'Loading comments...',
+    'guestbook.empty': 'No comments yet. Be the first!',
+    'guestbook.load_error': 'Error loading comments.',
+    'guestbook.placeholder': 'Write your comment...',
+    'guestbook.max_chars': 'Maximum 500 characters',
+    'guestbook.publish': 'Publish',
+    'guestbook.publishing': 'Publishing...',
+    'guestbook.delete_confirm': 'Delete this comment?',
+    'guestbook.delete_error': 'Error deleting: {mensaje}',
+    'guestbook.need_message': 'Write a message.',
+    'guestbook.too_long': 'Message is too long (maximum 500 characters).',
+    'guestbook.publish_error': 'Error: {mensaje}',
+    'guestbook.user': 'User'
   }
 };
 
