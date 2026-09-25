@@ -794,6 +794,7 @@
   </div>
 
   <!-- MODAL: Mi Perfil -->
+<!-- MODAL: Mi Perfil -->
   <div id="modal-profile" class="modal-overlay hidden">
     <div class="modal-content">
       <h3 data-i18n="profile.title">My Profile</h3>
@@ -804,44 +805,40 @@
         </div>
         <div class="form-group">
           <label for="profile-name" data-i18n="profile.name">Name</label>
-          <input type="text" id="profile-name" placeholder="Tu nombre completo">
+          <input type="text" id="profile-name" data-i18n-placeholder="profile.name_placeholder" placeholder="Your full name">
         </div>
         <div class="form-group">
           <label for="profile-phone" data-i18n="profile.phone">Phone (optional)</label>
-          <input type="tel" id="profile-phone" placeholder="+54 9 11 1234 5678">
+          <input type="tel" id="profile-phone" placeholder="+1 555 123 4567">
         </div>
-
-<div class="form-group">
-  <label for="profile-currency" data-i18n="profile.currency">Preferred currency</label>
-  <select id="profile-currency" required>
-    <option value="EUR">EUR - Euro</option>
-  </select>
-  <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.currency_hint">
-    The dashboard will show totals in this currency.
-  </small>
-</div>
-<div class="form-group">
-  <label for="profile-language" data-i18n="profile.language">Language</label>
-  <select id="profile-language" required>
-    <option value="en">English (US)</option>
-    <option value="es">Spanish</option>
-  </select>
-  <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.language_hint">
-    Choose the app language.
-  </small>
-</div>
-        
+        <div class="form-group">
+          <label for="profile-currency" data-i18n="profile.currency">Preferred currency</label>
+          <select id="profile-currency" required>
+            <option value="EUR">EUR - Euro</option>
+          </select>
+          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.currency_hint">
+            The dashboard will show totals in this currency.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="profile-language" data-i18n="profile.language">Language</label>
+          <select id="profile-language" required>
+            <option value="en">English (US)</option>
+            <option value="es">Spanish</option>
+          </select>
+          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.language_hint">
+            Choose the app language.
+          </small>
+        </div>
         <p id="profile-error" class="error-msg"></p>
         <p id="profile-success" class="success-msg" style="text-align: center; font-size: 0.85rem;"></p>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-profile" class="btn-secondary" data-i18n="profile.cancel">Cancel</button>
-<button type="submit" class="btn-primary" data-i18n="profile.save">Save changes</button>
-          <button type="submit" class="btn-primary">Guardar cambios</button>
+          <button type="submit" class="btn-primary" data-i18n="profile.save">Save changes</button>
         </div>
       </form>
     </div>
   </div>
-
   <!-- MODAL: Historico (grafico + tabla) -->
   <div id="modal-chart-history" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 700px;">
