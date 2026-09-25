@@ -95,89 +95,90 @@
   </div>
 
   <!-- MODAL: Crear Grupo -->
+<!-- MODAL: Crear Grupo -->
   <div id="modal-group" class="modal-overlay hidden">
     <div class="modal-content">
-      <h3>Crear Nuevo Grupo</h3>
+      <h3 data-i18n="group.create.title">Create New Group</h3>
       <form id="form-group">
         <div class="form-group">
-          <label for="group-name">Nombre del Grupo</label>
-          <input type="text" id="group-name" placeholder="Ej: Viaje a Bariloche" required>
+          <label for="group-name" data-i18n="group.create.name">Group Name</label>
+          <input type="text" id="group-name" data-i18n-placeholder="group.create.name_placeholder" placeholder="Ex: Trip to Bariloche" required>
         </div>
         <div class="form-group">
-          <label for="group-type">Tipo</label>
+          <label for="group-type" data-i18n="group.create.type">Type</label>
           <select id="group-type" required>
-            <option value="viaje">Viaje</option>
-            <option value="depto">Departamento</option>
-            <option value="salidas">Salidas</option>
-            <option value="otro">Otro</option>
+            <option value="viaje" data-i18n="group.create.type.trip">Trip</option>
+            <option value="depto" data-i18n="group.create.type.flat">Apartment</option>
+            <option value="salidas" data-i18n="group.create.type.outings">Outings</option>
+            <option value="otro" data-i18n="group.create.type.other">Other</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="group-currency">Moneda</label>
+          <label for="group-currency" data-i18n="group.create.currency">Currency</label>
           <select id="group-currency" required>
             <option value="EUR">EUR - Euro</option>
-            <option value="USD">USD - Dolar estadounidense</option>
-            <option value="ARS">ARS - Peso argentino</option>
-            <option value="MXN">MXN - Peso mexicano</option>
-            <option value="BRL">BRL - Real brasileno</option>
-            <option value="CLP">CLP - Peso chileno</option>
-            <option value="COP">COP - Peso colombiano</option>
-            <option value="PEN">PEN - Sol peruano</option>
-            <option value="UYU">UYU - Peso uruguayo</option>
-            <option value="BOB">BOB - Boliviano</option>
-            <option value="PYG">PYG - Guarani paraguayo</option>
-            <option value="VES">VES - Bolivar venezolano</option>
-            <option value="PAB">PAB - Balboa panameno</option>
-            <option value="CRC">CRC - Colon costarricense</option>
-            <option value="GTQ">GTQ - Quetzal guatemalteco</option>
-            <option value="DOP">DOP - Peso dominicano</option>
-            <option value="HNL">HNL - Lempira hondurena</option>
-            <option value="NIO">NIO - Cordoba nicaraguense</option>
-            <option value="CUP">CUP - Peso cubano</option>
-            <option value="CAD">CAD - Dolar canadiense</option>
-            <option value="GBP">GBP - Libra esterlina</option>
-            <option value="CHF">CHF - Franco suizo</option>
-            <option value="NOK">NOK - Corona noruega</option>
-            <option value="SEK">SEK - Corona sueca</option>
-            <option value="DKK">DKK - Corona danesa</option>
-            <option value="PLN">PLN - Zloty polaco</option>
-            <option value="CZK">CZK - Corona checa</option>
-            <option value="HUF">HUF - Forinto hungaro</option>
-            <option value="RON">RON - Leu rumano</option>
-            <option value="BGN">BGN - Lev bulgaro</option>
-            <option value="TRY">TRY - Lira turca</option>
-            <option value="RUB">RUB - Rublo ruso</option>
-            <option value="UAH">UAH - Grivna ucraniana</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="UYU">UYU - Uruguayan Peso</option>
+            <option value="BOB">BOB - Bolivian Boliviano</option>
+            <option value="PYG">PYG - Paraguayan Guarani</option>
+            <option value="VES">VES - Venezuelan Bolivar</option>
+            <option value="PAB">PAB - Panamanian Balboa</option>
+            <option value="CRC">CRC - Costa Rican Colon</option>
+            <option value="GTQ">GTQ - Guatemalan Quetzal</option>
+            <option value="DOP">DOP - Dominican Peso</option>
+            <option value="HNL">HNL - Honduran Lempira</option>
+            <option value="NIO">NIO - Nicaraguan Cordoba</option>
+            <option value="CUP">CUP - Cuban Peso</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="CHF">CHF - Swiss Franc</option>
+            <option value="NOK">NOK - Norwegian Krone</option>
+            <option value="SEK">SEK - Swedish Krona</option>
+            <option value="DKK">DKK - Danish Krone</option>
+            <option value="PLN">PLN - Polish Zloty</option>
+            <option value="CZK">CZK - Czech Koruna</option>
+            <option value="HUF">HUF - Hungarian Forint</option>
+            <option value="RON">RON - Romanian Leu</option>
+            <option value="BGN">BGN - Bulgarian Lev</option>
+            <option value="TRY">TRY - Turkish Lira</option>
+            <option value="RUB">RUB - Russian Ruble</option>
+            <option value="UAH">UAH - Ukrainian Hryvnia</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="group-date-start">Fecha de inicio (opcional)</label>
+          <label for="group-date-start" data-i18n="group.create.date_start">Start date (optional)</label>
           <input type="date" id="group-date-start">
         </div>
         <div class="form-group">
-          <label for="group-date-end">Fecha de fin (opcional)</label>
+          <label for="group-date-end" data-i18n="group.create.date_end">End date (optional)</label>
           <input type="date" id="group-date-end">
         </div>
         <div class="form-group">
-          <label for="group-manual-rate">Cotizacion manual (opcional)</label>
+          <label for="group-manual-rate" data-i18n="group.create.manual_rate">Manual exchange rate (optional)</label>
           <div style="display: flex; align-items: center; gap: 8px;">
             <span id="group-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 EUR =</span>
-            <input type="number" id="group-manual-rate" placeholder="Ej: 1200" step="0.01" min="0" style="flex: 1; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+            <input type="number" id="group-manual-rate" data-i18n-placeholder="group.create.manual_rate_placeholder" placeholder="Ex: 1200" step="0.01" min="0" style="flex: 1; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
             <span id="group-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
           </div>
-          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;">
-            Si la cotizacion no esta en la web, se usara esta. Si esta vacio, queda en 0.
+          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="group.create.manual_rate_hint">
+            If the rate is not available online, this will be used. If empty, it stays at 0.
           </small>
         </div>
         <p id="group-error" class="error-msg"></p>
         <div class="modal-actions">
-          <button type="button" id="btn-cancel-group" class="btn-secondary">Cancelar</button>
-          <button type="submit" class="btn-primary">Crear Grupo</button>
+          <button type="button" id="btn-cancel-group" class="btn-secondary" data-i18n="group.create.cancel">Cancel</button>
+          <button type="submit" class="btn-primary" data-i18n="group.create.submit">Create Group</button>
         </div>
       </form>
     </div>
-  </div>
-
+  </div> 
+ 
   <!-- MODAL: Amigos -->
   <div id="modal-friends" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
