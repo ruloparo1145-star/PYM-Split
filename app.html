@@ -46,11 +46,11 @@
         </div>
       </div>
 
-<div class="dashboard-tabs">
-  <button class="dash-tab active" data-range="active">Grupos activos</button>
-  <button class="dash-tab" data-range="archived">Grupos archivados</button>
-  <button class="dash-tab" data-range="all">Todos</button>
-</div>
+      <div class="dashboard-tabs">
+        <button class="dash-tab active" data-range="active">Grupos activos</button>
+        <button class="dash-tab" data-range="archived">Grupos archivados</button>
+        <button class="dash-tab" data-range="all">Todos</button>
+      </div>
 
       <div class="stats-grid">
         <div class="stat-card">
@@ -199,11 +199,9 @@
         <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;">Mis Amigos</h4>
         <div id="friends-list"><p class="placeholder-text">Cargando...</p></div>
       </div>
-
-<div class="modal-actions">
-        <button type="button" id="btn-close-detail" class="btn-close-detail">Cerrar</button>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-friends" class="btn-secondary">Cerrar</button>
       </div>
-      
     </div>
   </div>
 
@@ -353,8 +351,8 @@
         <h4>Balance</h4>
         <div id="group-balance"><p class="placeholder-text">Calculando balances...</p></div>
       </div>
-     
-<div class="expenses-section">
+
+      <div class="expenses-section">
         <div class="section-header">
           <h4>Gastos</h4>
           <button id="btn-add-expense-from-detail" class="btn-small">+ Anadir</button>
@@ -390,7 +388,7 @@
           <p class="placeholder-text">Cargando...</p>
         </div>
       </div>
-  
+
       <div class="members-section">
         <div class="section-header">
           <h4>Miembros</h4>
@@ -428,7 +426,7 @@
       </div>
 
       <div class="modal-actions">
-        <button type="button" id="btn-close-detail" class="btn-secondary">Cerrar</button>
+        <button type="button" id="btn-close-detail" class="btn-close-detail">Cerrar</button>
       </div>
     </div>
   </div>
@@ -456,7 +454,7 @@
       </div>
       <div class="modal-actions">
         <button type="button" id="btn-edit-expense" class="btn-secondary" style="background: #ebf4ff; color: #3182ce;">Editar</button>
-<button type="button" id="btn-delete-expense" class="btn-secondary" style="background: #fefcbf; color: #b7791f;">Archivar</button>
+        <button type="button" id="btn-delete-expense" class="btn-secondary" style="background: #fefcbf; color: #b7791f;">Archivar</button>
         <button type="button" id="btn-close-expense-detail" class="btn-secondary">Cerrar</button>
       </div>
     </div>
@@ -675,7 +673,7 @@
           <h4>16. Dashboard principal</h4>
           <p>La pantalla principal muestra:</p>
           <ul>
-            <li><strong>Tabs de rango:</strong> Mes actual / 3 meses / Este ano / Todo.</li>
+            <li><strong>Tabs de rango:</strong> Grupos activos / Grupos archivados / Todos.</li>
             <li><strong>3 tarjetas:</strong> Total gastado, Te deben, Debes (en tu moneda preferida).</li>
             <li><strong>Ultimos movimientos:</strong> los 5 gastos mas recientes.</li>
             <li><strong>Boton "Ver historico":</strong> abre el grafico + tabla de los ultimos 12 meses.</li>
@@ -711,13 +709,14 @@
         </section>
 
         <section class="manual-section">
-          <h4>20. Editar o eliminar un gasto</h4>
+          <h4>20. Editar o archivar un gasto</h4>
           <p>Toca cualquier gasto de la lista. Se abre el detalle, con 2 botones:</p>
           <ul>
             <li><strong>Editar:</strong> cambia descripcion, monto, categoria, moneda o quien pago.</li>
-            <li><strong>Eliminar:</strong> borra el gasto definitivamente.</li>
+            <li><strong>Archivar:</strong> el gasto deja de formar parte de los calculos del grupo. Se puede restaurar despues.</li>
           </ul>
-          <p>Despues de cualquier cambio, el dashboard principal se actualiza automaticamente.</p>
+          <p><strong>Importante:</strong> para archivar un gasto, primero tenes que <strong>cerrar el computo</strong> del grupo.</p>
+          <p>Los gastos archivados aparecen en un boton especial <strong>"Ver gastos archivados"</strong>, desde donde podes restaurarlos.</p>
         </section>
 
         <section class="manual-section">
@@ -756,7 +755,7 @@
           <p><strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.</p>
           <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.</p>
           <p><strong>Que pasa si la moneda no esta en la web?</strong><br>Podes cargar una cotizacion manual al crear el grupo. La app la usa como respaldo cuando las APIs fallan.</p>
-          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o eliminarlo tocando el gasto en la lista.</p>
+          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo tocando el gasto en la lista.</p>
           <p><strong>Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexion para cargar y guardar datos en Supabase.</p>
           <p><strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mas.</p>
           <p><strong>Cuanta gente puede estar en un grupo?</strong><br>No hay limite. Podes agregar a todos los amigos que quieras.</p>
