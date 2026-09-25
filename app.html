@@ -810,15 +810,27 @@
           <label for="profile-phone">Telefono (opcional)</label>
           <input type="tel" id="profile-phone" placeholder="+54 9 11 1234 5678">
         </div>
-        <div class="form-group">
-          <label for="profile-currency">Moneda preferida</label>
-          <select id="profile-currency" required>
-            <option value="EUR">EUR - Euro</option>
-          </select>
-          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;">
-            El dashboard mostrara los totales en esta moneda.
-          </small>
-        </div>
+
+<div class="form-group">
+  <label for="profile-currency" data-i18n="profile.currency">Preferred currency</label>
+  <select id="profile-currency" required>
+    <option value="EUR">EUR - Euro</option>
+  </select>
+  <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.currency_hint">
+    The dashboard will show totals in this currency.
+  </small>
+</div>
+<div class="form-group">
+  <label for="profile-language" data-i18n="profile.language">Language</label>
+  <select id="profile-language" required>
+    <option value="en">English (US)</option>
+    <option value="es">Spanish</option>
+  </select>
+  <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.language_hint">
+    Choose the app language.
+  </small>
+</div>
+        
         <p id="profile-error" class="error-msg"></p>
         <p id="profile-success" class="success-msg" style="text-align: center; font-size: 0.85rem;"></p>
         <div class="modal-actions">
