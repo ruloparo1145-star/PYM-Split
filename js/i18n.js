@@ -85,6 +85,10 @@ export const TRADUCCIONES = {
     'profile.export_loading': 'Exportando...',
     'profile.export_success': 'Datos exportados! Se descargo el archivo JSON.',
     'profile.export_error': 'Error al exportar: {mensaje}',
+    'profile.export_button': 'Export my data',
+    'profile.export_loading': 'Exporting...',
+    'profile.export_success': 'Data exported! The JSON file was downloaded.',
+    'profile.export_error': 'Error exporting: {mensaje}',
 
     // ---------- IDIOMAS ----------
     'lang.es': 'Espanol',
