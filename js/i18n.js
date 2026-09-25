@@ -445,6 +445,77 @@ export const TRADUCCIONES = {
     'manual.s12.li1': '<strong>Total del viaje:</strong> cuanto se gasto en total.',
     'manual.s12.li2': '<strong>Mi parte:</strong> cuanto te corresponde a vos segun las divisiones de cada gasto.',
     'manual.s12.p2': 'Si tu moneda preferida es distinta a la del grupo, se muestra tambien la conversion entre parentesis.'
+
+    'manual.s13.title': '13. Calcular en moneda de hoy',
+    'manual.s13.p1': 'En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:',
+    'manual.s13.li1': 'El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.',
+    'manual.s13.li2': 'El total que costaria <strong>con las tasas de hoy</strong>.',
+    'manual.s13.li3': 'La <strong>diferencia</strong> (cuanto subio o bajo).',
+    'manual.s13.p2': 'Es solo informativo. <strong>No modifica ningun dato.</strong>',
+
+    'manual.s14.title': '14. Cerrar el computo de un viaje',
+    'manual.s14.p1': 'Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. La app guarda:',
+    'manual.s14.li1': 'La <strong>fecha de cierre</strong> (automatica, no editable).',
+    'manual.s14.li2': 'El <strong>total final</strong> del viaje en la moneda del grupo.',
+    'manual.s14.p2': 'Si te equivocaste, podes tocar <strong>"Reabrir"</strong> para volver atras.',
+    'manual.s14.p3': 'Esto te sirve para dejar "congelado" el resultado del viaje.',
+
+    'manual.s15.title': '15. Saldar deudas',
+    'manual.s15.p1': 'Cuando alguien ya pago por fuera (efectivo, transferencia, etc.), toca el boton <strong>"Saldar"</strong> al lado de la deuda.',
+    'manual.s15.p2': 'Confirmas y el balance se actualiza automaticamente.',
+    'manual.s15.p3': '<strong>Aclaracion:</strong> la app NO mueve plata. Solo registra que la deuda ya fue saldada.',
+
+    'manual.s16.title': '16. Dashboard principal',
+    'manual.s16.p1': 'La pantalla principal muestra:',
+    'manual.s16.li1': '<strong>Tabs de rango:</strong> Grupos activos / Grupos archivados / Todos.',
+    'manual.s16.li2': '<strong>3 tarjetas:</strong> Total gastado, Te deben, Debes (en tu moneda preferida).',
+    'manual.s16.li3': '<strong>Ultimos movimientos:</strong> los 5 gastos mas recientes.',
+    'manual.s16.li4': '<strong>Boton "Ver historico":</strong> abre el grafico + tabla de los ultimos 12 meses.',
+    'manual.s16.p2': 'Todos los montos se convierten automaticamente a <strong>tu moneda preferida</strong>.',
+
+    'manual.s17.title': '17. Historico por mes',
+    'manual.s17.p1': 'Toca el boton <strong>"Ver historico"</strong> (arriba del dashboard, al lado de "Hola, tu nombre").',
+    'manual.s17.p2': 'Se abre un modal con:',
+    'manual.s17.li1': '<strong>Grafico de barras:</strong> cuanto se gasto cada mes.',
+    'manual.s17.li2': '<strong>Tabla:</strong> mes, cantidad de gastos y total.',
+    'manual.s17.li3': '<strong>Fila final:</strong> total de los ultimos 12 meses.',
+
+    'manual.s18.title': '18. Historial y graficos del grupo',
+    'manual.s18.p1': 'Dentro de cada grupo, mas abajo, vas a ver un boton <strong>"Ver graficos, totales e historial"</strong>. Al tocarlo se despliegan:',
+    'manual.s18.li1': '<strong>Graficos:</strong> cuanto pago cada persona y cuanto se gasto por categoria.',
+    'manual.s18.li2': '<strong>Totales por categoria:</strong> desglose de cuanto se gasto en comida, transporte, etc.',
+    'manual.s18.li3': '<strong>Historial:</strong> todos los movimientos (gastos + pagos) ordenados por fecha.',
+    'manual.s18.p2': 'Tocalo de nuevo para ocultarlos y ocupar menos espacio.',
+
+    'manual.s19.title': '19. Filtros',
+    'manual.s19.p1': 'En la lista de gastos de un grupo, podes filtrar por <strong>categoria</strong> para ver solo lo que te interesa (comida, transporte, etc.).',
+
+    'manual.s20.title': '20. Editar o archivar un gasto',
+    'manual.s20.p1': 'Toca cualquier gasto de la lista. Se abre el detalle, con 2 botones:',
+    'manual.s20.li1': '<strong>Editar:</strong> cambia descripcion, monto, categoria, moneda o quien pago.',
+    'manual.s20.li2': '<strong>Archivar:</strong> el gasto deja de formar parte de los calculos del grupo. Se puede restaurar despues.',
+    'manual.s20.p2': 'Los gastos archivados aparecen en un boton especial <strong>"Ver gastos archivados"</strong>, desde donde podes restaurarlos.',
+
+    'manual.s21.title': '21. Archivar y restaurar grupos',
+    'manual.s21.p1': 'Cada grupo tiene un boton <strong>&#128230; (archivar)</strong>. Al tocarlo, el grupo desaparece de la lista principal pero <strong>NO se borra</strong>.',
+    'manual.s21.p2': '<strong>Importante:</strong> para archivar un grupo primero tenes que <strong>cerrar el computo</strong>.',
+    'manual.s21.p3': 'Para ver los grupos archivados, toca el boton <strong>"Archivados"</strong> arriba de la lista.',
+    'manual.s21.p4': 'Ahi podes <strong>restaurarlos</strong> (boton &#8634;) o <strong>eliminarlos definitivamente</strong> (boton &#128465;).',
+
+    'manual.s22.title': '22. Eliminar un grupo',
+    'manual.s22.p1': 'Solo se puede eliminar un grupo <strong>despues de archivarlo</strong>. Esto evita borrar por error.',
+    'manual.s22.p2': '<strong>Atencion:</strong> eliminar un grupo borra TODOS sus gastos, miembros, pagos e historial. <strong>No se puede deshacer.</strong>',
+    'manual.s22.p3': 'Si queres conservar el historico, usa <strong>archivar</strong> en vez de eliminar.',
+
+    'manual.s23.title': '23. Instalar como app en el celular',
+    'manual.s23.ios_label': 'iPhone (Safari):',
+    'manual.s23.ios_li1': 'Abri la app.',
+    'manual.s23.ios_li2': 'Toca el boton Compartir (flecha hacia arriba).',
+    'manual.s23.ios_li3': 'Elegi "Anadir a pantalla de inicio".',
+    'manual.s23.android_label': 'Android (Chrome):',
+    'manual.s23.android_li1': 'Abri la app.',
+    'manual.s23.android_li2': 'Menu (3 puntos) - "Instalar app".',
+    'manual.s23.p1': 'Se va a ver como una app normal, con su icono.'
   },
 
   en: {
