@@ -21,10 +21,23 @@ function getCat(c) {
   return CATEGORIAS_CHART[c] || CATEGORIAS_CHART.otros;
 }
 
-export async function cargarGraficos(groupId) {
+// Convierte el monto de un gasto a la moneda del grupo
+function montoEnMonedaGrupo(gasto, monedaGrupo) {
+  const monto = parseFloat(gasto.amount) || 0;
+  const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
+
+  if (monedaGasto === monedaGrupo) return monto;
+
+  const tasa = parseFloat(gasto.exchange_rate) || 1;
+  return monto * tasa;
+}
+
+export async function cargarGraficos(groupId, monedaGrupo = 'EUR') {
+  monedaGrupo = (monedaGrupo || 'EUR').toUpperCase();
+
   const { data: gastos, error } = await supabase
     .from('expenses')
-    .select('amount, paid_by, category')
+    .select('amount, paid_by, category, currency, exchange_rate')
     .eq('group_id', groupId);
 
   if (error) {
@@ -42,7 +55,7 @@ export async function cargarGraficos(groupId) {
     return;
   }
 
-  // === GrÃ¡fico por persona ===
+  // === Grafico por persona ===
   const paidByIds = [...new Set(gastos.map(g => g.paid_by))];
   const { data: perfiles } = await supabase
     .from('profiles')
@@ -55,7 +68,7 @@ export async function cargarGraficos(groupId) {
   const porPersona = {};
   gastos.forEach(g => {
     const nombre = nombres[g.paid_by] || 'Desconocido';
-    porPersona[nombre] = (porPersona[nombre] || 0) + parseFloat(g.amount);
+    porPersona[nombre] = (porPersona[nombre] || 0) + montoEnMonedaGrupo(g, monedaGrupo);
   });
 
   const canvasPersona = document.getElementById('chart-by-person');
@@ -77,17 +90,17 @@ export async function cargarGraficos(groupId) {
         maintainAspectRatio: false,
         plugins: {
           legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } },
-          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed.toFixed(2)} EUR` } }
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed.toFixed(2)} ${monedaGrupo}` } }
         }
       }
     });
   }
 
-  // === GrÃ¡fico por categorÃ­a ===
+  // === Grafico por categoria ===
   const porCategoria = {};
   gastos.forEach(g => {
     const cat = g.category || 'otros';
-    porCategoria[cat] = (porCategoria[cat] || 0) + parseFloat(g.amount);
+    porCategoria[cat] = (porCategoria[cat] || 0) + montoEnMonedaGrupo(g, monedaGrupo);
   });
 
   const catLabels = [];
@@ -119,13 +132,13 @@ export async function cargarGraficos(groupId) {
         maintainAspectRatio: false,
         plugins: {
           legend: { position: 'bottom', labels: { font: { size: 12 }, padding: 12 } },
-          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed.toFixed(2)} EUR` } }
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${ctx.parsed.toFixed(2)} ${monedaGrupo}` } }
         }
       }
     });
   }
 
-  // === Totales por categorÃ­a (lista) ===
+  // === Totales por categoria ===
   const totales = document.getElementById('group-category-totals');
   if (totales) {
     const total = Object.values(porCategoria).reduce((a, b) => a + b, 0);
@@ -137,7 +150,7 @@ export async function cargarGraficos(groupId) {
         <div class="category-total-row">
           <span class="category-total-icon">${info.icono}</span>
           <span class="category-total-label">${info.label}</span>
-          <span class="category-total-amount">${monto.toFixed(2)} EUR <small>(${pct}%)</small></span>
+          <span class="category-total-amount">${monto.toFixed(2)} ${monedaGrupo} <small>(${pct}%)</small></span>
         </div>
       `;
     }).join('');
