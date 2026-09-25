@@ -137,6 +137,12 @@ export async function cargarGrupos() {
       btnNew.style.display = mostrarArchivados ? 'none' : 'inline-block';
     }
 
+    // Ocultar "Ultimos movimientos" cuando se ven grupos archivados
+    const seccionMovimientos = document.getElementById('dashboard-recent')?.closest('.section-card');
+    if (seccionMovimientos) {
+      seccionMovimientos.style.display = mostrarArchivados ? 'none' : '';
+    }
+
     if (!grupos || grupos.length === 0) {
       groupsList.innerHTML = mostrarArchivados
         ? '<p class="placeholder-text">No tienes grupos archivados.</p>'
@@ -455,7 +461,6 @@ async function abrirDetalleGrupo(groupId) {
 
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
-  filtroCategoriaActual = '';
 
   const monedaGrupo = (grupo?.currency || 'EUR').toUpperCase();
   const infoTotal = await calcularTotalGrupo(
@@ -513,9 +518,6 @@ async function abrirDetalleGrupo(groupId) {
   await cargarMiembrosDelGrupo(groupId);
   await actualizarBadgeArchivados(groupId);
 }
-
-// Variable auxiliar (evita error de referencia)
-let filtroCategoriaActual = '';
 
 // ==========================================
 // 9. ACTUALIZAR INFO DEL GRUPO
