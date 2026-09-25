@@ -1,25 +1,38 @@
 // js/history.js
 import { supabase } from './supabase.js';
+import { t } from './i18n.js';
+
+const CATEGORIAS_ICONOS = {
+  comida: '&#127829;',
+  transporte: '&#128663;',
+  alojamiento: '&#127968;',
+  supermercado: '&#128722;',
+  ocio: '&#127881;',
+  salud: '&#128138;',
+  servicios: '&#128241;',
+  compras: '&#128717;',
+  viajes: '&#9992;',
+  otros: '&#128176;'
+};
 
 export async function cargarHistorial(groupId) {
   const listContainer = document.getElementById('group-history-list');
   if (!listContainer) return;
-  listContainer.innerHTML = '<p class="placeholder-text">Cargando historial...</p>';
+  listContainer.innerHTML = `<p class="placeholder-text">${t('group.detail.history_loading')}</p>`;
 
-  // 1. Gastos activos (no archivados)
+  // Gastos activos (no archivados) con categoria
   const { data: gastos } = await supabase
     .from('expenses')
-    .select('id, description, amount, currency, date, created_at, paid_by')
+    .select('id, description, amount, currency, date, created_at, paid_by, category')
     .eq('group_id', groupId)
     .eq('archived', false);
 
-  // 2. Settlements
+  // Settlements
   const { data: pagos } = await supabase
     .from('settlements')
     .select('id, amount, currency, date, created_at, from_user, to_user')
     .eq('group_id', groupId);
 
-  // 3. Recolectar user_ids
   const userIds = new Set();
   (gastos || []).forEach(g => g.paid_by && userIds.add(g.paid_by));
   (pagos || []).forEach(p => {
@@ -27,7 +40,6 @@ export async function cargarHistorial(groupId) {
     if (p.to_user) userIds.add(p.to_user);
   });
 
-  // 4. Traer perfiles
   const nombres = {};
   if (userIds.size > 0) {
     const { data: perfiles } = await supabase
@@ -40,12 +52,17 @@ export async function cargarHistorial(groupId) {
   const eventos = [];
 
   (gastos || []).forEach(g => {
+    const cat = g.category || 'otros';
     eventos.push({
       tipo: 'gasto',
       fecha: g.created_at || g.date,
-      icono: '&#127829;',
+      icono: CATEGORIAS_ICONOS[cat] || CATEGORIAS_ICONOS.otros,
       titulo: g.description,
-      detalle: `${nombres[g.paid_by] || 'Alguien'} pago ${parseFloat(g.amount).toFixed(2)} ${g.currency}`,
+      detalle: t('history.paid_by', {
+        nombre: nombres[g.paid_by] || t('debt.someone'),
+        monto: parseFloat(g.amount).toFixed(2),
+        moneda: g.currency
+      }),
       color: '#3182ce'
     });
   });
@@ -55,8 +72,13 @@ export async function cargarHistorial(groupId) {
       tipo: 'pago',
       fecha: p.created_at || p.date,
       icono: '&#128176;',
-      titulo: 'Deuda saldada',
-      detalle: `${nombres[p.from_user] || 'Alguien'} pago a ${nombres[p.to_user] || 'alguien'} ${parseFloat(p.amount).toFixed(2)} ${p.currency}`,
+      titulo: t('history.debt_settled'),
+      detalle: t('history.paid_from_to', {
+        from: nombres[p.from_user] || t('debt.someone'),
+        to: nombres[p.to_user] || t('debt.someone'),
+        monto: parseFloat(p.amount).toFixed(2),
+        moneda: p.currency
+      }),
       color: '#38a169'
     });
   });
@@ -64,7 +86,7 @@ export async function cargarHistorial(groupId) {
   eventos.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
 
   if (eventos.length === 0) {
-    listContainer.innerHTML = '<p class="placeholder-text">Sin actividad aun.</p>';
+    listContainer.innerHTML = `<p class="placeholder-text">${t('group.detail.no_activity')}</p>`;
     return;
   }
 
@@ -74,7 +96,7 @@ export async function cargarHistorial(groupId) {
       <div class="history-info">
         <h5>${e.titulo}</h5>
         <p>${e.detalle}</p>
-        <small>${new Date(e.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' })}</small>
+        <small>${new Date(e.fecha).toLocaleDateString(undefined, { day: '2-digit', month: 'short', year: 'numeric' })}</small>
       </div>
     </div>
   `).join('');
