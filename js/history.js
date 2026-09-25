@@ -3,21 +3,23 @@ import { supabase } from './supabase.js';
 
 export async function cargarHistorial(groupId) {
   const listContainer = document.getElementById('group-history-list');
+  if (!listContainer) return;
   listContainer.innerHTML = '<p class="placeholder-text">Cargando historial...</p>';
 
-  // 1. Gastos sin join
+  // 1. Gastos activos (no archivados)
   const { data: gastos } = await supabase
     .from('expenses')
     .select('id, description, amount, currency, date, created_at, paid_by')
-    .eq('group_id', groupId);
+    .eq('group_id', groupId)
+    .eq('archived', false);
 
-  // 2. Settlements sin join
+  // 2. Settlements
   const { data: pagos } = await supabase
     .from('settlements')
     .select('id, amount, currency, date, created_at, from_user, to_user')
     .eq('group_id', groupId);
 
-  // 3. Recolectar todos los user_ids
+  // 3. Recolectar user_ids
   const userIds = new Set();
   (gastos || []).forEach(g => g.paid_by && userIds.add(g.paid_by));
   (pagos || []).forEach(p => {
@@ -25,7 +27,7 @@ export async function cargarHistorial(groupId) {
     if (p.to_user) userIds.add(p.to_user);
   });
 
-  // 4. Traer todos los perfiles de una vez
+  // 4. Traer perfiles
   const nombres = {};
   if (userIds.size > 0) {
     const { data: perfiles } = await supabase
@@ -41,7 +43,7 @@ export async function cargarHistorial(groupId) {
     eventos.push({
       tipo: 'gasto',
       fecha: g.created_at || g.date,
-      icono: 'ðŸ�•',
+      icono: '&#127829;',
       titulo: g.description,
       detalle: `${nombres[g.paid_by] || 'Alguien'} pago ${parseFloat(g.amount).toFixed(2)} ${g.currency}`,
       color: '#3182ce'
@@ -52,7 +54,7 @@ export async function cargarHistorial(groupId) {
     eventos.push({
       tipo: 'pago',
       fecha: p.created_at || p.date,
-      icono: 'ðŸ’¸',
+      icono: '&#128176;',
       titulo: 'Deuda saldada',
       detalle: `${nombres[p.from_user] || 'Alguien'} pago a ${nombres[p.to_user] || 'alguien'} ${parseFloat(p.amount).toFixed(2)} ${p.currency}`,
       color: '#38a169'
