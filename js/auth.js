@@ -1,5 +1,9 @@
 // js/auth.js
 import { supabase } from './supabase.js';
+import { initI18n, t } from './i18n.js';
+
+// Inicializar idioma antes que nada
+initI18n();
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -40,7 +44,7 @@ formLogin.addEventListener('submit', async (e) => {
   loginError.textContent = '';
   const btn = formLogin.querySelector('button[type="submit"]');
   btn.disabled = true;
-  btn.textContent = 'Entrando...';
+  btn.textContent = t('auth.loading.login');
 
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value;
@@ -50,7 +54,7 @@ formLogin.addEventListener('submit', async (e) => {
   if (error) {
     loginError.textContent = traducirError(error.message);
     btn.disabled = false;
-    btn.textContent = 'Entrar';
+    btn.textContent = t('index.login_button');
     return;
   }
 
@@ -65,7 +69,7 @@ formRegister.addEventListener('submit', async (e) => {
   registerError.textContent = '';
   const btn = formRegister.querySelector('button[type="submit"]');
   btn.disabled = true;
-  btn.textContent = 'Creando cuenta...';
+  btn.textContent = t('auth.loading.register');
 
   const fullName = document.getElementById('register-name').value.trim();
   const email = document.getElementById('register-email').value.trim();
@@ -82,7 +86,7 @@ formRegister.addEventListener('submit', async (e) => {
   if (error) {
     registerError.textContent = traducirError(error.message);
     btn.disabled = false;
-    btn.textContent = 'Crear cuenta';
+    btn.textContent = t('index.register_button');
     return;
   }
 
@@ -90,18 +94,20 @@ formRegister.addEventListener('submit', async (e) => {
 });
 
 // ==========================================
-// TRADUCCION DE ERRORES DE SUPABASE
+// TRADUCCION DE ERRORES
 // ==========================================
 function traducirError(msg) {
-  const errores = {
-    'Invalid login credentials': 'Email o contrasena incorrectos.',
-    'Email not confirmed': 'Debes confirmar tu email antes de entrar.',
-    'User already registered': 'Este email ya esta registrado.',
-    'Password should be at least 6 characters': 'La contrasena debe tener al menos 6 caracteres.',
-    'Unable to validate email address: invalid format': 'El formato del email no es valido.',
-    'Failed to fetch': 'No se pudo conectar con el servidor. Revisa tu conexion a internet o la URL de Supabase.'
+  const mapa = {
+    'Invalid login credentials': 'auth.error.invalid_credentials',
+    'Email not confirmed': 'auth.error.email_not_confirmed',
+    'User already registered': 'auth.error.user_exists',
+    'Password should be at least 6 characters': 'auth.error.password_short',
+    'Unable to validate email address: invalid format': 'auth.error.email_invalid',
+    'Failed to fetch': 'auth.error.fetch'
   };
-  return errores[msg] || msg;
+
+  const clave = mapa[msg];
+  return clave ? t(clave) : msg;
 }
 
 // ==========================================
