@@ -1,9 +1,7 @@
 // js/debtSolver.js
 import { supabase } from './supabase.js';
+import { t } from './i18n.js';
 
-// ==========================================
-// 1. CALCULAR BALANCE NETO DEL GRUPO
-// ==========================================
 export async function calcularBalance(groupId) {
   const balance = {};
 
@@ -15,7 +13,6 @@ export async function calcularBalance(groupId) {
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
-  // Solo gastos activos (no archivados)
   const { data: gastos } = await supabase
     .from('expenses')
     .select('id, amount, paid_by, currency, exchange_rate')
@@ -79,9 +76,6 @@ export async function calcularBalance(groupId) {
   return balance;
 }
 
-// ==========================================
-// 2. SIMPLIFICAR DEUDAS
-// ==========================================
 export function simplificarDeudas(balance) {
   const deudores = [];
   const acreedores = [];
@@ -118,13 +112,10 @@ export function simplificarDeudas(balance) {
   return transacciones;
 }
 
-// ==========================================
-// 3. RENDERIZAR BALANCE
-// ==========================================
 export async function mostrarBalance(groupId) {
   const container = document.getElementById('group-balance');
   if (!container) return;
-  container.innerHTML = '<p class="placeholder-text">Calculando...</p>';
+  container.innerHTML = `<p class="placeholder-text">${t('group.detail.balance_loading')}</p>`;
 
   const { data: grupoInfo } = await supabase
     .from('groups')
@@ -138,7 +129,7 @@ export async function mostrarBalance(groupId) {
   const userIds = Object.keys(balance);
 
   if (userIds.length === 0) {
-    container.innerHTML = '<p class="placeholder-text">Sin movimientos todavia.</p>';
+    container.innerHTML = `<p class="placeholder-text">${t('group.detail.balance_empty')}</p>`;
     return;
   }
 
@@ -148,27 +139,27 @@ export async function mostrarBalance(groupId) {
     .in('id', userIds);
 
   const nombres = {};
-  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Usuario');
+  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || t('debt.user'));
 
   const transacciones = simplificarDeudas(balance);
 
   if (transacciones.length === 0) {
-    container.innerHTML = '<p class="success-msg" style="text-align: center;">Todo saldado!</p>';
+    container.innerHTML = `<p class="success-msg" style="text-align: center;">${t('group.detail.balance_settled')}</p>`;
     return;
   }
 
-  container.innerHTML = transacciones.map(t => `
+  container.innerHTML = transacciones.map(tr => `
     <div class="debt-card">
-      <span class="debt-from">${nombres[t.from] || 'Alguien'}</span>
+      <span class="debt-from">${nombres[tr.from] || t('debt.someone')}</span>
       <span class="debt-arrow">-></span>
-      <span class="debt-to">${nombres[t.to] || 'Alguien'}</span>
-      <span class="debt-amount">${t.amount.toFixed(2)} ${monedaGrupo}</span>
+      <span class="debt-to">${nombres[tr.to] || t('debt.someone')}</span>
+      <span class="debt-amount">${tr.amount.toFixed(2)} ${monedaGrupo}</span>
       <button class="btn-small btn-settle"
               data-group="${groupId}"
-              data-from="${t.from}"
-              data-to="${t.to}"
-              data-amount="${t.amount}">
-        Saldar
+              data-from="${tr.from}"
+              data-to="${tr.to}"
+              data-amount="${tr.amount}">
+        ${t('debt.settle')}
       </button>
     </div>
   `).join('');
@@ -180,31 +171,32 @@ export async function mostrarBalance(groupId) {
       const toId = btn.dataset.to;
       const amount = parseFloat(btn.dataset.amount);
 
-      if (!confirm(`Confirmas que se pagaron ${amount.toFixed(2)} ${monedaGrupo}?`)) return;
+      const confirmMsg = t('debt.settle_confirm', {
+        monto: amount.toFixed(2),
+        moneda: monedaGrupo
+      });
+
+      if (!confirm(confirmMsg)) return;
 
       try {
         await saldarDeuda(gId, fromId, toId, amount, monedaGrupo);
         await mostrarBalance(gId);
 
-        // Refrescar historial solo si esta abierto
         const extras = document.getElementById('group-extras');
         if (extras && !extras.classList.contains('hidden')) {
           const { cargarHistorial } = await import('./history.js');
           await cargarHistorial(gId);
         }
       } catch (error) {
-        alert('Error al saldar: ' + error.message);
+        alert(t('debt.settle_error', { mensaje: error.message }));
       }
     });
   });
 }
 
-// ==========================================
-// 4. REGISTRAR UN PAGO
-// ==========================================
 async function saldarDeuda(groupId, fromUserId, toUserId, amount, monedaGrupo) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuario no autenticado');
+  if (!user) throw new Error('Not authenticated');
 
   const { error } = await supabase
     .from('settlements')
