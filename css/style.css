@@ -1622,3 +1622,24 @@ body {
   color: #b7791f;
   text-align: center;
 }
+/* ==========================================
+   37. BOTON CERRAR DETALLE DEL GRUPO
+   ========================================== */
+.btn-close-detail {
+  padding: 12px;
+  background: #2d3748;
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex: 1;
+}
+
+.btn-close-detail:hover {
+  background: #1a202c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(45, 55, 72, 0.35);
+}
