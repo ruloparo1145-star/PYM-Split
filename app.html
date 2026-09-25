@@ -352,8 +352,8 @@
         <h4>Balance</h4>
         <div id="group-balance"><p class="placeholder-text">Calculando balances...</p></div>
       </div>
-
-      <div class="expenses-section">
+     
+<div class="expenses-section">
         <div class="section-header">
           <h4>Gastos</h4>
           <button id="btn-add-expense-from-detail" class="btn-small">+ Anadir</button>
@@ -374,8 +374,22 @@
           </select>
         </div>
         <div id="group-expenses-list"><p class="placeholder-text">Cargando gastos...</p></div>
-      </div>
 
+        <!-- Aviso de gastos archivados -->
+        <div id="group-archived-badge" class="group-archived-badge hidden"></div>
+
+        <!-- Acordeon de gastos archivados -->
+        <div class="archived-toggle-wrap">
+          <button type="button" id="btn-toggle-archived-expenses" class="btn-toggle-archived-expenses">
+            &#128230; Ver gastos archivados
+          </button>
+        </div>
+
+        <div id="group-archived-expenses" class="group-archived-expenses hidden">
+          <p class="placeholder-text">Cargando...</p>
+        </div>
+      </div>
+  
       <div class="members-section">
         <div class="section-header">
           <h4>Miembros</h4>
