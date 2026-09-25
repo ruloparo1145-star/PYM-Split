@@ -962,13 +962,14 @@ export const TRADUCCIONES = {
     'manual.s12.li1': '<strong>Trip total:</strong> how much was spent in total.',
     'manual.s12.li2': '<strong>My share:</strong> how much corresponds to you based on each expense split.',
     'manual.s12.p2': 'If your preferred currency differs from the group, the conversion is also shown in parentheses.'
-        'manual.s13.title': '13. Calculate in today rate',
+    
+      'manual.s13.title': '13. Calculate in today rate',
     'manual.s13.p1': 'In the details of an <strong>archived group</strong>, tap <strong>"Calculate in today rate"</strong>. The app shows you:',
     'manual.s13.li1': 'The total spent with the <strong>rates at the time</strong> the expenses were added.',
     'manual.s13.li2': 'The total it would cost <strong>with today rates</strong>.',
     'manual.s13.li3': 'The <strong>difference</strong> (how much it went up or down).',
     'manual.s13.p2': 'It is informative only. <strong>It does not modify any data.</strong>',
-
+,
     'manual.s14.title': '14. Close the calculation of a trip',
     'manual.s14.p1': 'When the trip ends, tap <strong>"Close calculation"</strong>. The app saves:',
     'manual.s14.li1': 'The <strong>closing date</strong> (automatic, not editable).',
