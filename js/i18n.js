@@ -516,6 +516,23 @@ export const TRADUCCIONES = {
     'manual.s23.android_li1': 'Abri la app.',
     'manual.s23.android_li2': 'Menu (3 puntos) - "Instalar app".',
     'manual.s23.p1': 'Se va a ver como una app normal, con su icono.'
+    ,
+
+    'manual.faq.title': 'Preguntas frecuentes',
+    'manual.faq.q1': '<strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.',
+    'manual.faq.q2': '<strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.',
+    'manual.faq.q3': '<strong>Que pasa si la moneda no esta en la web?</strong><br>Podes cargar una cotizacion manual al crear el grupo. La app la usa como respaldo cuando las APIs fallan.',
+    'manual.faq.q4': '<strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo tocando el gasto en la lista.',
+    'manual.faq.q5': '<strong>Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexion para cargar y guardar datos en Supabase.',
+    'manual.faq.q6': '<strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mas.',
+    'manual.faq.q7': '<strong>Cuanta gente puede estar en un grupo?</strong><br>No hay limite. Podes agregar a todos los amigos que quieras.',
+    'manual.faq.q8': '<strong>Se puede usar la misma cuenta en varios dispositivos?</strong><br>Si. Inicias sesion con el mismo email y contrasena, y ves lo mismo en todos lados.',
+    'manual.faq.q9': '<strong>La app funciona en iPhone y Android?</strong><br>Si. Es una PWA (app web progresiva), funciona en cualquier celular o PC con navegador moderno.',
+
+    'manual.guestbook.title': 'Libro de visitas',
+    'manual.guestbook.p1': 'Dejanos tu comentario, sugerencia o saludo. Todos los usuarios pueden leer los comentarios.',
+
+    'manual.close': 'Cerrar'
   },
 
   en: {
