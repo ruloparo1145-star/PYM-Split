@@ -271,6 +271,9 @@ export async function cargarGrupos() {
 // ==========================================
 // 2. ARCHIVAR / DESARCHIVAR GRUPO
 // ==========================================
+// ==========================================
+// 2. ARCHIVAR / DESARCHIVAR GRUPO
+// ==========================================
 export async function archivarGrupo(groupId, archivar) {
   const { error } = await supabase
     .from('groups')
@@ -283,7 +286,6 @@ export async function archivarGrupo(groupId, archivar) {
     throw error;
   }
 }
-
 // ==========================================
 // 3. ELIMINAR GRUPO
 // ==========================================
