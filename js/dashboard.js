@@ -12,7 +12,6 @@ export async function cargarDashboard() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // Marcar el tab activo
   document.querySelectorAll('.dash-tab').forEach(tab => {
     if (tab.dataset.range === rangoActual) {
       tab.classList.add('active');
@@ -46,10 +45,12 @@ export async function cargarDashboard() {
 
     const rango = calcularRango(rangoActual);
 
+    // Solo gastos activos
     let query = supabase
       .from('expenses')
       .select('id, description, amount, currency, date, paid_by, group_id, category')
       .in('group_id', groupIds)
+      .eq('archived', false)
       .order('created_at', { ascending: false });
 
     if (rango.desde) {
@@ -68,11 +69,12 @@ export async function cargarDashboard() {
 
     const resultado = await sumarConvertido(itemsRango, monedaUsuario);
 
-    // Balance global
+    // Balance global (solo gastos activos)
     const { data: gastosTodos } = await supabase
       .from('expenses')
       .select('id, amount, currency, paid_by, group_id')
-      .in('group_id', groupIds);
+      .in('group_id', groupIds)
+      .eq('archived', false);
 
     const balance = {};
 
@@ -143,7 +145,6 @@ export async function cargarDashboard() {
     const teDeben = miBalance > 0 ? miBalance : 0;
     const debes = miBalance < 0 ? Math.abs(miBalance) : 0;
 
-    // Label dinamico
     const labelTotal = document.getElementById('stat-total-label');
     if (labelTotal) {
       labelTotal.textContent = rango.label;
@@ -293,7 +294,7 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
 }
 
 // ==========================================
-// HISTORICO POR MES (dentro del modal)
+// HISTORICO POR MES
 // ==========================================
 async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
   const tableContainer = document.getElementById('history-table');
@@ -305,10 +306,12 @@ async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
   const hace12 = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1);
   const desdeHistorico = hace12.toISOString().split('T')[0];
 
+  // Solo gastos activos
   const { data: gastos } = await supabase
     .from('expenses')
     .select('amount, currency, date, group_id')
     .in('group_id', groupIds)
+    .eq('archived', false)
     .gte('date', desdeHistorico);
 
   if (!gastos || gastos.length === 0) {
@@ -340,7 +343,6 @@ async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
     });
   }
 
-  // Grafico (solo si el canvas existe)
   if (chartHistoryInstance) chartHistoryInstance.destroy();
 
   if (canvas) {
@@ -385,7 +387,6 @@ async function cargarHistorico(groupIds, monedaPorGrupo, monedaUsuario) {
     });
   }
 
-  // Tabla
   const totalGeneral = resultados.reduce((sum, r) => sum + r.total, 0);
 
   tableContainer.innerHTML = `
