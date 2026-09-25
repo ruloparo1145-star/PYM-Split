@@ -1,43 +1,49 @@
 // js/profile.js
 import { supabase } from './supabase.js';
+import { t, setIdioma, getIdioma, aplicarTraducciones } from './i18n.js';
 
 // ==========================================
 // MONEDAS DISPONIBLES
 // ==========================================
 const MONEDAS = [
-  { code: 'ARS', label: 'Peso argentino' },
-  { code: 'BOB', label: 'Boliviano' },
-  { code: 'BRL', label: 'Real brasileno' },
-  { code: 'CAD', label: 'Dolar canadiense' },
-  { code: 'CLP', label: 'Peso chileno' },
-  { code: 'COP', label: 'Peso colombiano' },
-  { code: 'CRC', label: 'Colon costarricense' },
-  { code: 'CUP', label: 'Peso cubano' },
-  { code: 'DOP', label: 'Peso dominicano' },
-  { code: 'GTQ', label: 'Quetzal guatemalteco' },
-  { code: 'HNL', label: 'Lempira hondurena' },
-  { code: 'MXN', label: 'Peso mexicano' },
-  { code: 'NIO', label: 'Cordoba nicaraguense' },
-  { code: 'PAB', label: 'Balboa panameno' },
-  { code: 'PEN', label: 'Sol peruano' },
-  { code: 'PYG', label: 'Guarani paraguayo' },
-  { code: 'USD', label: 'Dolar estadounidense' },
-  { code: 'UYU', label: 'Peso uruguayo' },
-  { code: 'VES', label: 'Bolivar venezolano' },
-  { code: 'EUR', label: 'Euro' },
-  { code: 'GBP', label: 'Libra esterlina' },
-  { code: 'CHF', label: 'Franco suizo' },
-  { code: 'NOK', label: 'Corona noruega' },
-  { code: 'SEK', label: 'Corona sueca' },
-  { code: 'DKK', label: 'Corona danesa' },
-  { code: 'PLN', label: 'Zloty polaco' },
-  { code: 'CZK', label: 'Corona checa' },
-  { code: 'HUF', label: 'Forinto hungaro' },
-  { code: 'RON', label: 'Leu rumano' },
-  { code: 'BGN', label: 'Lev bulgaro' },
-  { code: 'TRY', label: 'Lira turca' },
-  { code: 'RUB', label: 'Rublo ruso' },
-  { code: 'UAH', label: 'Grivna ucraniana' }
+  { code: 'ARS', label_es: 'Peso argentino', label_en: 'Argentine Peso' },
+  { code: 'BOB', label_es: 'Boliviano', label_en: 'Bolivian Boliviano' },
+  { code: 'BRL', label_es: 'Real brasileno', label_en: 'Brazilian Real' },
+  { code: 'CAD', label_es: 'Dolar canadiense', label_en: 'Canadian Dollar' },
+  { code: 'CLP', label_es: 'Peso chileno', label_en: 'Chilean Peso' },
+  { code: 'COP', label_es: 'Peso colombiano', label_en: 'Colombian Peso' },
+  { code: 'CRC', label_es: 'Colon costarricense', label_en: 'Costa Rican Colon' },
+  { code: 'CUP', label_es: 'Peso cubano', label_en: 'Cuban Peso' },
+  { code: 'DOP', label_es: 'Peso dominicano', label_en: 'Dominican Peso' },
+  { code: 'GTQ', label_es: 'Quetzal guatemalteco', label_en: 'Guatemalan Quetzal' },
+  { code: 'HNL', label_es: 'Lempira hondurena', label_en: 'Honduran Lempira' },
+  { code: 'MXN', label_es: 'Peso mexicano', label_en: 'Mexican Peso' },
+  { code: 'NIO', label_es: 'Cordoba nicaraguense', label_en: 'Nicaraguan Cordoba' },
+  { code: 'PAB', label_es: 'Balboa panameno', label_en: 'Panamanian Balboa' },
+  { code: 'PEN', label_es: 'Sol peruano', label_en: 'Peruvian Sol' },
+  { code: 'PYG', label_es: 'Guarani paraguayo', label_en: 'Paraguayan Guarani' },
+  { code: 'USD', label_es: 'Dolar estadounidense', label_en: 'US Dollar' },
+  { code: 'UYU', label_es: 'Peso uruguayo', label_en: 'Uruguayan Peso' },
+  { code: 'VES', label_es: 'Bolivar venezolano', label_en: 'Venezuelan Bolivar' },
+  { code: 'EUR', label_es: 'Euro', label_en: 'Euro' },
+  { code: 'GBP', label_es: 'Libra esterlina', label_en: 'British Pound' },
+  { code: 'CHF', label_es: 'Franco suizo', label_en: 'Swiss Franc' },
+  { code: 'NOK', label_es: 'Corona noruega', label_en: 'Norwegian Krone' },
+  { code: 'SEK', label_es: 'Corona sueca', label_en: 'Swedish Krona' },
+  { code: 'DKK', label_es: 'Corona danesa', label_en: 'Danish Krone' },
+  { code: 'PLN', label_es: 'Zloty polaco', label_en: 'Polish Zloty' },
+  { code: 'CZK', label_es: 'Corona checa', label_en: 'Czech Koruna' },
+  { code: 'HUF', label_es: 'Forinto hungaro', label_en: 'Hungarian Forint' },
+  { code: 'RON', label_es: 'Leu rumano', label_en: 'Romanian Leu' },
+  { code: 'BGN', label_es: 'Lev bulgaro', label_en: 'Bulgarian Lev' },
+  { code: 'TRY', label_es: 'Lira turca', label_en: 'Turkish Lira' },
+  { code: 'RUB', label_es: 'Rublo ruso', label_en: 'Russian Ruble' },
+  { code: 'UAH', label_es: 'Grivna ucraniana', label_en: 'Ukrainian Hryvnia' }
+];
+
+const IDIOMAS = [
+  { code: 'es', key: 'lang.es' },
+  { code: 'en', key: 'lang.en' }
 ];
 
 // ==========================================
@@ -49,7 +55,7 @@ export async function cargarPerfil() {
 
   const { data: perfil, error } = await supabase
     .from('profiles')
-    .select('id, email, full_name, phone, preferred_currency')
+    .select('id, email, full_name, phone, preferred_currency, language')
     .eq('id', user.id)
     .single();
 
@@ -58,10 +64,22 @@ export async function cargarPerfil() {
     return;
   }
 
+  const idioma = getIdioma();
+  const labelKey = idioma === 'es' ? 'label_es' : 'label_en';
+
+  // Selector de moneda
   const selectMoneda = document.getElementById('profile-currency');
   selectMoneda.innerHTML = MONEDAS.map(m =>
-    `<option value="${m.code}" ${m.code === (perfil.preferred_currency || 'EUR') ? 'selected' : ''}>${m.code} - ${m.label}</option>`
+    `<option value="${m.code}" ${m.code === (perfil.preferred_currency || 'EUR') ? 'selected' : ''}>${m.code} - ${m[labelKey]}</option>`
   ).join('');
+
+  // Selector de idioma
+  const selectIdioma = document.getElementById('profile-language');
+  if (selectIdioma) {
+    selectIdioma.innerHTML = IDIOMAS.map(i =>
+      `<option value="${i.code}" ${i.code === (perfil.language || idioma) ? 'selected' : ''}>${t(i.key)}</option>`
+    ).join('');
+  }
 
   document.getElementById('profile-email').value = perfil.email || '';
   document.getElementById('profile-name').value = perfil.full_name || '';
@@ -76,26 +94,46 @@ export async function cargarPerfil() {
 // ==========================================
 export async function guardarPerfil() {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuario no autenticado');
+  if (!user) throw new Error('Not authenticated');
 
   const fullName = document.getElementById('profile-name').value.trim();
   const phone = document.getElementById('profile-phone').value.trim();
   const currency = document.getElementById('profile-currency').value;
+  const language = document.getElementById('profile-language')?.value || getIdioma();
 
   const { error } = await supabase
     .from('profiles')
     .update({
       full_name: fullName,
       phone: phone || null,
-      preferred_currency: currency
+      preferred_currency: currency,
+      language: language
     })
     .eq('id', user.id);
 
   if (error) throw error;
 
+  // Si cambio el idioma, aplicarlo ya
+  if (language !== getIdioma()) {
+    setIdioma(language);
+    aplicarTraducciones();
+
+    // Actualizar welcome message
+    const welcomeMessage = document.getElementById('welcome-message');
+    if (welcomeMessage && fullName) {
+      welcomeMessage.textContent = t('dashboard.welcome', { nombre: fullName });
+    }
+
+    // Recargar la app despues de un momento para que todo se retraduzca
+    setTimeout(() => {
+      window.location.reload();
+    }, 800);
+    return;
+  }
+
   const welcomeMessage = document.getElementById('welcome-message');
   if (welcomeMessage && fullName) {
-    welcomeMessage.textContent = 'Hola, ' + fullName;
+    welcomeMessage.textContent = t('dashboard.welcome', { nombre: fullName });
   }
 }
 
@@ -130,12 +168,12 @@ export function initProfileModal() {
 
     const btnSubmit = form.querySelector('button[type="submit"]');
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Guardando...';
+    btnSubmit.textContent = t('profile.saving');
 
     try {
       await guardarPerfil();
       successMsg.style.color = '#38a169';
-      successMsg.textContent = 'Perfil guardado correctamente.';
+      successMsg.textContent = t('profile.success');
 
       setTimeout(() => {
         modal.classList.add('hidden');
@@ -143,10 +181,10 @@ export function initProfileModal() {
       }, 1500);
 
     } catch (error) {
-      errorMsg.textContent = 'Error: ' + error.message;
+      errorMsg.textContent = t('profile.error', { mensaje: error.message });
     } finally {
       btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Guardar cambios';
+      btnSubmit.textContent = t('profile.save');
     }
   });
 }
