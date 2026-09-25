@@ -732,6 +732,90 @@ export const TRADUCCIONES = {
   }
 };
 
+,
+
+    // ---------- MANUAL ----------
+    'manual.title': 'Manual de uso',
+    'manual.what_is.title': 'Que es PYM Split?',
+    'manual.what_is.p1': 'PYM Split es una app para <strong>dividir gastos</strong> entre amigos, familia o companeros de piso. Cargas quien pago que, y la app calcula automaticamente <strong>quien le debe a quien</strong>. Ademas, <strong>simplifica las deudas</strong> para que se hagan la menor cantidad de transferencias posible.',
+
+    'manual.s1.title': '1. Crear una cuenta',
+    'manual.s1.p1': 'En la pantalla de inicio, toca <strong>"Crear cuenta"</strong>, completa tu nombre, email y una contrasena (minimo 6 caracteres). Listo, ya estas dentro.',
+    'manual.s1.p2': 'Despues de registrarte, revisa tu email: puede que tengas que confirmar la cuenta antes de poder entrar.',
+
+    'manual.s2.title': '2. Completar tu Perfil',
+    'manual.s2.p1': 'Toca el boton <strong>"Perfil"</strong> arriba a la derecha. Ahi podes:',
+    'manual.s2.li1': 'Editar tu <strong>nombre</strong>.',
+    'manual.s2.li2': 'Agregar tu <strong>telefono</strong> (opcional).',
+    'manual.s2.li3': 'Elegir tu <strong>moneda preferida</strong> (ej: MXN, EUR, ARS).',
+    'manual.s2.li4': 'Elegir el <strong>idioma</strong> de la app (Espanol o Ingles).',
+    'manual.s2.p2': 'La moneda preferida define en que moneda se muestran los totales del dashboard. Si viajas a otro pais, podes cambiarla cuando quieras.',
+
+    'manual.s3.title': '3. Agregar amigos',
+    'manual.s3.p1': 'Toca el boton <strong>"Amigos"</strong> arriba a la derecha.',
+    'manual.s3.li1': 'Escribi el <strong>email</strong> de tu amigo y toca <strong>"Enviar"</strong>.',
+    'manual.s3.li2': 'Tu amigo recibira una solicitud. Cuando la acepte, aparecera en tu lista.',
+    'manual.s3.li3': 'Tambien podes aceptar o rechazar solicitudes que te lleguen.',
+    'manual.s3.p2': '<strong>Ojo:</strong> tu amigo tiene que estar registrado con el mismo email que le pusiste.',
+
+    'manual.s4.title': '4. Crear un grupo',
+    'manual.s4.p1': 'En la pantalla principal, toca <strong>"+ Nuevo"</strong> arriba de "Mis Grupos".',
+    'manual.s4.li1': '<strong>Nombre:</strong> ej. "Viaje a Cancun", "Depto", "Cena del viernes".',
+    'manual.s4.li2': '<strong>Tipo:</strong> viaje, depto, salidas u otro.',
+    'manual.s4.li3': '<strong>Moneda:</strong> la moneda principal del grupo.',
+    'manual.s4.li4': '<strong>Fecha de inicio y fin (opcional):</strong> ideal para viajes.',
+    'manual.s4.li5': '<strong>Cotizacion manual (opcional):</strong> si usas una moneda que no esta en la web.',
+    'manual.s4.p2': 'Toca <strong>"Crear Grupo"</strong> y listo. Vos quedas como miembro automaticamente.',
+
+    'manual.s5.title': '5. Agregar amigos al grupo',
+    'manual.s5.p1': 'Abri el grupo (tocandolo en la lista) y toca <strong>"+ Anadir miembro"</strong>.',
+    'manual.s5.p2': 'Selecciona uno de tus amigos de la lista. Ya esta dentro del grupo.',
+
+    'manual.s6.title': '6. Cargar un gasto',
+    'manual.s6.p1': 'Toca el boton <strong>"+"</strong> (abajo a la derecha).',
+    'manual.s6.li1': '<strong>Que fue:</strong> ej. "Cena", "Taxi", "Supermercado".',
+    'manual.s6.li2': '<strong>Monto:</strong> cuanto costo.',
+    'manual.s6.li3': '<strong>Grupo:</strong> a que grupo pertenece.',
+    'manual.s6.li4': '<strong>Quien pago:</strong> quien puso la plata.',
+    'manual.s6.li5': '<strong>Moneda:</strong> en que moneda se pago.',
+    'manual.s6.li6': '<strong>Categoria:</strong> comida, transporte, alojamiento, etc.',
+    'manual.s6.li7': '<strong>Tipo de division:</strong> como se reparte.',
+    'manual.s6.p2': 'Despues de guardar, el dashboard principal se actualiza automaticamente.',
+
+    'manual.s7.title': '7. Tipos de division',
+    'manual.s7.li1': '<strong>Partes iguales:</strong> se divide el total en partes iguales entre los seleccionados.',
+    'manual.s7.li2': '<strong>Por porcentaje:</strong> a cada uno le asignas un %. Debe sumar 100%.',
+    'manual.s7.li3': '<strong>Montos exactos:</strong> a cada uno le pones el monto exacto. Debe sumar el total.',
+    'manual.s7.li4': '<strong>Por partes (shares):</strong> ej. uno tiene 2 partes y otro 1, entonces paga el doble.',
+    'manual.s7.p1': 'Podes <strong>tildar o destildar</strong> personas en la lista para incluir o excluir del reparto.',
+
+    'manual.s8.title': '8. Monedas multiples',
+    'manual.s8.p1': 'Cada grupo tiene su <strong>moneda principal</strong> (ej: EUR, MXN, ARS). Pero podes cargar gastos en <strong>cualquier otra moneda</strong>. La app convierte automaticamente a la moneda del grupo.',
+    'manual.s8.p2': '<strong>Ejemplo:</strong> un grupo en MXN, y un gasto pagado en EUR. La app guarda la tasa de cambio del momento y muestra el monto convertido a MXN.',
+    'manual.s8.p3': 'En tu <strong>Perfil</strong> elegis tu moneda preferida, que es la que se usa en el dashboard global.',
+
+    'manual.s9.title': '9. Cotizacion automatica y manual',
+    'manual.s9.p1': 'La app intenta obtener la cotizacion de <strong>2 fuentes automaticas</strong>:',
+    'manual.s9.li1': '<strong>Frankfurter</strong> (Banco Central Europeo): EUR, USD, MXN, BRL, CLP, etc.',
+    'manual.s9.li2': '<strong>DolarAPI</strong> (Argentina): ARS, y otras monedas latinoamericanas.',
+    'manual.s9.p2': 'Si la moneda no esta en ninguna de las 2, podes cargar una <strong>cotizacion manual</strong> al crear el grupo.',
+    'manual.s9.p3': '<strong>Importante:</strong> la cotizacion manual se guarda siempre contra USD para que sea universal para todos los miembros del grupo.',
+
+    'manual.s10.title': '10. Editar la cotizacion manual',
+    'manual.s10.p1': 'Si un grupo tiene cotizacion manual, en el detalle aparece el boton <strong>"Editar cotizacion"</strong>.',
+    'manual.s10.p2': 'Al tocarlo, podes cambiar el valor. El campo te muestra la cotizacion en <strong>tu moneda preferida</strong>, pero internamente se convierte a USD para guardarla.',
+
+    'manual.s11.title': '11. Ver el balance del grupo',
+    'manual.s11.p1': 'Al abrir un grupo, arriba de todo aparece el <strong>Balance</strong>. Ahi se muestra <strong>quien le debe a quien</strong> y cuanto, ya convertido a la moneda del grupo.',
+    'manual.s11.p2': 'La app <strong>simplifica las deudas</strong>: si A le debe a B y B le debe a C, se muestra directamente que A le pague a C. Asi se hacen menos transferencias.',
+
+    'manual.s12.title': '12. Total del viaje y Mi parte',
+    'manual.s12.p1': 'En el detalle del grupo, arriba del balance, se muestran 2 numeros:',
+    'manual.s12.li1': '<strong>Total del viaje:</strong> cuanto se gasto en total.',
+    'manual.s12.li2': '<strong>Mi parte:</strong> cuanto te corresponde a vos segun las divisiones de cada gasto.',
+    'manual.s12.p2': 'Si tu moneda preferida es distinta a la del grupo, se muestra tambien la conversion entre parentesis.'
+
+
 // ==========================================
 // ESTADO
 // ==========================================
