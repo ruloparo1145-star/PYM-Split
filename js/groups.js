@@ -484,7 +484,7 @@ async function abrirDetalleGrupo(groupId) {
   modal.dataset.manualRate = grupo?.manual_exchange_rate || '';
   modal.dataset.groupArchived = grupo?.archived ? 'true' : 'false';
 
-  const selectFiltro = document.getElementById('filter-category');
+const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
 
   const monedaGrupo = (grupo?.currency || 'EUR').toUpperCase();
