@@ -25,12 +25,11 @@
         <img src="icon-192.png" alt="PYM Split" class="header-logo">
         <h1>PYM Split</h1>
       </div>
-
       <div class="header-right">
-<button id="btn-manual" class="btn-small" data-i18n-title="header.manual" title="User manual">?</button>
-<button id="btn-friends" class="btn-small" data-i18n="header.friends">Friends</button>
-<button id="btn-profile" class="btn-small" data-i18n="header.profile">Profile</button>
-<button id="btn-logout" class="btn-logout" data-i18n="header.logout">Sign out</button>    
+        <button id="btn-manual" class="btn-small" data-i18n-title="header.manual" title="User manual">?</button>
+        <button id="btn-friends" class="btn-small" data-i18n="header.friends">Friends</button>
+        <button id="btn-profile" class="btn-small" data-i18n="header.profile">Profile</button>
+        <button id="btn-logout" class="btn-logout" data-i18n="header.logout">Sign out</button>
       </div>
     </header>
 
@@ -39,18 +38,18 @@
         <div class="welcome-header">
           <div>
             <h2 id="welcome-message">Hola, ...</h2>
-            <p>Bienvenido a tu gestor de gastos</p>
+            <p data-i18n="dashboard.welcome_sub">Welcome to your expense manager</p>
           </div>
-          <button id="btn-ver-historico" class="btn-ver-grafico" title="Ver historico">
-            Ver historico
+          <button id="btn-ver-historico" class="btn-ver-grafico" data-i18n-title="dashboard.see_history" title="See history" data-i18n="dashboard.see_history">
+            See history
           </button>
         </div>
       </div>
 
       <div class="dashboard-tabs">
-        <button class="dash-tab active" data-range="active">Grupos activos</button>
-        <button class="dash-tab" data-range="archived">Grupos archivados</button>
-        <button class="dash-tab" data-range="all">Todos</button>
+        <button class="dash-tab active" data-range="active" data-i18n="dashboard.tab.active">Active groups</button>
+        <button class="dash-tab" data-range="archived" data-i18n="dashboard.tab.archived">Archived groups</button>
+        <button class="dash-tab" data-range="all" data-i18n="dashboard.tab.all">All</button>
       </div>
 
       <div class="stats-grid">
@@ -73,29 +72,28 @@
           <h3 data-i18n="dashboard.recent">Recent activity</h3>
         </div>
         <div id="dashboard-recent">
-          <p class="placeholder-text">Cargando...</p>
+          <p class="placeholder-text" data-i18n="dashboard.loading">Loading...</p>
         </div>
       </div>
 
       <div class="section-card" id="groups-section">
         <div class="section-header">
-          <h3>Mis Grupos</h3>
+          <h3 data-i18n="dashboard.groups">My Groups</h3>
           <div style="display: flex; gap: 6px;">
-            <button id="btn-toggle-archived" class="btn-small" style="background: #fefcbf; color: #b7791f;">Archivados</button>
-            <button id="btn-new-group" class="btn-small">+ Nuevo</button>
+            <button id="btn-toggle-archived" class="btn-small" style="background: #fefcbf; color: #b7791f;" data-i18n="dashboard.btn_archived">Archived</button>
+            <button id="btn-new-group" class="btn-small" data-i18n="dashboard.btn_new">+ New</button>
           </div>
         </div>
         <div id="groups-list">
-          <p class="placeholder-text">Cargando grupos...</p>
+          <p class="placeholder-text" data-i18n="dashboard.loading">Loading...</p>
         </div>
       </div>
     </main>
 
-    <button id="fab-add" class="fab" title="Anadir Gasto">+</button>
+    <button id="fab-add" class="fab" title="Add Expense">+</button>
   </div>
 
   <!-- MODAL: Crear Grupo -->
-<!-- MODAL: Crear Grupo -->
   <div id="modal-group" class="modal-overlay hidden">
     <div class="modal-content">
       <h3 data-i18n="group.create.title">Create New Group</h3>
@@ -177,8 +175,8 @@
         </div>
       </form>
     </div>
-  </div> 
- 
+  </div>
+
   <!-- MODAL: Amigos -->
   <div id="modal-friends" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
@@ -210,102 +208,102 @@
   <!-- MODAL: Anadir Gasto -->
   <div id="modal-expense" class="modal-overlay hidden">
     <div class="modal-content">
-      <h3>Nuevo Gasto</h3>
+      <h3 data-i18n="expense.create.title">New Expense</h3>
       <form id="form-expense">
         <div class="form-group">
-          <label for="expense-description">Que fue?</label>
-          <input type="text" id="expense-description" placeholder="Ej: Cena en el restaurante" required>
+          <label for="expense-description" data-i18n="expense.create.description">What was it?</label>
+          <input type="text" id="expense-description" data-i18n-placeholder="expense.create.description_placeholder" placeholder="Ex: Dinner at the restaurant" required>
         </div>
         <div class="form-group">
-          <label for="expense-amount">Monto</label>
-          <input type="number" id="expense-amount" placeholder="0.00" step="0.01" min="0.01" required>
+          <label for="expense-amount" data-i18n="expense.create.amount">Amount</label>
+          <input type="number" id="expense-amount" data-i18n-placeholder="expense.create.amount_placeholder" placeholder="0.00" step="0.01" min="0.01" required>
         </div>
         <div class="form-group">
-          <label for="expense-group">Grupo</label>
-          <select id="expense-group" required><option value="">Seleccionar grupo...</option></select>
+          <label for="expense-group" data-i18n="expense.create.group">Group</label>
+          <select id="expense-group" required><option value="">Select group...</option></select>
         </div>
         <div class="form-group">
-          <label for="expense-paid-by">Quien pago?</label>
-          <select id="expense-paid-by" required><option value="">Seleccionar quien pago...</option></select>
+          <label for="expense-paid-by" data-i18n="expense.create.paid_by">Who paid?</label>
+          <select id="expense-paid-by" required><option value="">Select who paid...</option></select>
         </div>
         <div class="form-group">
-          <label for="expense-currency">Moneda</label>
+          <label for="expense-currency" data-i18n="expense.create.currency">Currency</label>
           <select id="expense-currency" required>
             <option value="EUR">EUR - Euro</option>
-            <option value="USD">USD - Dolar estadounidense</option>
-            <option value="ARS">ARS - Peso argentino</option>
-            <option value="MXN">MXN - Peso mexicano</option>
-            <option value="BRL">BRL - Real brasileno</option>
-            <option value="CLP">CLP - Peso chileno</option>
-            <option value="COP">COP - Peso colombiano</option>
-            <option value="PEN">PEN - Sol peruano</option>
-            <option value="UYU">UYU - Peso uruguayo</option>
-            <option value="BOB">BOB - Boliviano</option>
-            <option value="PYG">PYG - Guarani paraguayo</option>
-            <option value="VES">VES - Bolivar venezolano</option>
-            <option value="PAB">PAB - Balboa panameno</option>
-            <option value="CRC">CRC - Colon costarricense</option>
-            <option value="GTQ">GTQ - Quetzal guatemalteco</option>
-            <option value="DOP">DOP - Peso dominicano</option>
-            <option value="HNL">HNL - Lempira hondurena</option>
-            <option value="NIO">NIO - Cordoba nicaraguense</option>
-            <option value="CUP">CUP - Peso cubano</option>
-            <option value="CAD">CAD - Dolar canadiense</option>
-            <option value="GBP">GBP - Libra esterlina</option>
-            <option value="CHF">CHF - Franco suizo</option>
-            <option value="NOK">NOK - Corona noruega</option>
-            <option value="SEK">SEK - Corona sueca</option>
-            <option value="DKK">DKK - Corona danesa</option>
-            <option value="PLN">PLN - Zloty polaco</option>
-            <option value="CZK">CZK - Corona checa</option>
-            <option value="HUF">HUF - Forinto hungaro</option>
-            <option value="RON">RON - Leu rumano</option>
-            <option value="BGN">BGN - Lev bulgaro</option>
-            <option value="TRY">TRY - Lira turca</option>
-            <option value="RUB">RUB - Rublo ruso</option>
-            <option value="UAH">UAH - Grivna ucraniana</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="UYU">UYU - Uruguayan Peso</option>
+            <option value="BOB">BOB - Bolivian Boliviano</option>
+            <option value="PYG">PYG - Paraguayan Guarani</option>
+            <option value="VES">VES - Venezuelan Bolivar</option>
+            <option value="PAB">PAB - Panamanian Balboa</option>
+            <option value="CRC">CRC - Costa Rican Colon</option>
+            <option value="GTQ">GTQ - Guatemalan Quetzal</option>
+            <option value="DOP">DOP - Dominican Peso</option>
+            <option value="HNL">HNL - Honduran Lempira</option>
+            <option value="NIO">NIO - Nicaraguan Cordoba</option>
+            <option value="CUP">CUP - Cuban Peso</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="CHF">CHF - Swiss Franc</option>
+            <option value="NOK">NOK - Norwegian Krone</option>
+            <option value="SEK">SEK - Swedish Krona</option>
+            <option value="DKK">DKK - Danish Krone</option>
+            <option value="PLN">PLN - Polish Zloty</option>
+            <option value="CZK">CZK - Czech Koruna</option>
+            <option value="HUF">HUF - Hungarian Forint</option>
+            <option value="RON">RON - Romanian Leu</option>
+            <option value="BGN">BGN - Bulgarian Lev</option>
+            <option value="TRY">TRY - Turkish Lira</option>
+            <option value="RUB">RUB - Russian Ruble</option>
+            <option value="UAH">UAH - Ukrainian Hryvnia</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="expense-category">Categoria</label>
+          <label for="expense-category" data-i18n="expense.create.category">Category</label>
           <select id="expense-category">
-            <option value="otros">&#128176; Otros</option>
-            <option value="comida">&#127829; Comida</option>
-            <option value="transporte">&#128663; Transporte</option>
-            <option value="alojamiento">&#127968; Alojamiento</option>
-            <option value="supermercado">&#128722; Supermercado</option>
-            <option value="ocio">&#127881; Ocio</option>
-            <option value="salud">&#128138; Salud</option>
-            <option value="servicios">&#128241; Servicios</option>
-            <option value="compras">&#128717; Compras</option>
-            <option value="viajes">&#9992; Viajes</option>
+            <option value="otros" data-i18n="cat.otros">Other</option>
+            <option value="comida" data-i18n="cat.comida">Food</option>
+            <option value="transporte" data-i18n="cat.transporte">Transport</option>
+            <option value="alojamiento" data-i18n="cat.alojamiento">Accommodation</option>
+            <option value="supermercado" data-i18n="cat.supermercado">Groceries</option>
+            <option value="ocio" data-i18n="cat.ocio">Entertainment</option>
+            <option value="salud" data-i18n="cat.salud">Health</option>
+            <option value="servicios" data-i18n="cat.servicios">Services</option>
+            <option value="compras" data-i18n="cat.compras">Shopping</option>
+            <option value="viajes" data-i18n="cat.viajes">Travel</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="split-type">Tipo de division:</label>
+          <label for="split-type" data-i18n="expense.create.split_type">Split type:</label>
           <select id="split-type" required>
-            <option value="equal">Partes iguales</option>
-            <option value="percentage">Por porcentaje (%)</option>
-            <option value="exact">Montos exactos</option>
-            <option value="shares">Por partes (shares)</option>
+            <option value="equal" data-i18n="expense.create.split_equal">Equal parts</option>
+            <option value="percentage" data-i18n="expense.create.split_percentage">By percentage (%)</option>
+            <option value="exact" data-i18n="expense.create.split_exact">Exact amounts</option>
+            <option value="shares" data-i18n="expense.create.split_shares">By shares</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Dividir entre:</label>
+          <label data-i18n="expense.create.split_between">Split between:</label>
           <div id="expense-split-members" class="split-members-list">
-            <p class="placeholder-text" style="padding: 10px 0;">Selecciona un grupo para ver los miembros...</p>
+            <p class="placeholder-text" style="padding: 10px 0;" data-i18n="expense.create.split_no_group">Select a group to see members...</p>
           </div>
         </div>
         <div class="form-group">
-          <label>Resumen de la division:</label>
+          <label data-i18n="expense.create.split_summary">Split summary:</label>
           <div id="split-summary" style="padding: 10px; background: #f8fafc; border-radius: 10px; font-size: 0.85rem; color: #4a5568;">
-            <p>Selecciona un grupo y ajusta los valores.</p>
+            <p data-i18n="expense.create.split_no_group_hint">Select a group and adjust the values.</p>
           </div>
         </div>
         <p id="expense-error" class="error-msg"></p>
         <div class="modal-actions">
-          <button type="button" id="btn-cancel-expense" class="btn-secondary">Cancelar</button>
-          <button type="submit" class="btn-primary">Guardar Gasto</button>
+          <button type="button" id="btn-cancel-expense" class="btn-secondary" data-i18n="expense.create.cancel">Cancel</button>
+          <button type="submit" class="btn-primary" data-i18n="expense.create.submit">Save Expense</button>
         </div>
       </form>
     </div>
@@ -313,121 +311,122 @@
 
   <!-- MODAL: Detalle del Grupo -->
   <div id="modal-group-detail" class="modal-overlay hidden">
-    <div class="modal-content" style="max-width: 600px;">
-      <h3 id="detail-group-name">Detalle del Grupo</h3>
+    <div class="modal-content modal-detail-content">
+      <div class="modal-scrollable">
+        <h3 id="detail-group-name">Detalle del Grupo</h3>
 
-      <div id="group-info-badges" style="text-align: center; margin-bottom: 10px;"></div>
+        <div id="group-info-badges" style="text-align: center; margin-bottom: 10px;"></div>
 
-      <div id="group-action-buttons" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
-        <button id="btn-calculate-today" class="btn-calculate-today" style="display: none;">
-          Calcular en moneda de hoy
-        </button>
-        <button id="btn-edit-manual-rate" class="btn-edit-manual-rate" style="display: none;">
-          Editar cotizacion
-        </button>
-        <button id="btn-close-computo" class="btn-close-computo" style="display: none;">
-          Cerrar computo
-        </button>
-        <button id="btn-reopen-computo" class="btn-reopen-computo" style="display: none;">
-          Reabrir
-        </button>
-      </div>
-
-      <div id="manual-rate-editor" class="manual-rate-editor hidden">
-        <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 6px;">
-          Cotizacion manual
-        </label>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span id="edit-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 EUR =</span>
-          <input type="number" id="edit-manual-rate-input" placeholder="Ej: 1200" step="0.01" min="0" style="flex: 1; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
-          <span id="edit-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
-        </div>
-        <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
-          <button type="button" id="btn-cancel-manual-rate" class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Cancelar</button>
-          <button type="button" id="btn-save-manual-rate" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;">Guardar</button>
-        </div>
-        <p id="manual-rate-error" class="error-msg" style="text-align: left; font-size: 0.75rem; margin-top: 6px;"></p>
-      </div>
-
-      <div class="balance-section">
-        <h4>Balance</h4>
-        <div id="group-balance"><p class="placeholder-text">Calculando balances...</p></div>
-      </div>
-
-      <div class="expenses-section">
-        <div class="section-header">
-          <h4>Gastos</h4>
-          <button id="btn-add-expense-from-detail" class="btn-small">+ Anadir</button>
-        </div>
-        <div class="form-group" style="margin-bottom: 10px;">
-          <select id="filter-category">
-            <option value="">Todas las categorias</option>
-            <option value="comida">&#127829; Comida</option>
-            <option value="transporte">&#128663; Transporte</option>
-            <option value="alojamiento">&#127968; Alojamiento</option>
-            <option value="supermercado">&#128722; Supermercado</option>
-            <option value="ocio">&#127881; Ocio</option>
-            <option value="salud">&#128138; Salud</option>
-            <option value="servicios">&#128241; Servicios</option>
-            <option value="compras">&#128717; Compras</option>
-            <option value="viajes">&#9992; Viajes</option>
-            <option value="otros">&#128176; Otros</option>
-          </select>
-        </div>
-        <div id="group-expenses-list"><p class="placeholder-text">Cargando gastos...</p></div>
-
-        <!-- Aviso de gastos archivados -->
-        <div id="group-archived-badge" class="group-archived-badge hidden"></div>
-
-        <!-- Acordeon de gastos archivados -->
-        <div class="archived-toggle-wrap">
-          <button type="button" id="btn-toggle-archived-expenses" class="btn-toggle-archived-expenses">
-            &#128230; Ver gastos archivados
+        <div id="group-action-buttons" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+          <button id="btn-calculate-today" class="btn-calculate-today" style="display: none;">
+            Calculate in today's rate
+          </button>
+          <button id="btn-edit-manual-rate" class="btn-edit-manual-rate" style="display: none;">
+            Edit rate
+          </button>
+          <button id="btn-close-computo" class="btn-close-computo" style="display: none;">
+            Close calculation
+          </button>
+          <button id="btn-reopen-computo" class="btn-reopen-computo" style="display: none;">
+            Reopen
           </button>
         </div>
 
-        <div id="group-archived-expenses" class="group-archived-expenses hidden">
-          <p class="placeholder-text">Cargando...</p>
+        <div id="manual-rate-editor" class="manual-rate-editor hidden">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 6px;">
+            Manual rate
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="edit-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 EUR =</span>
+            <input type="number" id="edit-manual-rate-input" placeholder="Ex: 1200" step="0.01" min="0" style="flex: 1; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+            <span id="edit-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
+            <button type="button" id="btn-cancel-manual-rate" class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Cancel</button>
+            <button type="button" id="btn-save-manual-rate" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;">Save</button>
+          </div>
+          <p id="manual-rate-error" class="error-msg" style="text-align: left; font-size: 0.75rem; margin-top: 6px;"></p>
+        </div>
+
+        <div class="balance-section">
+          <h4>Balance</h4>
+          <div id="group-balance"><p class="placeholder-text">Calculando balances...</p></div>
+        </div>
+
+        <div class="expenses-section">
+          <div class="section-header">
+            <h4>Gastos</h4>
+            <button id="btn-add-expense-from-detail" class="btn-small">+ Anadir</button>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <select id="filter-category">
+              <option value="" data-i18n="category.filter.all">All categories</option>
+              <option value="comida" data-i18n="cat.comida">Food</option>
+              <option value="transporte" data-i18n="cat.transporte">Transport</option>
+              <option value="alojamiento" data-i18n="cat.alojamiento">Accommodation</option>
+              <option value="supermercado" data-i18n="cat.supermercado">Groceries</option>
+              <option value="ocio" data-i18n="cat.ocio">Entertainment</option>
+              <option value="salud" data-i18n="cat.salud">Health</option>
+              <option value="servicios" data-i18n="cat.servicios">Services</option>
+              <option value="compras" data-i18n="cat.compras">Shopping</option>
+              <option value="viajes" data-i18n="cat.viajes">Travel</option>
+              <option value="otros" data-i18n="cat.otros">Other</option>
+            </select>
+          </div>
+          <div id="group-expenses-list"><p class="placeholder-text">Cargando gastos...</p></div>
+
+          <div id="group-archived-badge" class="group-archived-badge hidden"></div>
+
+          <div class="archived-toggle-wrap">
+            <button type="button" id="btn-toggle-archived-expenses" class="btn-toggle-archived-expenses">
+              &#128230; View archived expenses
+            </button>
+          </div>
+
+          <div id="group-archived-expenses" class="group-archived-expenses hidden">
+            <p class="placeholder-text">Loading...</p>
+          </div>
+        </div>
+
+        <div class="members-section">
+          <div class="section-header">
+            <h4>Miembros</h4>
+            <button id="btn-add-member" class="btn-small">+ Anadir miembro</button>
+          </div>
+          <div id="group-members-list"><p class="placeholder-text">Cargando miembros...</p></div>
+        </div>
+
+        <div class="extras-toggle-wrap">
+          <button type="button" id="btn-toggle-extras" class="btn-toggle-extras">
+            &#128202; View charts, totals and history
+          </button>
+        </div>
+
+        <div id="group-extras" class="group-extras hidden">
+          <div class="charts-section">
+            <div class="section-header"><h4>Grafico por persona</h4></div>
+            <div class="chart-container"><canvas id="chart-by-person"></canvas></div>
+          </div>
+
+          <div class="charts-section">
+            <div class="section-header"><h4>Grafico por categoria</h4></div>
+            <div class="chart-container"><canvas id="chart-by-category"></canvas></div>
+          </div>
+
+          <div class="totals-section">
+            <div class="section-header"><h4>Totales por categoria</h4></div>
+            <div id="group-category-totals"><p class="placeholder-text">Sin datos.</p></div>
+          </div>
+
+          <div class="history-section">
+            <div class="section-header"><h4>Historial</h4></div>
+            <div id="group-history-list"><p class="placeholder-text">Cargando historial...</p></div>
+          </div>
         </div>
       </div>
 
-      <div class="members-section">
-        <div class="section-header">
-          <h4>Miembros</h4>
-          <button id="btn-add-member" class="btn-small">+ Anadir miembro</button>
-        </div>
-        <div id="group-members-list"><p class="placeholder-text">Cargando miembros...</p></div>
-      </div>
-
-      <div class="extras-toggle-wrap">
-        <button type="button" id="btn-toggle-extras" class="btn-toggle-extras">
-          &#128202; Ver graficos, totales e historial
-        </button>
-      </div>
-
-      <div id="group-extras" class="group-extras hidden">
-        <div class="charts-section">
-          <div class="section-header"><h4>Grafico por persona</h4></div>
-          <div class="chart-container"><canvas id="chart-by-person"></canvas></div>
-        </div>
-
-        <div class="charts-section">
-          <div class="section-header"><h4>Grafico por categoria</h4></div>
-          <div class="chart-container"><canvas id="chart-by-category"></canvas></div>
-        </div>
-
-        <div class="totals-section">
-          <div class="section-header"><h4>Totales por categoria</h4></div>
-          <div id="group-category-totals"><p class="placeholder-text">Sin datos.</p></div>
-        </div>
-
-        <div class="history-section">
-          <div class="section-header"><h4>Historial</h4></div>
-          <div id="group-history-list"><p class="placeholder-text">Cargando historial...</p></div>
-        </div>
-      </div>
-
-      <div class="modal-actions">
+      <!-- Boton Cerrar STICKY (siempre visible) -->
+      <div class="modal-actions modal-actions-sticky">
         <button type="button" id="btn-close-detail" class="btn-close-detail">Cerrar</button>
       </div>
     </div>
@@ -450,14 +449,14 @@
   <!-- MODAL: Detalle del Gasto -->
   <div id="modal-expense-detail" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
-      <h3>Detalle del Gasto</h3>
+      <h3 data-i18n="expense.detail.title">Expense Details</h3>
       <div id="expense-detail-content" style="padding: 15px 0;">
-        <p class="placeholder-text">Cargando...</p>
+        <p class="placeholder-text" data-i18n="expense.detail.loading">Loading...</p>
       </div>
       <div class="modal-actions">
-        <button type="button" id="btn-edit-expense" class="btn-secondary" style="background: #ebf4ff; color: #3182ce;">Editar</button>
-        <button type="button" id="btn-delete-expense" class="btn-secondary" style="background: #fefcbf; color: #b7791f;">Archivar</button>
-        <button type="button" id="btn-close-expense-detail" class="btn-secondary">Cerrar</button>
+        <button type="button" id="btn-edit-expense" class="btn-secondary" style="background: #ebf4ff; color: #3182ce;" data-i18n="expense.detail.edit">Edit</button>
+        <button type="button" id="btn-delete-expense" class="btn-secondary" style="background: #fefcbf; color: #b7791f;" data-i18n="expense.detail.archive">Archive</button>
+        <button type="button" id="btn-close-expense-detail" class="btn-secondary" data-i18n="expense.detail.close">Close</button>
       </div>
     </div>
   </div>
@@ -465,54 +464,54 @@
   <!-- MODAL: Editar Gasto -->
   <div id="modal-expense-edit" class="modal-overlay hidden">
     <div class="modal-content">
-      <h3>Editar Gasto</h3>
+      <h3 data-i18n="expense.edit.title">Edit Expense</h3>
       <form id="form-expense-edit">
         <input type="hidden" id="edit-expense-id">
         <div class="form-group">
-          <label for="edit-expense-description">Que fue?</label>
+          <label for="edit-expense-description" data-i18n="expense.edit.description">What was it?</label>
           <input type="text" id="edit-expense-description" required>
         </div>
         <div class="form-group">
-          <label for="edit-expense-amount">Monto</label>
+          <label for="edit-expense-amount" data-i18n="expense.edit.amount">Amount</label>
           <input type="number" id="edit-expense-amount" step="0.01" min="0.01" required>
         </div>
         <div class="form-group">
-          <label for="edit-expense-category">Categoria</label>
+          <label for="edit-expense-category" data-i18n="expense.edit.category">Category</label>
           <select id="edit-expense-category">
-            <option value="otros">&#128176; Otros</option>
-            <option value="comida">&#127829; Comida</option>
-            <option value="transporte">&#128663; Transporte</option>
-            <option value="alojamiento">&#127968; Alojamiento</option>
-            <option value="supermercado">&#128722; Supermercado</option>
-            <option value="ocio">&#127881; Ocio</option>
-            <option value="salud">&#128138; Salud</option>
-            <option value="servicios">&#128241; Servicios</option>
-            <option value="compras">&#128717; Compras</option>
-            <option value="viajes">&#9992; Viajes</option>
+            <option value="otros" data-i18n="cat.otros">Other</option>
+            <option value="comida" data-i18n="cat.comida">Food</option>
+            <option value="transporte" data-i18n="cat.transporte">Transport</option>
+            <option value="alojamiento" data-i18n="cat.alojamiento">Accommodation</option>
+            <option value="supermercado" data-i18n="cat.supermercado">Groceries</option>
+            <option value="ocio" data-i18n="cat.ocio">Entertainment</option>
+            <option value="salud" data-i18n="cat.salud">Health</option>
+            <option value="servicios" data-i18n="cat.servicios">Services</option>
+            <option value="compras" data-i18n="cat.compras">Shopping</option>
+            <option value="viajes" data-i18n="cat.viajes">Travel</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="edit-expense-currency">Moneda</label>
+          <label for="edit-expense-currency" data-i18n="expense.edit.currency">Currency</label>
           <select id="edit-expense-currency" required>
             <option value="EUR">EUR - Euro</option>
-            <option value="USD">USD - Dolar estadounidense</option>
-            <option value="ARS">ARS - Peso argentino</option>
-            <option value="MXN">MXN - Peso mexicano</option>
-            <option value="BRL">BRL - Real brasileno</option>
-            <option value="CLP">CLP - Peso chileno</option>
-            <option value="COP">COP - Peso colombiano</option>
-            <option value="PEN">PEN - Sol peruano</option>
-            <option value="UYU">UYU - Peso uruguayo</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="UYU">UYU - Uruguayan Peso</option>
           </select>
         </div>
         <div class="form-group">
-          <label for="edit-expense-paid-by">Quien pago?</label>
+          <label for="edit-expense-paid-by" data-i18n="expense.edit.paid_by">Who paid?</label>
           <select id="edit-expense-paid-by" required></select>
         </div>
         <p id="edit-expense-error" class="error-msg"></p>
         <div class="modal-actions">
-          <button type="button" id="btn-cancel-edit" class="btn-secondary">Cancelar</button>
-          <button type="submit" class="btn-primary">Guardar cambios</button>
+          <button type="button" id="btn-cancel-edit" class="btn-secondary" data-i18n="expense.edit.cancel">Cancel</button>
+          <button type="submit" class="btn-primary" data-i18n="expense.edit.submit">Save changes</button>
         </div>
       </form>
     </div>
@@ -542,6 +541,7 @@
             <li>Editar tu <strong>nombre</strong>.</li>
             <li>Agregar tu <strong>telefono</strong> (opcional).</li>
             <li>Elegir tu <strong>moneda preferida</strong> (ej: MXN, EUR, ARS).</li>
+            <li>Elegir el <strong>idioma</strong> de la app (Espanol o Ingles).</li>
           </ul>
           <p>La moneda preferida define en que moneda se muestran los totales del dashboard. Si viajas a otro pais, podes cambiarla cuando quieras.</p>
         </section>
@@ -564,16 +564,14 @@
             <li><strong>Nombre:</strong> ej. "Viaje a Cancun", "Depto", "Cena del viernes".</li>
             <li><strong>Tipo:</strong> viaje, depto, salidas u otro.</li>
             <li><strong>Moneda:</strong> la moneda principal del grupo.</li>
-            <li><strong>Fecha de inicio y fin (opcional):</strong> ideal para viajes. Si no las pones, el grupo se crea igual.</li>
-            <li><strong>Cotizacion manual (opcional):</strong> si usas una moneda que no esta en la web, podes cargar la cotizacion vos mismo. Se explica mas abajo.</li>
+            <li><strong>Fecha de inicio y fin (opcional):</strong> ideal para viajes.</li>
+            <li><strong>Cotizacion manual (opcional):</strong> si usas una moneda que no esta en la web.</li>
           </ul>
-          <p>Toca <strong>"Crear Grupo"</strong> y listo. Vos quedas como miembro automaticamente.</p>
         </section>
 
         <section class="manual-section">
           <h4>5. Agregar amigos al grupo</h4>
           <p>Abri el grupo (tocandolo en la lista) y toca <strong>"+ Anadir miembro"</strong>.</p>
-          <p>Selecciona uno de tus amigos de la lista. Ya esta dentro del grupo.</p>
         </section>
 
         <section class="manual-section">
@@ -584,190 +582,125 @@
             <li><strong>Monto:</strong> cuanto costo.</li>
             <li><strong>Grupo:</strong> a que grupo pertenece.</li>
             <li><strong>Quien pago:</strong> quien puso la plata.</li>
-            <li><strong>Moneda:</strong> en que moneda se pago (por defecto, la del grupo).</li>
+            <li><strong>Moneda:</strong> en que moneda se pago.</li>
             <li><strong>Categoria:</strong> comida, transporte, alojamiento, etc.</li>
-            <li><strong>Tipo de division:</strong> como se reparte (ver siguiente seccion).</li>
+            <li><strong>Tipo de division:</strong> como se reparte.</li>
           </ul>
-          <p>Despues de guardar, el dashboard principal se actualiza automaticamente.</p>
         </section>
 
         <section class="manual-section">
           <h4>7. Tipos de division</h4>
           <ul>
-            <li><strong>Partes iguales:</strong> se divide el total en partes iguales entre los seleccionados.</li>
-            <li><strong>Por porcentaje:</strong> a cada uno le asignas un %. Debe sumar 100%.</li>
-            <li><strong>Montos exactos:</strong> a cada uno le pones el monto exacto. Debe sumar el total.</li>
-            <li><strong>Por partes (shares):</strong> ej. uno tiene 2 partes y otro 1, entonces paga el doble.</li>
+            <li><strong>Partes iguales:</strong> se divide el total en partes iguales.</li>
+            <li><strong>Por porcentaje:</strong> a cada uno le asignas un %.</li>
+            <li><strong>Montos exactos:</strong> a cada uno le pones el monto exacto.</li>
+            <li><strong>Por partes (shares):</strong> uno tiene 2 partes y otro 1.</li>
           </ul>
-          <p>Podes <strong>tildar o destildar</strong> personas en la lista para incluir o excluir del reparto.</p>
         </section>
 
         <section class="manual-section">
           <h4>8. Monedas multiples</h4>
-          <p>Cada grupo tiene su <strong>moneda principal</strong> (ej: EUR, MXN, ARS). Pero podes cargar gastos en <strong>cualquier otra moneda</strong>. La app convierte automaticamente a la moneda del grupo.</p>
-          <p><strong>Ejemplo:</strong> un grupo en MXN, y un gasto pagado en EUR. La app guarda la tasa de cambio del momento y muestra el monto convertido a MXN.</p>
-          <p>En tu <strong>Perfil</strong> elegis tu moneda preferida, que es la que se usa en el dashboard global.</p>
+          <p>Cada grupo tiene su moneda principal. Pero podes cargar gastos en cualquier otra moneda.</p>
         </section>
 
         <section class="manual-section">
           <h4>9. Cotizacion automatica y manual</h4>
-          <p>La app intenta obtener la cotizacion de <strong>2 fuentes automaticas</strong>:</p>
-          <ul>
-            <li><strong>Frankfurter</strong> (Banco Central Europeo): EUR, USD, MXN, BRL, CLP, etc.</li>
-            <li><strong>DolarAPI</strong> (Argentina): ARS, y otras monedas latinoamericanas.</li>
-          </ul>
-          <p>Si la moneda no esta en ninguna de las 2, podes cargar una <strong>cotizacion manual</strong> al crear el grupo. Se usa como respaldo cuando las APIs fallan.</p>
-          <p><strong>Importante:</strong> la cotizacion manual se guarda siempre contra USD para que sea universal para todos los miembros del grupo.</p>
+          <p>La app intenta obtener la cotizacion de <strong>Frankfurter</strong> y <strong>DolarAPI</strong>. Si fallan, usa la cotizacion manual del grupo.</p>
         </section>
 
         <section class="manual-section">
           <h4>10. Editar la cotizacion manual</h4>
-          <p>Si un grupo tiene cotizacion manual, en el detalle aparece el boton <strong>"Editar cotizacion"</strong>.</p>
-          <p>Al tocarlo, podes cambiar el valor. El campo te muestra la cotizacion en <strong>tu moneda preferida</strong>, pero internamente se convierte a USD para guardarla.</p>
+          <p>Si un grupo tiene cotizacion manual, aparece el boton <strong>"Editar cotizacion"</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>11. Ver el balance del grupo</h4>
-          <p>Al abrir un grupo, arriba de todo aparece el <strong>Balance</strong>. Ahi se muestra <strong>quien le debe a quien</strong> y cuanto, ya convertido a la moneda del grupo.</p>
-          <p>La app <strong>simplifica las deudas</strong>: si A le debe a B y B le debe a C, se muestra directamente que A le pague a C. Asi se hacen menos transferencias.</p>
+          <p>Al abrir un grupo, arriba de todo aparece el <strong>Balance</strong> con quien le debe a quien.</p>
         </section>
 
         <section class="manual-section">
           <h4>12. Total del viaje y Mi parte</h4>
-          <p>En el detalle del grupo, arriba del balance, se muestran 2 numeros:</p>
-          <ul>
-            <li><strong>Total del viaje:</strong> cuanto se gasto en total (todos los gastos del grupo).</li>
-            <li><strong>Mi parte:</strong> cuanto te corresponde a vos segun las divisiones de cada gasto.</li>
-          </ul>
-          <p>Si tu moneda preferida es distinta a la del grupo, se muestra tambien la conversion entre parentesis.</p>
+          <p>Se muestran 2 numeros: <strong>Total del viaje</strong> y <strong>Mi parte</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>13. Calcular en moneda de hoy</h4>
-          <p>En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:</p>
-          <ul>
-            <li>El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.</li>
-            <li>El total que costaria <strong>con las tasas de hoy</strong>.</li>
-            <li>La <strong>diferencia</strong> (cuanto subio o bajo).</li>
-          </ul>
-          <p>Es solo informativo. <strong>No modifica ningun dato.</strong></p>
+          <p>En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. Es solo informativo.</p>
         </section>
 
         <section class="manual-section">
           <h4>14. Cerrar el computo de un viaje</h4>
-          <p>Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. La app guarda:</p>
-          <ul>
-            <li>La <strong>fecha de cierre</strong> (automatica, no editable).</li>
-            <li>El <strong>total final</strong> del viaje en la moneda del grupo.</li>
-          </ul>
-          <p>Si te equivocaste, podes tocar <strong>"Reabrir"</strong> para volver atras.</p>
-          <p>Esto te sirve para dejar "congelado" el resultado del viaje.</p>
+          <p>Cuando el viaje termina, toca <strong>"Cerrar computo"</strong>. Guarda la fecha y el total final.</p>
         </section>
 
         <section class="manual-section">
           <h4>15. Saldar deudas</h4>
-          <p>Cuando alguien ya pago por fuera (efectivo, transferencia, etc.), toca el boton <strong>"Saldar"</strong> al lado de la deuda.</p>
-          <p>Confirmas y el balance se actualiza automaticamente.</p>
-          <p><strong>Aclaracion:</strong> la app NO mueve plata. Solo registra que la deuda ya fue saldada.</p>
+          <p>Cuando alguien ya pago por fuera, toca <strong>"Saldar"</strong> al lado de la deuda.</p>
         </section>
 
         <section class="manual-section">
           <h4>16. Dashboard principal</h4>
-          <p>La pantalla principal muestra:</p>
           <ul>
-            <li><strong>Tabs de rango:</strong> Grupos activos / Grupos archivados / Todos.</li>
-            <li><strong>3 tarjetas:</strong> Total gastado, Te deben, Debes (en tu moneda preferida).</li>
+            <li><strong>Tabs:</strong> Grupos activos / Grupos archivados / Todos.</li>
+            <li><strong>3 tarjetas:</strong> Total gastado, Te deben, Debes.</li>
             <li><strong>Ultimos movimientos:</strong> los 5 gastos mas recientes.</li>
-            <li><strong>Boton "Ver historico":</strong> abre el grafico + tabla de los ultimos 12 meses.</li>
+            <li><strong>Boton "Ver historico":</strong> grafico + tabla de los ultimos 12 meses.</li>
           </ul>
-          <p>Todos los montos se convierten automaticamente a <strong>tu moneda preferida</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>17. Historico por mes</h4>
-          <p>Toca el boton <strong>"Ver historico"</strong> (arriba del dashboard, al lado de "Hola, tu nombre").</p>
-          <p>Se abre un modal con:</p>
-          <ul>
-            <li><strong>Grafico de barras:</strong> cuanto se gasto cada mes.</li>
-            <li><strong>Tabla:</strong> mes, cantidad de gastos y total.</li>
-            <li><strong>Fila final:</strong> total de los ultimos 12 meses.</li>
-          </ul>
+          <p>Toca <strong>"Ver historico"</strong> para ver el grafico de barras y la tabla.</p>
         </section>
 
         <section class="manual-section">
           <h4>18. Historial y graficos del grupo</h4>
-          <p>Dentro de cada grupo, mas abajo, vas a ver un boton <strong>"Ver graficos, totales e historial"</strong>. Al tocarlo se despliegan:</p>
-          <ul>
-            <li><strong>Graficos:</strong> cuanto pago cada persona y cuanto se gasto por categoria.</li>
-            <li><strong>Totales por categoria:</strong> desglose de cuanto se gasto en comida, transporte, etc.</li>
-            <li><strong>Historial:</strong> todos los movimientos (gastos + pagos) ordenados por fecha.</li>
-          </ul>
-          <p>Tocalo de nuevo para ocultarlos y ocupar menos espacio.</p>
+          <p>Dentro de cada grupo, toca <strong>"Ver graficos, totales e historial"</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>19. Filtros</h4>
-          <p>En la lista de gastos de un grupo, podes filtrar por <strong>categoria</strong> para ver solo lo que te interesa (comida, transporte, etc.).</p>
+          <p>En la lista de gastos, podes filtrar por <strong>categoria</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>20. Editar o archivar un gasto</h4>
-          <p>Toca cualquier gasto de la lista. Se abre el detalle, con 2 botones:</p>
           <ul>
             <li><strong>Editar:</strong> cambia descripcion, monto, categoria, moneda o quien pago.</li>
-            <li><strong>Archivar:</strong> el gasto deja de formar parte de los calculos del grupo. Se puede restaurar despues.</li>
+            <li><strong>Archivar:</strong> el gasto deja de formar parte de los calculos del grupo.</li>
           </ul>
-          <p><strong>Importante:</strong> para archivar un gasto, primero tenes que <strong>cerrar el computo</strong> del grupo.</p>
-          <p>Los gastos archivados aparecen en un boton especial <strong>"Ver gastos archivados"</strong>, desde donde podes restaurarlos.</p>
+          <p>Los gastos archivados aparecen en el boton <strong>"Ver gastos archivados"</strong> desde donde podes restaurarlos.</p>
         </section>
 
         <section class="manual-section">
           <h4>21. Archivar y restaurar grupos</h4>
-          <p>Cada grupo tiene un boton <strong>&#128230; (archivar)</strong>. Al tocarlo, el grupo desaparece de la lista principal pero <strong>NO se borra</strong>.</p>
-          <p>Para ver los grupos archivados, toca el boton <strong>"Archivados"</strong> arriba de la lista.</p>
-          <p>Ahi podes <strong>restaurarlos</strong> (boton &#8634;) o <strong>eliminarlos definitivamente</strong> (boton &#128465;).</p>
-          <p><strong>Ideal para:</strong> viajes terminados, departamentos que dejaste, etc.</p>
+          <p>Cada grupo tiene un boton <strong>&#128230;</strong> para archivarlo. <strong>Para archivar un grupo primero tenes que cerrar su computo.</strong></p>
+          <p>Para ver los grupos archivados, toca el boton <strong>"Archivados"</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>22. Eliminar un grupo</h4>
-          <p>Solo se puede eliminar un grupo <strong>despues de archivarlo</strong>. Esto evita borrar por error.</p>
-          <p><strong>Atencion:</strong> eliminar un grupo borra TODOS sus gastos, miembros, pagos e historial. <strong>No se puede deshacer.</strong></p>
-          <p>Si queres conservar el historico, usa <strong>archivar</strong> en vez de eliminar.</p>
+          <p>Solo se puede eliminar un grupo <strong>despues de archivarlo</strong>.</p>
         </section>
 
         <section class="manual-section">
           <h4>23. Instalar como app en el celular</h4>
-          <p><strong>iPhone (Safari):</strong></p>
-          <ul>
-            <li>Abri la app.</li>
-            <li>Toca el boton Compartir (flecha hacia arriba).</li>
-            <li>Elegi "Anadir a pantalla de inicio".</li>
-          </ul>
-          <p><strong>Android (Chrome):</strong></p>
-          <ul>
-            <li>Abri la app.</li>
-            <li>Menu (3 puntos) &rarr; "Instalar app".</li>
-          </ul>
-          <p>Se va a ver como una app normal, con su icono.</p>
+          <p><strong>iPhone (Safari):</strong> Compartir -> "Anadir a pantalla de inicio".</p>
+          <p><strong>Android (Chrome):</strong> Menu -> "Instalar app".</p>
         </section>
 
         <section class="manual-section">
           <h4>Preguntas frecuentes</h4>
-          <p><strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.</p>
-          <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.</p>
-          <p><strong>Que pasa si la moneda no esta en la web?</strong><br>Podes cargar una cotizacion manual al crear el grupo. La app la usa como respaldo cuando las APIs fallan.</p>
-          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo tocando el gasto en la lista.</p>
-          <p><strong>Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexion para cargar y guardar datos en Supabase.</p>
-          <p><strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mas.</p>
-          <p><strong>Cuanta gente puede estar en un grupo?</strong><br>No hay limite. Podes agregar a todos los amigos que quieras.</p>
-          <p><strong>Se puede usar la misma cuenta en varios dispositivos?</strong><br>Si. Inicias sesion con el mismo email y contrasena, y ves lo mismo en todos lados.</p>
-          <p><strong>La app funciona en iPhone y Android?</strong><br>Si. Es una PWA (app web progresiva), funciona en cualquier celular o PC con navegador moderno.</p>
+          <p><strong>La app mueve plata?</strong><br>No. Solo registra y calcula.</p>
+          <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda.</p>
+          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo.</p>
+          <p><strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo.</p>
+          <p><strong>Se puede usar en varios dispositivos?</strong><br>Si, con la misma cuenta.</p>
         </section>
 
         <section class="manual-section">
           <h4>Libro de visitas</h4>
-          <p>Dejanos tu comentario, sugerencia o saludo. Todos los usuarios pueden leer los comentarios.</p>
+          <p>Dejanos tu comentario, sugerencia o saludo.</p>
 
           <form id="form-guestbook" style="margin-top: 12px; margin-bottom: 20px;">
             <div class="form-group">
@@ -795,7 +728,6 @@
   </div>
 
   <!-- MODAL: Mi Perfil -->
-<!-- MODAL: Mi Perfil -->
   <div id="modal-profile" class="modal-overlay hidden">
     <div class="modal-content">
       <h3 data-i18n="profile.title">My Profile</h3>
@@ -840,6 +772,7 @@
       </form>
     </div>
   </div>
+
   <!-- MODAL: Historico (grafico + tabla) -->
   <div id="modal-chart-history" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 700px;">
