@@ -1,11 +1,8 @@
 // js/i18n.js
 
-// ==========================================
-// TRADUCCIONES
-// ==========================================
 export const TRADUCCIONES = {
   es: {
-    // ---------- INDEX (Login/Registro) ----------
+    // ---------- INDEX ----------
     'index.title': 'PYM Split - Iniciar sesion',
     'index.subtitle': 'Divide gastos, no amistades',
     'index.tab_login': 'Iniciar sesion',
@@ -19,7 +16,7 @@ export const TRADUCCIONES = {
     'index.register_name_placeholder': 'Juan Perez',
     'index.register_button': 'Crear cuenta',
 
-    // ---------- ERRORES AUTH ----------
+    // ---------- AUTH ERRORS ----------
     'auth.error.invalid_credentials': 'Email o contrasena incorrectos.',
     'auth.error.email_not_confirmed': 'Debes confirmar tu email antes de entrar.',
     'auth.error.user_exists': 'Este email ya esta registrado.',
@@ -149,6 +146,33 @@ export const TRADUCCIONES = {
     'group.detail.manual_rate_value': '1 {moneda} = {rate} USD',
     'group.detail.no_rate_badge': 'Sin cotizacion automatica',
     'group.detail.no_rate_hint': 'Carga una cotizacion manual',
+    'group.detail.balance': 'Balance',
+    'group.detail.balance_loading': 'Calculando balances...',
+    'group.detail.balance_empty': 'Sin movimientos todavia.',
+    'group.detail.balance_settled': 'Todo saldado!',
+    'group.detail.expenses_section': 'Gastos',
+    'group.detail.expenses_add': '+ Anadir',
+    'group.detail.expenses_loading': 'Cargando gastos...',
+    'group.detail.members_section': 'Miembros',
+    'group.detail.members_add': '+ Anadir miembro',
+    'group.detail.members_loading': 'Cargando miembros...',
+    'group.detail.members_error': 'Error al cargar miembros.',
+    'group.detail.charts_by_person': 'Grafico por persona',
+    'group.detail.charts_by_category': 'Grafico por categoria',
+    'group.detail.totals_by_category': 'Totales por categoria',
+    'group.detail.no_data': 'Sin datos.',
+    'group.detail.history_section': 'Historial',
+    'group.detail.history_loading': 'Cargando historial...',
+    'group.detail.no_activity': 'Sin actividad aun.',
+    'group.detail.close': 'Cerrar',
+    'group.detail.add_member_title': 'Anadir miembro al grupo',
+    'group.detail.add_member_hint': 'Selecciona un amigo para anadirlo a este grupo',
+    'group.detail.add_member_loading': 'Cargando amigos...',
+    'group.detail.add_member_no_friends': 'No tienes amigos aun. Anade uno desde el boton "Amigos".',
+    'group.detail.add_member_all_in': 'Todos tus amigos ya estan en este grupo.',
+    'group.detail.add_member_add': 'Anadir',
+    'group.detail.add_member_already': 'Ese amigo ya esta en el grupo.',
+    'group.detail.add_member_error': 'Error al anadir: {mensaje}',
 
     // ---------- GRUPOS: BOTONES DETALLE ----------
     'group.btn.calc_today': 'Calcular en moneda de hoy',
@@ -187,6 +211,18 @@ export const TRADUCCIONES = {
     'group.calc.empty': 'Este grupo no tiene gastos.',
     'group.calc.error': 'Error al calcular.',
     'group.calc.loading': 'Calculando...',
+
+    // ---------- BALANCE / DEUDAS ----------
+    'debt.settle': 'Saldar',
+    'debt.settle_confirm': 'Confirmas que se pagaron {monto} {moneda}?',
+    'debt.settle_error': 'Error al saldar: {mensaje}',
+    'debt.someone': 'Alguien',
+    'debt.user': 'Usuario',
+
+    // ---------- HISTORIAL ----------
+    'history.debt_settled': 'Deuda saldada',
+    'history.paid_by': '{nombre} pago {monto} {moneda}',
+    'history.paid_from_to': '{from} pago a {to} {monto} {moneda}',
 
     // ---------- GASTOS: MODAL CREAR ----------
     'expense.create.title': 'Nuevo Gasto',
@@ -280,7 +316,7 @@ export const TRADUCCIONES = {
   },
 
   en: {
-    // ---------- INDEX (Login/Register) ----------
+    // ---------- INDEX ----------
     'index.title': 'PYM Split - Sign in',
     'index.subtitle': 'Split expenses, not friendships',
     'index.tab_login': 'Sign in',
@@ -424,6 +460,33 @@ export const TRADUCCIONES = {
     'group.detail.manual_rate_value': '1 {moneda} = {rate} USD',
     'group.detail.no_rate_badge': 'No automatic rate',
     'group.detail.no_rate_hint': 'Set a manual rate',
+    'group.detail.balance': 'Balance',
+    'group.detail.balance_loading': 'Calculating balances...',
+    'group.detail.balance_empty': 'No activity yet.',
+    'group.detail.balance_settled': 'All settled!',
+    'group.detail.expenses_section': 'Expenses',
+    'group.detail.expenses_add': '+ Add',
+    'group.detail.expenses_loading': 'Loading expenses...',
+    'group.detail.members_section': 'Members',
+    'group.detail.members_add': '+ Add member',
+    'group.detail.members_loading': 'Loading members...',
+    'group.detail.members_error': 'Error loading members.',
+    'group.detail.charts_by_person': 'Chart by person',
+    'group.detail.charts_by_category': 'Chart by category',
+    'group.detail.totals_by_category': 'Totals by category',
+    'group.detail.no_data': 'No data.',
+    'group.detail.history_section': 'History',
+    'group.detail.history_loading': 'Loading history...',
+    'group.detail.no_activity': 'No activity yet.',
+    'group.detail.close': 'Close',
+    'group.detail.add_member_title': 'Add member to ' group',
+    'group.detail.add_member_hint': 'Select a friend to add to this group',
+    'group.detail.add_member_loading': 'Loading friends...',
+    'group.detail.add_member_no_friends': 'You have no friends yet. Add one from the "Friends" button.',
+    'group.detail.add_member_all_in': 'All your friends are already in this group.',
+    'group.detail.add_member_add': 'Add',
+    'group.detail.add_member_already': 'That friend is already in the group.',
+    'group.detail.add_member_error': 'Error adding: {mensaje}',
 
     // ---------- GROUPS: DETAIL BUTTONS ----------
     'group.btn.calc_today': 'Calculate in today\'s rate',
@@ -431,7 +494,7 @@ export const TRADUCCIONES = {
     'group.btn.close_computo': 'Close calculation',
     'group.btn.reopen_computo': 'Reopen',
     'group.btn.view_extras': 'View charts, totals and history',
-    'group.btn.hide_extras': 'Hide charts and history',
+    'group.btn.hide_extras':Hide charts and history',
     'group.btn.view_archived_expenses': 'View archived expenses',
     'group.btn.hide_archived_expenses': 'Hide archived expenses',
 
@@ -462,6 +525,18 @@ export const TRADUCCIONES = {
     'group.calc.empty': 'This group has no expenses.',
     'group.calc.error': 'Error calculating.',
     'group.calc.loading': 'Calculating...',
+
+    // ---------- BALANCE / DEBTS ----------
+    'debt.settle': 'Settle',
+    'debt.settle_confirm': 'Confirm that {monto} {moneda} was paid?',
+    'debt.settle_error': 'Error settling: {mensaje}',
+    'debt.someone': 'Someone',
+    'debt.user': 'User',
+
+    // ---------- HISTORY ----------
+    'history.debt_settled': 'Debt settled',
+    'history.paid_by': '{nombre} paid {monto} {moneda}',
+    'history.paid_from_to': '{from} paid {to} {monto} {moneda}',
 
     // ---------- EXPENSES: CREATE MODAL ----------
     'expense.create.title': 'New Expense',
@@ -560,9 +635,6 @@ export const TRADUCCIONES = {
 // ==========================================
 let idiomaActual = 'en';
 
-// ==========================================
-// SET / GET IDIOMA
-// ==========================================
 export function setIdioma(idioma) {
   idiomaActual = (idioma === 'es') ? 'es' : 'en';
   localStorage.setItem('pym_idioma', idiomaActual);
@@ -573,9 +645,6 @@ export function getIdioma() {
   return idiomaActual;
 }
 
-// ==========================================
-// TRADUCIR
-// ==========================================
 export function t(clave, params = {}) {
   const textos = TRADUCCIONES[idiomaActual] || TRADUCCIONES.en;
   let texto = textos[clave] || TRADUCCIONES.en[clave] || clave;
@@ -587,9 +656,6 @@ export function t(clave, params = {}) {
   return texto;
 }
 
-// ==========================================
-// APLICAR TRADUCCIONES AL DOM
-// ==========================================
 export function aplicarTraducciones(root = document) {
   root.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.dataset.i18n);
@@ -604,9 +670,6 @@ export function aplicarTraducciones(root = document) {
   });
 }
 
-// ==========================================
-// DETECTAR IDIOMA INICIAL
-// ==========================================
 export function detectarIdioma() {
   const guardado = localStorage.getItem('pym_idioma');
   if (guardado) return guardado;
@@ -615,9 +678,6 @@ export function detectarIdioma() {
   return navegador.startsWith('es') ? 'es' : 'en';
 }
 
-// ==========================================
-// INICIALIZAR (llamar al arrancar la app)
-// ==========================================
 export function initI18n() {
   const idioma = detectarIdioma();
   setIdioma(idioma);
@@ -625,16 +685,10 @@ export function initI18n() {
   return idioma;
 }
 
-// ==========================================
-// TRADUCIR CATEGORIAS
-// ==========================================
 export function tCategoria(cat) {
   return t(`cat.${cat}`) || cat;
 }
 
-// ==========================================
-// TRADUCIR MESES
-// ==========================================
 export function tMes(mesNumero) {
   const meses = {
     es: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
