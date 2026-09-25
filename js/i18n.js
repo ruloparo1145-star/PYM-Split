@@ -962,6 +962,76 @@ export const TRADUCCIONES = {
     'manual.s12.li1': '<strong>Trip total:</strong> how much was spent in total.',
     'manual.s12.li2': '<strong>My share:</strong> how much corresponds to you based on each expense split.',
     'manual.s12.p2': 'If your preferred currency differs from the group, the conversion is also shown in parentheses.'
+        'manual.s13.title': '13. Calculate in today rate',
+    'manual.s13.p1': 'In the details of an <strong>archived group</strong>, tap <strong>"Calculate in today rate"</strong>. The app shows you:',
+    'manual.s13.li1': 'The total spent with the <strong>rates at the time</strong> the expenses were added.',
+    'manual.s13.li2': 'The total it would cost <strong>with today rates</strong>.',
+    'manual.s13.li3': 'The <strong>difference</strong> (how much it went up or down).',
+    'manual.s13.p2': 'It is informative only. <strong>It does not modify any data.</strong>',
+
+    'manual.s14.title': '14. Close the calculation of a trip',
+    'manual.s14.p1': 'When the trip ends, tap <strong>"Close calculation"</strong>. The app saves:',
+    'manual.s14.li1': 'The <strong>closing date</strong> (automatic, not editable).',
+    'manual.s14.li2': 'The <strong>final total</strong> of the trip in the group currency.',
+    'manual.s14.p2': 'If you made a mistake, you can tap <strong>"Reopen"</strong> to go back.',
+    'manual.s14.p3': 'This is useful to leave the trip result "frozen".',
+
+    'manual.s15.title': '15. Settle debts',
+    'manual.s15.p1': 'When someone has already paid outside (cash, transfer, etc.), tap the <strong>"Settle"</strong> button next to the debt.',
+    'manual.s15.p2': 'You confirm and the balance updates automatically.',
+    'manual.s15.p3': '<strong>Note:</strong> the app does NOT move money. It only records that the debt has been settled.',
+
+    'manual.s16.title': '16. Main dashboard',
+    'manual.s16.p1': 'The home screen shows:',
+    'manual.s16.li1': '<strong>Range tabs:</strong> Active groups / Archived groups / All.',
+    'manual.s16.li2': '<strong>3 cards:</strong> Total spent, They owe you, You owe (in your preferred currency).',
+    'manual.s16.li3': '<strong>Recent activity:</strong> the 5 most recent expenses.',
+    'manual.s16.li4': '<strong>"See history" button:</strong> opens the chart + table of the last 12 months.',
+    'manual.s16.p2': 'All amounts are automatically converted to <strong>your preferred currency</strong>.',
+
+    'manual.s17.title': '17. Monthly history',
+    'manual.s17.p1': 'Tap the <strong>"See history"</strong> button (above the dashboard, next to "Hi, your name").',
+    'manual.s17.p2': 'A modal opens with:',
+    'manual.s17.li1': '<strong>Bar chart:</strong> how much was spent each month.',
+    'manual.s17.li2': '<strong>Table:</strong> month, number of expenses and total.',
+    'manual.s17.li3': '<strong>Final row:</strong> total of the last 12 months.',
+
+    'manual.s18.title': '18. Group history and charts',
+    'manual.s18.p1': 'Inside each group, further down, you will see a <strong>"View charts, totals and history"</strong> button. When you tap it, the following unfolds:',
+    'manual.s18.li1': '<strong>Charts:</strong> how much each person paid and how much was spent per category.',
+    'manual.s18.li2': '<strong>Totals by category:</strong> breakdown of how much was spent on food, transport, etc.',
+    'manual.s18.li3': '<strong>History:</strong> all movements (expenses + payments) sorted by date.',
+    'manual.s18.p2': 'Tap it again to hide them and take up less space.',
+
+    'manual.s19.title': '19. Filters',
+    'manual.s19.p1': 'In the expense list of a group, you can filter by <strong>category</strong> to see only what interests you (food, transport, etc.).',
+
+    'manual.s20.title': '20. Edit or archive an expense',
+    'manual.s20.p1': 'Tap any expense in the list. The details open, with 2 buttons:',
+    'manual.s20.li1': '<strong>Edit:</strong> change description, amount, category, currency or who paid.',
+    'manual.s20.li2': '<strong>Archive:</strong> the expense stops being part of the group calculations. It can be restored later.',
+    'manual.s20.p2': 'Archived expenses appear in a special <strong>"View archived expenses"</strong> button, from where you can restore them.',
+
+    'manual.s21.title': '21. Archive and restore groups',
+    'manual.s21.p1': 'Each group has a <strong>&#128230; (archive)</strong> button. When you tap it, the group disappears from the main list but is <strong>NOT deleted</strong>.',
+    'manual.s21.p2': '<strong>Important:</strong> to archive a group you must first <strong>close its calculation</strong>.',
+    'manual.s21.p3': 'To see archived groups, tap the <strong>"Archived"</strong> button above the list.',
+    'manual.s21.p4': 'There you can <strong>restore</strong> them (&#8634; button) or <strong>permanently delete</strong> them (&#128465; button).',
+
+    'manual.s22.title': '22. Delete a group',
+    'manual.s22.p1': 'A group can only be deleted <strong>after archiving it</strong>. This prevents accidental deletion.',
+    'manual.s22.p2': '<strong>Warning:</strong> deleting a group removes ALL its expenses, members, payments and history. <strong>It cannot be undone.</strong>',
+    'manual.s22.p3': 'If you want to keep the history, use <strong>archive</strong> instead of delete.',
+
+    'manual.s23.title': '23. Install as an app on your phone',
+    'manual.s23.ios_label': 'iPhone (Safari):',
+    'manual.s23.ios_li1': 'Open the app.',
+    'manual.s23.ios_li2': 'Tap the Share button (arrow up).',
+    'manual.s23.ios_li3': 'Choose "Add to Home Screen".',
+    'manual.s23.android_label': 'Android (Chrome):',
+    'manual.s23.android_li1': 'Open the app.',
+    'manual.s23.android_li2': 'Menu (3 dots) - "Install app".',
+    'manual.s23.p1': 'It will look like a normal app, with its icon.'
   }
 };
 
