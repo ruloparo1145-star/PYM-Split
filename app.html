@@ -639,9 +639,9 @@
             <li data-i18n-html="manual.s12.li2">My share: how much corresponds to you...</li>
           </ul>
           <p data-i18n-html="manual.s12.p2">If your preferred currency differs from the group...</p>
-        </section>  
-        
-<section class="manual-section">
+        </section>
+
+        <section class="manual-section">
           <h4 data-i18n="manual.s13.title">13. Calculate in today rate</h4>
           <p data-i18n-html="manual.s13.p1">In the details of an archived group...</p>
           <ul>
@@ -749,45 +749,45 @@
           </ul>
           <p data-i18n-html="manual.s23.p1">It will look like a normal app, with its icon.</p>
         </section>
-        
+
         <section class="manual-section">
-          <h4>Preguntas frecuentes</h4>
-          <p><strong>La app mueve plata?</strong><br>No. Solo registra los gastos y calcula quien debe a quien. Las transferencias las haces por fuera.</p>
-          <p><strong>Puedo usar varias monedas?</strong><br>Si. Cada grupo tiene su moneda, y podes cargar gastos en cualquier otra. La app convierte automaticamente.</p>
-          <p><strong>Que pasa si la moneda no esta en la web?</strong><br>Podes cargar una cotizacion manual al crear el grupo. La app la usa como respaldo cuando las APIs fallan.</p>
-          <p><strong>Que pasa si me equivoco al cargar un gasto?</strong><br>Podes editarlo o archivarlo tocando el gasto en la lista.</p>
-          <p><strong>Puedo usar la app sin internet?</strong><br>Parcialmente. La app queda instalada, pero necesita conexion para cargar y guardar datos en Supabase.</p>
-          <p><strong>Quien puede ver mis gastos?</strong><br>Solo los miembros de cada grupo. Nadie mas.</p>
-          <p><strong>Cuanta gente puede estar en un grupo?</strong><br>No hay limite. Podes agregar a todos los amigos que quieras.</p>
-          <p><strong>Se puede usar la misma cuenta en varios dispositivos?</strong><br>Si. Inicias sesion con el mismo email y contrasena, y ves lo mismo en todos lados.</p>
-          <p><strong>La app funciona en iPhone y Android?</strong><br>Si. Es una PWA (app web progresiva), funciona en cualquier celular o PC con navegador moderno.</p>
+          <h4 data-i18n="manual.faq.title">Frequently asked questions</h4>
+          <p data-i18n-html="manual.faq.q1">Does the app move money?...</p>
+          <p data-i18n-html="manual.faq.q2">Can I use multiple currencies?...</p>
+          <p data-i18n-html="manual.faq.q3">What if the currency is not available online?...</p>
+          <p data-i18n-html="manual.faq.q4">What if I make a mistake when adding an expense?...</p>
+          <p data-i18n-html="manual.faq.q5">Can I use the app without internet?...</p>
+          <p data-i18n-html="manual.faq.q6">Who can see my expenses?...</p>
+          <p data-i18n-html="manual.faq.q7">How many people can be in a group?...</p>
+          <p data-i18n-html="manual.faq.q8">Can I use the same account on multiple devices?...</p>
+          <p data-i18n-html="manual.faq.q9">Does the app work on iPhone and Android?...</p>
         </section>
 
         <section class="manual-section">
-          <h4>Libro de visitas</h4>
-          <p>Dejanos tu comentario, sugerencia o saludo. Todos los usuarios pueden leer los comentarios.</p>
+          <h4 data-i18n="manual.guestbook.title">Guestbook</h4>
+          <p data-i18n-html="manual.guestbook.p1">Leave us your comment, suggestion or greeting...</p>
 
           <form id="form-guestbook" style="margin-top: 12px; margin-bottom: 20px;">
             <div class="form-group">
-              <textarea id="guestbook-message" placeholder="Escribi tu comentario..." rows="3" maxlength="500" required style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; outline: none;"></textarea>
-              <small style="color: #a0aec0; font-size: 0.75rem; text-align: right; display: block; margin-top: 4px;">
-                Maximo 500 caracteres
+              <textarea id="guestbook-message" data-i18n-placeholder="guestbook.placeholder" placeholder="Write your comment..." rows="3" maxlength="500" required style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; outline: none;"></textarea>
+              <small style="color: #a0aec0; font-size: 0.75rem; text-align: right; display: block; margin-top: 4px;" data-i18n="guestbook.max_chars">
+                Maximum 500 characters
               </small>
             </div>
             <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
-              <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px;">Publicar</button>
+              <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px;" data-i18n="guestbook.publish">Publish</button>
             </div>
             <p id="guestbook-error" class="error-msg" style="text-align: left;"></p>
           </form>
 
           <div id="guestbook-list" style="margin-top: 15px;">
-            <p class="placeholder-text">Cargando comentarios...</p>
+            <p class="placeholder-text" data-i18n="guestbook.loading">Loading comments...</p>
           </div>
         </section>
 
       </div>
       <div class="modal-actions">
-        <button type="button" id="btn-close-manual" class="btn-secondary">Cerrar</button>
+        <button type="button" id="btn-close-manual" class="btn-secondary" data-i18n="manual.close">Close</button>
       </div>
     </div>
   </div>
@@ -866,14 +866,14 @@
   <!-- MODAL: Simulador "Calcular hoy" -->
   <div id="modal-calculator" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
-      <h3>Calculadora de hoy</h3>
+      <h3 data-i18n="group.calc.modal_title">Today calculator</h3>
 
       <div id="calculator-body" style="padding: 15px 0;">
-        <p class="placeholder-text">Calculando...</p>
+        <p class="placeholder-text" data-i18n="group.calc.loading">Calculating...</p>
       </div>
 
       <div class="modal-actions">
-        <button type="button" id="btn-close-calculator" class="btn-secondary">Cerrar</button>
+        <button type="button" id="btn-close-calculator" class="btn-secondary" data-i18n="group.calc.modal_close">Close</button>
       </div>
     </div>
   </div>
