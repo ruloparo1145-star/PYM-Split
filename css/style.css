@@ -1505,3 +1505,115 @@ body {
   color: #4a5568;
   font-weight: 600;
 }
+/* ==========================================
+   36. GASTOS ARCHIVADOS
+   ========================================== */
+.group-archived-badge {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  color: #b7791f;
+  text-align: center;
+  font-weight: 600;
+}
+
+.group-archived-badge-text {
+  display: inline-block;
+}
+
+.archived-toggle-wrap {
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+.btn-toggle-archived-expenses {
+  background: #fffaf0;
+  color: #b7791f;
+  border: 2px solid #fbd38d;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.btn-toggle-archived-expenses:hover {
+  background: #fefcbf;
+  border-color: #f6e05e;
+}
+
+.btn-toggle-archived-expenses.abierto {
+  background: #b7791f;
+  color: #ffffff;
+  border-color: #b7791f;
+}
+
+.group-archived-expenses {
+  margin-top: 10px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.expense-card-archived {
+  background: #fafafa;
+  border: 1px dashed #cbd5e0;
+  opacity: 0.85;
+}
+
+.expense-card-archived:hover {
+  border-color: #a0aec0;
+  background: #f0f0f0;
+}
+
+.expense-icon-archived {
+  background: #fefcbf;
+  border-color: #f6e05e;
+  font-size: 1.1rem;
+}
+
+.expense-amount-archived {
+  color: #718096 !important;
+}
+
+.expense-archived-date {
+  display: block;
+  font-size: 0.7rem;
+  color: #a0aec0;
+  font-style: italic;
+  margin-top: 2px;
+}
+
+.btn-restore-expense {
+  background: #c6f6d5;
+  color: #38a169;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.btn-restore-expense:hover {
+  background: #38a169;
+  color: white;
+}
+
+.expense-archived-notice {
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: #fffaf0;
+  border: 1px solid #fbd38d;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  color: #b7791f;
+  text-align: center;
+}
