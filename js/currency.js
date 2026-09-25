@@ -219,6 +219,8 @@ export async function sumarConvertido(items, monedaDestino) {
   const monedasOrigen = new Set();
   let montoNoConvertido = 0;
 
+  // 1. Agrupar por moneda origen
+  const porMoneda = {};
   for (const item of items) {
     const monedaOrigen = (item.moneda || 'EUR').toUpperCase();
     const monto = parseFloat(item.monto) || 0;
@@ -229,15 +231,27 @@ export async function sumarConvertido(items, monedaDestino) {
     }
 
     monedasOrigen.add(monedaOrigen);
+    if (!porMoneda[monedaOrigen]) porMoneda[monedaOrigen] = 0;
+    porMoneda[monedaOrigen] += monto;
+  }
 
-    const tasa = await obtenerTasa(monedaOrigen, monedaDestino);
+  // 2. Resolver todas las tasas en paralelo
+  const monedas = Object.keys(porMoneda);
+  const tasasPromises = monedas.map(m => obtenerTasa(m, monedaDestino));
+  const tasas = await Promise.all(tasasPromises);
+
+  // 3. Aplicar las tasas
+  monedas.forEach((moneda, i) => {
+    const tasa = tasas[i];
+    const monto = porMoneda[moneda];
+
     if (tasa === null) {
-      noConvertidas.add(monedaOrigen);
+      noConvertidas.add(moneda);
       montoNoConvertido += monto;
     } else {
       total += monto * tasa;
     }
-  }
+  });
 
   return {
     total,
