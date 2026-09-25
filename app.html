@@ -313,7 +313,7 @@
   <div id="modal-group-detail" class="modal-overlay hidden">
     <div class="modal-content modal-detail-content">
       <div class="modal-scrollable">
-        <h3 id="detail-group-name">Detalle del Grupo</h3>
+        <h3 id="detail-group-name" data-i18n="group.detail.title">Group Details</h3>
 
         <div id="group-info-badges" style="text-align: center; margin-bottom: 10px;"></div>
 
@@ -333,7 +333,7 @@
         </div>
 
         <div id="manual-rate-editor" class="manual-rate-editor hidden">
-          <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 6px;">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 6px;" data-i18n="group.rate.label">
             Manual rate
           </label>
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -342,21 +342,21 @@
             <span id="edit-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
           </div>
           <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
-            <button type="button" id="btn-cancel-manual-rate" class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;">Cancel</button>
-            <button type="button" id="btn-save-manual-rate" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;">Save</button>
+            <button type="button" id="btn-cancel-manual-rate" class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" data-i18n="group.rate.cancel">Cancel</button>
+            <button type="button" id="btn-save-manual-rate" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;" data-i18n="group.rate.save">Save</button>
           </div>
           <p id="manual-rate-error" class="error-msg" style="text-align: left; font-size: 0.75rem; margin-top: 6px;"></p>
         </div>
 
         <div class="balance-section">
-          <h4>Balance</h4>
-          <div id="group-balance"><p class="placeholder-text">Calculando balances...</p></div>
+          <h4 data-i18n="group.detail.balance">Balance</h4>
+          <div id="group-balance"><p class="placeholder-text" data-i18n="group.detail.balance_loading">Calculating balances...</p></div>
         </div>
 
         <div class="expenses-section">
           <div class="section-header">
-            <h4>Gastos</h4>
-            <button id="btn-add-expense-from-detail" class="btn-small">+ Anadir</button>
+            <h4 data-i18n="group.detail.expenses_section">Expenses</h4>
+            <button id="btn-add-expense-from-detail" class="btn-small" data-i18n="group.detail.expenses_add">+ Add</button>
           </div>
           <div class="form-group" style="margin-bottom: 10px;">
             <select id="filter-category">
@@ -373,7 +373,7 @@
               <option value="otros" data-i18n="cat.otros">Other</option>
             </select>
           </div>
-          <div id="group-expenses-list"><p class="placeholder-text">Cargando gastos...</p></div>
+          <div id="group-expenses-list"><p class="placeholder-text" data-i18n="group.detail.expenses_loading">Loading expenses...</p></div>
 
           <div id="group-archived-badge" class="group-archived-badge hidden"></div>
 
@@ -384,16 +384,16 @@
           </div>
 
           <div id="group-archived-expenses" class="group-archived-expenses hidden">
-            <p class="placeholder-text">Loading...</p>
+            <p class="placeholder-text" data-i18n="dashboard.loading">Loading...</p>
           </div>
         </div>
 
         <div class="members-section">
           <div class="section-header">
-            <h4>Miembros</h4>
-            <button id="btn-add-member" class="btn-small">+ Anadir miembro</button>
+            <h4 data-i18n="group.detail.members_section">Members</h4>
+            <button id="btn-add-member" class="btn-small" data-i18n="group.detail.members_add">+ Add member</button>
           </div>
-          <div id="group-members-list"><p class="placeholder-text">Cargando miembros...</p></div>
+          <div id="group-members-list"><p class="placeholder-text" data-i18n="group.detail.members_loading">Loading members...</p></div>
         </div>
 
         <div class="extras-toggle-wrap">
@@ -404,30 +404,29 @@
 
         <div id="group-extras" class="group-extras hidden">
           <div class="charts-section">
-            <div class="section-header"><h4>Grafico por persona</h4></div>
+            <div class="section-header"><h4 data-i18n="group.detail.charts_by_person">Chart by person</h4></div>
             <div class="chart-container"><canvas id="chart-by-person"></canvas></div>
           </div>
 
           <div class="charts-section">
-            <div class="section-header"><h4>Grafico por categoria</h4></div>
+            <div class="section-header"><h4 data-i18n="group.detail.charts_by_category">Chart by category</h4></div>
             <div class="chart-container"><canvas id="chart-by-category"></canvas></div>
           </div>
 
           <div class="totals-section">
-            <div class="section-header"><h4>Totales por categoria</h4></div>
-            <div id="group-category-totals"><p class="placeholder-text">Sin datos.</p></div>
+            <div class="section-header"><h4 data-i18n="group.detail.totals_by_category">Totals by category</h4></div>
+            <div id="group-category-totals"><p class="placeholder-text" data-i18n="group.detail.no_data">No data.</p></div>
           </div>
 
           <div class="history-section">
-            <div class="section-header"><h4>Historial</h4></div>
-            <div id="group-history-list"><p class="placeholder-text">Cargando historial...</p></div>
+            <div class="section-header"><h4 data-i18n="group.detail.history_section">History</h4></div>
+            <div id="group-history-list"><p class="placeholder-text" data-i18n="group.detail.history_loading">Loading history...</p></div>
           </div>
         </div>
       </div>
 
-      <!-- Boton Cerrar STICKY (siempre visible) -->
       <div class="modal-actions modal-actions-sticky">
-        <button type="button" id="btn-close-detail" class="btn-close-detail">Cerrar</button>
+        <button type="button" id="btn-close-detail" class="btn-close-detail" data-i18n="group.detail.close">Close</button>
       </div>
     </div>
   </div>
@@ -435,13 +434,13 @@
   <!-- MODAL: Anadir miembro -->
   <div id="modal-add-member" class="modal-overlay hidden">
     <div class="modal-content">
-      <h3>Anadir miembro al grupo</h3>
-      <p style="font-size: 0.85rem; color: #718096; text-align: center; margin-bottom: 15px;">
-        Selecciona un amigo para anadirlo a este grupo
+      <h3 data-i18n="group.detail.add_member_title">Add member to group</h3>
+      <p style="font-size: 0.85rem; color: #718096; text-align: center; margin-bottom: 15px;" data-i18n="group.detail.add_member_hint">
+        Select a friend to add to this group
       </p>
-      <div id="available-friends-list"><p class="placeholder-text">Cargando amigos...</p></div>
+      <div id="available-friends-list"><p class="placeholder-text" data-i18n="group.detail.add_member_loading">Loading friends...</p></div>
       <div class="modal-actions">
-        <button type="button" id="btn-cancel-add-member" class="btn-secondary">Cerrar</button>
+        <button type="button" id="btn-cancel-add-member" class="btn-secondary" data-i18n="group.detail.close">Close</button>
       </div>
     </div>
   </div>
@@ -685,8 +684,8 @@
 
         <section class="manual-section">
           <h4>23. Instalar como app en el celular</h4>
-          <p><strong>iPhone (Safari):</strong> Compartir -> "Anadir a pantalla de inicio".</p>
-          <p><strong>Android (Chrome):</strong> Menu -> "Instalar app".</p>
+          <p><strong>iPhone (Safari):</strong> Compartir, luego "Anadir a pantalla de inicio".</p>
+          <p><strong>Android (Chrome):</strong> Menu, luego "Instalar app".</p>
         </section>
 
         <section class="manual-section">
@@ -798,7 +797,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Simulador "Calcular hoy" -->
+  <!-- MODAL: Simulador Calcular hoy -->
   <div id="modal-calculator" class="modal-overlay hidden">
     <div class="modal-content" style="max-width: 500px;">
       <h3>Calculadora de hoy</h3>
@@ -815,4 +814,4 @@
 
   <script type="module" src="js/ui.js"></script>
 </body>
-</html>
+</html
