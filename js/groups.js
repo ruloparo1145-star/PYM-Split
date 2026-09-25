@@ -274,7 +274,24 @@ export async function cargarGrupos() {
 // ==========================================
 // 2. ARCHIVAR / DESARCHIVAR GRUPO
 // ==========================================
+// ==========================================
+// 2. ARCHIVAR / DESARCHIVAR GRUPO
+// ==========================================
 export async function archivarGrupo(groupId, archivar) {
+  // Si vamos a archivar el grupo (no restaurar), verificar que el computo este cerrado
+  if (archivar) {
+    const { data: grupoInfo } = await supabase
+      .from('groups')
+      .select('date_closed')
+      .eq('id', groupId)
+      .single();
+
+    if (!grupoInfo?.date_closed) {
+      alert(t('group.action.need_close_computo'));
+      return;
+    }
+  }
+
   const { error } = await supabase
     .from('groups')
     .update({ archived: archivar })
