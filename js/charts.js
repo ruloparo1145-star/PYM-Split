@@ -35,10 +35,11 @@ function montoEnMonedaGrupo(gasto, monedaGrupo) {
 export async function cargarGraficos(groupId, monedaGrupo = 'EUR') {
   monedaGrupo = (monedaGrupo || 'EUR').toUpperCase();
 
-  const { data: gastos, error } = await supabase
+const { data: gastos, error } = await supabase
     .from('expenses')
     .select('amount, paid_by, category, currency, exchange_rate')
-    .eq('group_id', groupId);
+    .eq('group_id', groupId)
+    .eq('archived', false);
 
   if (error) {
     console.error('Error cargando graficos:', error);
