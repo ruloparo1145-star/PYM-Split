@@ -1,5 +1,5 @@
 // sw.js - PYM Split
-const CACHE_NAME = 'pym-split-v43';
+const CACHE_NAME = 'pym-split-v44';
 const APP_ASSETS = [
   './',
   './index.html',
