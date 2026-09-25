@@ -303,7 +303,8 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       currency: monedaGasto,
       exchange_rate: exchangeRate,
       category: categoria,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      archived: false
     }])
     .select()
     .single();
@@ -327,7 +328,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
 }
 
 // ==========================================
-// 6. CARGAR GASTOS DE UN GRUPO
+// 6. CARGAR GASTOS DE UN GRUPO (solo activos)
 // ==========================================
 export async function cargarGastosDelGrupo(groupId) {
   const listContainer = document.getElementById('group-expenses-list');
@@ -336,6 +337,7 @@ export async function cargarGastosDelGrupo(groupId) {
     .from('expenses')
     .select('id, description, amount, currency, date, paid_by, category, exchange_rate')
     .eq('group_id', groupId)
+    .eq('archived', false)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -410,6 +412,115 @@ export async function cargarGastosDelGrupo(groupId) {
   listContainer.querySelectorAll('.clickable-expense').forEach(card => {
     card.addEventListener('click', () => {
       abrirDetalleGasto(card.dataset.expenseId, groupId);
+    });
+  });
+}
+
+// ==========================================
+// 6b. CARGAR GASTOS ARCHIVADOS DE UN GRUPO
+// ==========================================
+export async function cargarGastosArchivados(groupId) {
+  const listContainer = document.getElementById('group-archived-expenses');
+  if (!listContainer) return;
+
+  listContainer.innerHTML = '<p class="placeholder-text">Cargando...</p>';
+
+  const { data: gastos, error } = await supabase
+    .from('expenses')
+    .select('id, description, amount, currency, date, paid_by, category, exchange_rate, archived_at')
+    .eq('group_id', groupId)
+    .eq('archived', true)
+    .order('archived_at', { ascending: false });
+
+  if (error) {
+    console.error('Error gastos archivados:', error);
+    listContainer.innerHTML = '<p class="error-msg">Error al cargar gastos archivados.</p>';
+    return;
+  }
+
+  if (!gastos || gastos.length === 0) {
+    listContainer.innerHTML = '<p class="placeholder-text">No hay gastos archivados en este grupo.</p>';
+    return;
+  }
+
+  const paidByIds = [...new Set(gastos.map(g => g.paid_by))];
+  const { data: perfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', paidByIds);
+
+  const nombres = {};
+  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
+
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency, archived')
+    .eq('id', groupId)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+  const grupoArchivado = !!(grupoInfo?.archived);
+
+  listContainer.innerHTML = gastos.map(g => {
+    const cat = getCategoria(g.category);
+    const monto = parseFloat(g.amount);
+    const monedaGasto = (g.currency || 'EUR').toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+
+    let montoMostrar;
+    let subtexto = '';
+
+    if (monedaGasto === monedaGrupo) {
+      montoMostrar = `${monto.toFixed(2)} ${monedaGrupo}`;
+    } else {
+      const convertido = monto * tasa;
+      montoMostrar = `${convertido.toFixed(2)} ${monedaGrupo}`;
+      subtexto = `(${monto.toFixed(2)} ${monedaGasto})`;
+    }
+
+    let fechaArchivado = '';
+    if (g.archived_at) {
+      const d = new Date(g.archived_at);
+      fechaArchivado = `Archivado el ${d.toLocaleDateString('es-ES')}`;
+    }
+
+    // Solo mostrar boton Restaurar si el grupo NO esta archivado
+    const btnRestaurar = grupoArchivado
+      ? ''
+      : `<button class="btn-small btn-restore-expense" data-expense-id="${g.id}" title="Restaurar">&#8634; Restaurar</button>`;
+
+    return `
+      <div class="expense-card expense-card-archived clickable-expense" data-expense-id="${g.id}">
+        <div class="expense-category-icon expense-icon-archived" title="${cat.label}">&#128230;</div>
+        <div class="expense-info">
+          <h5>${g.description}</h5>
+          <span>Pago: ${nombres[g.paid_by] || 'Desconocido'} - ${g.date}</span>
+          ${fechaArchivado ? `<small class="expense-archived-date">${fechaArchivado}</small>` : ''}
+        </div>
+        <div class="expense-amount expense-amount-archived">
+          ${montoMostrar}
+          ${subtexto ? `<small class="expense-subtext">${subtexto}</small>` : ''}
+        </div>
+        ${btnRestaurar}
+      </div>
+    `;
+  }).join('');
+
+  // Listener: click en card -> abrir detalle (solo lectura)
+  listContainer.querySelectorAll('.clickable-expense').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.btn-restore-expense')) return;
+      abrirDetalleGasto(card.dataset.expenseId, groupId);
+    });
+  });
+
+  // Listener: boton restaurar
+  listContainer.querySelectorAll('.btn-restore-expense').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const expenseId = btn.dataset.expenseId;
+      if (!confirm('Restaurar este gasto? Volvera a formar parte de los calculos del grupo.')) return;
+      await restaurarGasto(expenseId, groupId);
     });
   });
 }
@@ -504,12 +615,18 @@ export function initExpenseModal() {
       if (groupIdDetail && groupIdDetail === groupId) {
         const { cargarGastosDelGrupo } = await import('./expenses.js');
         const { mostrarBalance } = await import('./debtSolver.js');
-        const { cargarGraficos } = await import('./charts.js');
         const { cargarHistorial } = await import('./history.js');
+        const { cargarGraficos } = await import('./charts.js');
         await cargarGastosDelGrupo(groupId);
         await mostrarBalance(groupId);
-        await cargarGraficos(groupId);
-        await cargarHistorial(groupId);
+        // Solo recargar extras si estan abiertos
+        const modalDetail = document.getElementById('modal-group-detail');
+        const extras = document.getElementById('group-extras');
+        if (extras && !extras.classList.contains('hidden')) {
+          const monedaGrupo = modalDetail.dataset.groupCurrency || 'EUR';
+          await cargarGraficos(groupId, monedaGrupo);
+          await cargarHistorial(groupId);
+        }
       }
 
       const { cargarDashboard } = await import('./dashboard.js');
@@ -537,7 +654,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
   const { data: gasto, error } = await supabase
     .from('expenses')
-    .select('id, description, amount, currency, date, category, notes, paid_by, exchange_rate, group_id')
+    .select('id, description, amount, currency, date, category, notes, paid_by, exchange_rate, group_id, archived, archived_at')
     .eq('id', expenseId)
     .single();
 
@@ -571,7 +688,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 
   const { data: grupoInfo } = await supabase
     .from('groups')
-    .select('currency')
+    .select('currency, archived, date_closed')
     .eq('id', gasto.group_id)
     .single();
 
@@ -579,6 +696,9 @@ export async function abrirDetalleGasto(expenseId, groupId) {
   const monedaGasto = (gasto.currency || 'EUR').toUpperCase();
   const monto = parseFloat(gasto.amount);
   const tasa = parseFloat(gasto.exchange_rate) || 1;
+  const grupoArchivado = !!(grupoInfo?.archived);
+  const computoCerrado = !!(grupoInfo?.date_closed);
+  const gastoArchivado = !!gasto.archived;
 
   let montoPrincipal, montoSub;
   if (monedaGasto === monedaGrupo) {
@@ -589,13 +709,24 @@ export async function abrirDetalleGasto(expenseId, groupId) {
     montoSub = `(${monto.toFixed(2)} ${monedaGasto})`;
   }
 
+  // Aviso si esta archivado
+  let avisoArchivado = '';
+  if (gastoArchivado) {
+    avisoArchivado = `
+      <div class="expense-archived-notice">
+        &#128230; Este gasto esta archivado y no forma parte de los calculos del grupo.
+      </div>
+    `;
+  }
+
   container.innerHTML = `
     <div style="text-align: center; margin-bottom: 20px;">
       <div style="font-size: 3rem; margin-bottom: 8px;">${cat.icono}</div>
-      <h2 style="color: #2ecc87; font-size: 2rem;">${montoPrincipal}</h2>
+      <h2 style="color: ${gastoArchivado ? '#718096' : '#2ecc87'}; font-size: 2rem;">${montoPrincipal}</h2>
       ${montoSub ? `<p style="color: #a0aec0; font-size: 0.85rem;">${montoSub}</p>` : ''}
       <p style="color: #4a5568; font-size: 1.1rem;">${gasto.description}</p>
       <p style="color: #718096; font-size: 0.85rem;">${cat.label} - ${gasto.date}</p>
+      ${avisoArchivado}
     </div>
 
     <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
@@ -615,43 +746,174 @@ export async function abrirDetalleGasto(expenseId, groupId) {
     </div>
   `;
 
+  // Configurar botones del modal segun el estado
+  const btnEdit = document.getElementById('btn-edit-expense');
+  const btnDelete = document.getElementById('btn-delete-expense');
+
+  if (gastoArchivado || grupoArchivado) {
+    // Ocultar ambos botones si el gasto esta archivado o el grupo esta archivado
+    if (btnEdit) btnEdit.style.display = 'none';
+    if (btnDelete) btnDelete.style.display = 'none';
+  } else {
+    // Mostrar botones. "Archivar" si el computo esta cerrado, "Cerrar computo" si no
+    if (btnEdit) btnEdit.style.display = '';
+
+    if (btnDelete) {
+      btnDelete.style.display = '';
+      if (computoCerrado) {
+        btnDelete.textContent = 'Archivar';
+        btnDelete.style.background = '#fefcbf';
+        btnDelete.style.color = '#b7791f';
+        btnDelete.dataset.action = 'archivar';
+      } else {
+        btnDelete.textContent = 'Archivar';
+        btnDelete.style.background = '#edf2f7';
+        btnDelete.style.color = '#a0aec0';
+        btnDelete.dataset.action = 'cerrar-computo-primero';
+      }
+    }
+  }
+
   modal.classList.remove('hidden');
 }
 
 // ==========================================
-// 9. ELIMINAR GASTO
+// 9. ARCHIVAR / ELIMINAR GASTO (boton principal)
 // ==========================================
-export async function eliminarGasto() {
+export async function accionGasto() {
   const modal = document.getElementById('modal-expense-detail');
+  const btnDelete = document.getElementById('btn-delete-expense');
   const expenseId = modal.dataset.expenseId;
   const groupId = document.getElementById('modal-group-detail').dataset.groupId;
 
-  if (!confirm('Seguro que quieres eliminar este gasto?')) return;
+  const accion = btnDelete?.dataset.action;
+
+  // Si el computo no esta cerrado, avisar
+  if (accion === 'cerrar-computo-primero') {
+    alert('Primero debes cerrar el computo del grupo para poder archivar gastos.\n\nAnda al detalle del grupo y toca "Cerrar computo".');
+    return;
+  }
+
+  if (!confirm('Archivar este gasto? Dejara de formar parte de los calculos del grupo. Podes restaurarlo despues.')) return;
 
   const { error } = await supabase
     .from('expenses')
-    .delete()
+    .update({ 
+      archived: true, 
+      archived_at: new Date().toISOString() 
+    })
     .eq('id', expenseId);
 
   if (error) {
-    alert('Error al eliminar: ' + error.message);
+    alert('Error al archivar: ' + error.message);
     return;
   }
 
   modal.classList.add('hidden');
 
-  const { cargarGastosDelGrupo } = await import('./expenses.js');
+  await recargarDetalleGrupo(groupId);
+}
+
+// ==========================================
+// 9b. RESTAURAR GASTO
+// ==========================================
+export async function restaurarGasto(expenseId, groupId) {
+  const { error } = await supabase
+    .from('expenses')
+    .update({ 
+      archived: false, 
+      archived_at: null 
+    })
+    .eq('id', expenseId);
+
+  if (error) {
+    alert('Error al restaurar: ' + error.message);
+    return;
+  }
+
+  await recargarDetalleGrupo(groupId);
+}
+
+// ==========================================
+// 9c. RECARGAR DETALLE DEL GRUPO
+// ==========================================
+async function recargarDetalleGrupo(groupId) {
+  const { cargarGastosDelGrupo, cargarGastosArchivados } = await import('./expenses.js');
   const { mostrarBalance } = await import('./debtSolver.js');
-  const { cargarHistorial } = await import('./history.js');
-  const { cargarGraficos } = await import('./charts.js');
 
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
-  await cargarHistorial(groupId);
-  await cargarGraficos(groupId);
+
+  // Recargar archivados solo si el acordeon esta abierto
+  const archivedContainer = document.getElementById('group-archived-expenses');
+  if (archivedContainer && !archivedContainer.classList.contains('hidden')) {
+    await cargarGastosArchivados(groupId);
+  }
+
+  // Actualizar badge de archivados
+  await actualizarBadgeArchivados(groupId);
+
+  // Recargar extras solo si estan abiertos
+  const extras = document.getElementById('group-extras');
+  if (extras && !extras.classList.contains('hidden')) {
+    const { cargarGraficos } = await import('./charts.js');
+    const { cargarHistorial } = await import('./history.js');
+    const modal = document.getElementById('modal-group-detail');
+    const monedaGrupo = modal.dataset.groupCurrency || 'EUR';
+    await cargarGraficos(groupId, monedaGrupo);
+    await cargarHistorial(groupId);
+  }
 
   const { cargarDashboard } = await import('./dashboard.js');
   await cargarDashboard();
+}
+
+// ==========================================
+// 9d. ACTUALIZAR BADGE DE ARCHIVADOS
+// ==========================================
+export async function actualizarBadgeArchivados(groupId) {
+  const badge = document.getElementById('group-archived-badge');
+  if (!badge) return;
+
+  const { data: grupoInfo } = await supabase
+    .from('groups')
+    .select('currency')
+    .eq('id', groupId)
+    .single();
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+
+  const { data: gastos } = await supabase
+    .from('expenses')
+    .select('amount, currency, exchange_rate')
+    .eq('group_id', groupId)
+    .eq('archived', true);
+
+  if (!gastos || gastos.length === 0) {
+    badge.classList.add('hidden');
+    badge.innerHTML = '';
+    return;
+  }
+
+  let totalArchivado = 0;
+  gastos.forEach(g => {
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+    if (monedaGasto === monedaGrupo) {
+      totalArchivado += monto;
+    } else {
+      totalArchivado += monto * tasa;
+    }
+  });
+
+  badge.classList.remove('hidden');
+  badge.innerHTML = `
+    <span class="group-archived-badge-text">
+      &#9888; ${gastos.length} ${gastos.length === 1 ? 'gasto archivado' : 'gastos archivados'} 
+      (${totalArchivado.toFixed(2)} ${monedaGrupo} no incluidos)
+    </span>
+  `;
 }
 
 // ==========================================
@@ -664,11 +926,17 @@ export async function cargarGastoParaEditar() {
 
   const { data: gasto } = await supabase
     .from('expenses')
-    .select('id, description, amount, paid_by, group_id, category, currency')
+    .select('id, description, amount, paid_by, group_id, category, currency, archived')
     .eq('id', expenseId)
     .single();
 
   if (!gasto) return;
+
+  // Bloquear edicion si esta archivado
+  if (gasto.archived) {
+    alert('No se puede editar un gasto archivado. Restauralo primero.');
+    return;
+  }
 
   const { data: miembros } = await supabase
     .from('group_members')
@@ -780,18 +1048,7 @@ export async function guardarEdicionGasto() {
     document.getElementById('modal-expense-edit').classList.add('hidden');
 
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
-    const { cargarGastosDelGrupo } = await import('./expenses.js');
-    const { mostrarBalance } = await import('./debtSolver.js');
-    const { cargarHistorial } = await import('./history.js');
-    const { cargarGraficos } = await import('./charts.js');
-
-    await cargarGastosDelGrupo(groupId);
-    await mostrarBalance(groupId);
-    await cargarHistorial(groupId);
-    await cargarGraficos(groupId);
-
-    const { cargarDashboard } = await import('./dashboard.js');
-    await cargarDashboard();
+    await recargarDetalleGrupo(groupId);
 
   } catch (error) {
     errorMsg.textContent = 'Error: ' + error.message;
