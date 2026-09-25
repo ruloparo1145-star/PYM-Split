@@ -1,5 +1,6 @@
 // js/guestbook.js
 import { supabase } from './supabase.js';
+import { t } from './i18n.js';
 
 // ==========================================
 // CARGAR COMENTARIOS
@@ -8,7 +9,7 @@ export async function cargarGuestbook() {
   const list = document.getElementById('guestbook-list');
   if (!list) return;
 
-  list.innerHTML = '<p class="placeholder-text">Cargando comentarios...</p>';
+  list.innerHTML = `<p class="placeholder-text">${t('guestbook.loading')}</p>`;
 
   const { data: comentarios, error } = await supabase
     .from('guestbook')
@@ -18,16 +19,15 @@ export async function cargarGuestbook() {
 
   if (error) {
     console.error('Error guestbook:', error);
-    list.innerHTML = '<p class="error-msg">Error al cargar los comentarios.</p>';
+    list.innerHTML = `<p class="error-msg">${t('guestbook.load_error')}</p>`;
     return;
   }
 
   if (!comentarios || comentarios.length === 0) {
-    list.innerHTML = '<p class="placeholder-text">Todavia no hay comentarios. Se el primero!</p>';
+    list.innerHTML = `<p class="placeholder-text">${t('guestbook.empty')}</p>`;
     return;
   }
 
-  // Traer perfiles
   const userIds = [...new Set(comentarios.map(c => c.user_id))];
   const { data: perfiles } = await supabase
     .from('profiles')
@@ -35,13 +35,13 @@ export async function cargarGuestbook() {
     .in('id', userIds);
 
   const nombres = {};
-  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Usuario');
+  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || t('guestbook.user'));
 
   const { data: { user } } = await supabase.auth.getUser();
 
   list.innerHTML = comentarios.map(c => {
     const esPropio = user && c.user_id === user.id;
-    const fecha = new Date(c.created_at).toLocaleDateString('es-ES', {
+    const fecha = new Date(c.created_at).toLocaleDateString(undefined, {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
@@ -55,9 +55,9 @@ export async function cargarGuestbook() {
         <div class="guestbook-avatar">${inicial}</div>
         <div class="guestbook-content">
           <div class="guestbook-header">
-            <strong>${nombres[c.user_id] || 'Usuario'}</strong>
+            <strong>${nombres[c.user_id] || t('guestbook.user')}</strong>
             <small>${fecha}</small>
-            ${esPropio ? `<button class="guestbook-delete" data-id="${c.id}" title="Eliminar">&#128465;</button>` : ''}
+            ${esPropio ? `<button class="guestbook-delete" data-id="${c.id}" title="Delete">&#128465;</button>` : ''}
           </div>
           <p>${escapeHtml(c.message)}</p>
         </div>
@@ -65,14 +65,13 @@ export async function cargarGuestbook() {
     `;
   }).join('');
 
-  // Listener para borrar
   list.querySelectorAll('.guestbook-delete').forEach(btn => {
     btn.addEventListener('click', async () => {
-      if (!confirm('Eliminar este comentario?')) return;
+      if (!confirm(t('guestbook.delete_confirm'))) return;
       const id = btn.dataset.id;
       const { error } = await supabase.from('guestbook').delete().eq('id', id);
       if (error) {
-        alert('Error al eliminar: ' + error.message);
+        alert(t('guestbook.delete_error', { mensaje: error.message }));
       } else {
         await cargarGuestbook();
       }
@@ -85,7 +84,7 @@ export async function cargarGuestbook() {
 // ==========================================
 async function publicarComentario(mensaje) {
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('Usuario no autenticado');
+  if (!user) throw new Error('Not authenticated');
 
   const { error } = await supabase
     .from('guestbook')
@@ -120,30 +119,29 @@ export function initGuestbook() {
 
     const mensaje = textarea.value.trim();
     if (!mensaje) {
-      errorMsg.textContent = 'Escribi un mensaje.';
+      errorMsg.textContent = t('guestbook.need_message');
       return;
     }
     if (mensaje.length > 500) {
-      errorMsg.textContent = 'El mensaje es demasiado largo (maximo 500 caracteres).';
+      errorMsg.textContent = t('guestbook.too_long');
       return;
     }
 
     const btnSubmit = form.querySelector('button[type="submit"]');
     btnSubmit.disabled = true;
-    btnSubmit.textContent = 'Publicando...';
+    btnSubmit.textContent = t('guestbook.publishing');
 
     try {
       await publicarComentario(mensaje);
       textarea.value = '';
       await cargarGuestbook();
     } catch (error) {
-      errorMsg.textContent = 'Error: ' + error.message;
+      errorMsg.textContent = t('guestbook.publish_error', { mensaje: error.message });
     } finally {
       btnSubmit.disabled = false;
-      btnSubmit.textContent = 'Publicar';
+      btnSubmit.textContent = t('guestbook.publish');
     }
   });
 
-  // Cargar comentarios la primera vez
   cargarGuestbook();
 }
