@@ -444,8 +444,8 @@ export const TRADUCCIONES = {
     'manual.s12.p1': 'En el detalle del grupo, arriba del balance, se muestran 2 numeros:',
     'manual.s12.li1': '<strong>Total del viaje:</strong> cuanto se gasto en total.',
     'manual.s12.li2': '<strong>Mi parte:</strong> cuanto te corresponde a vos segun las divisiones de cada gasto.',
-    'manual.s12.p2': 'Si tu moneda preferida es distinta a la del grupo, se muestra tambien la conversion entre parentesis.'
-,
+    'manual.s12.p2': 'Si tu moneda preferida es distinta a la del grupo, se muestra tambien la conversion entre parentesis.',
+
     'manual.s13.title': '13. Calcular en moneda de hoy',
     'manual.s13.p1': 'En el detalle de un <strong>grupo archivado</strong>, toca <strong>"Calcular en moneda de hoy"</strong>. La app te muestra:',
     'manual.s13.li1': 'El total gastado con las <strong>tasas del momento</strong> en que se cargaron los gastos.',
@@ -508,11 +508,11 @@ export const TRADUCCIONES = {
     'manual.s22.p3': 'Si queres conservar el historico, usa <strong>archivar</strong> en vez de eliminar.',
 
     'manual.s23.title': '23. Instalar como app en el celular',
-    'manual.s23.ios_label': 'iPhone (Safari):',
+    'manual.s23.ios_label': '<strong>iPhone (Safari):</strong>',
     'manual.s23.ios_li1': 'Abri la app.',
     'manual.s23.ios_li2': 'Toca el boton Compartir (flecha hacia arriba).',
     'manual.s23.ios_li3': 'Elegi "Anadir a pantalla de inicio".',
-    'manual.s23.android_label': 'Android (Chrome):',
+    'manual.s23.android_label': '<strong>Android (Chrome):</strong>',
     'manual.s23.android_li1': 'Abri la app.',
     'manual.s23.android_li2': 'Menu (3 puntos) - "Instalar app".',
     'manual.s23.p1': 'Se va a ver como una app normal, con su icono.'
@@ -961,15 +961,15 @@ export const TRADUCCIONES = {
     'manual.s12.p1': 'In the group details, above the balance, 2 numbers are shown:',
     'manual.s12.li1': '<strong>Trip total:</strong> how much was spent in total.',
     'manual.s12.li2': '<strong>My share:</strong> how much corresponds to you based on each expense split.',
-    'manual.s12.p2': 'If your preferred currency differs from the group, the conversion is also shown in parentheses.'
-    
-      'manual.s13.title': '13. Calculate in today rate',
+    'manual.s12.p2': 'If your preferred currency differs from the group, the conversion is also shown in parentheses.',
+
+    'manual.s13.title': '13. Calculate in today rate',
     'manual.s13.p1': 'In the details of an <strong>archived group</strong>, tap <strong>"Calculate in today rate"</strong>. The app shows you:',
     'manual.s13.li1': 'The total spent with the <strong>rates at the time</strong> the expenses were added.',
     'manual.s13.li2': 'The total it would cost <strong>with today rates</strong>.',
     'manual.s13.li3': 'The <strong>difference</strong> (how much it went up or down).',
     'manual.s13.p2': 'It is informative only. <strong>It does not modify any data.</strong>',
-,
+
     'manual.s14.title': '14. Close the calculation of a trip',
     'manual.s14.p1': 'When the trip ends, tap <strong>"Close calculation"</strong>. The app saves:',
     'manual.s14.li1': 'The <strong>closing date</strong> (automatic, not editable).',
@@ -1025,11 +1025,11 @@ export const TRADUCCIONES = {
     'manual.s22.p3': 'If you want to keep the history, use <strong>archive</strong> instead of delete.',
 
     'manual.s23.title': '23. Install as an app on your phone',
-    'manual.s23.ios_label': 'iPhone (Safari):',
+    'manual.s23.ios_label': '<strong>iPhone (Safari):</strong>',
     'manual.s23.ios_li1': 'Open the app.',
     'manual.s23.ios_li2': 'Tap the Share button (arrow up).',
     'manual.s23.ios_li3': 'Choose "Add to Home Screen".',
-    'manual.s23.android_label': 'Android (Chrome):',
+    'manual.s23.android_label': '<strong>Android (Chrome):</strong>',
     'manual.s23.android_li1': 'Open the app.',
     'manual.s23.android_li2': 'Menu (3 dots) - "Install app".',
     'manual.s23.p1': 'It will look like a normal app, with its icon.'
