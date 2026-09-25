@@ -1,9 +1,7 @@
 // js/members.js
 import { supabase } from './supabase.js';
+import { t } from './i18n.js';
 
-// ==========================================
-// 1. CARGAR MIEMBROS DEL GRUPO
-// ==========================================
 export async function cargarMiembrosDelGrupo(groupId) {
   const list = document.getElementById('group-members-list');
   
@@ -13,7 +11,7 @@ export async function cargarMiembrosDelGrupo(groupId) {
     .eq('group_id', groupId);
 
   if (error || !miembros) {
-    list.innerHTML = '<p class="error-msg">Error al cargar miembros.</p>';
+    list.innerHTML = `<p class="error-msg">${t('group.detail.members_error')}</p>`;
     return;
   }
 
@@ -24,15 +22,11 @@ export async function cargarMiembrosDelGrupo(groupId) {
   `).join('');
 }
 
-// ==========================================
-// 2. CARGAR AMIGOS DISPONIBLES (NO EN EL GRUPO)
-// ==========================================
 export async function cargarAmigosDisponibles(groupId) {
   const list = document.getElementById('available-friends-list');
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
-  // 1. Traer mis amigos (aceptados)
   const { data: amistades } = await supabase
     .from('friendships')
     .select(`
@@ -44,11 +38,10 @@ export async function cargarAmigosDisponibles(groupId) {
     .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`);
 
   if (!amistades || amistades.length === 0) {
-    list.innerHTML = '<p class="placeholder-text">No tienes amigos aÃºn. AÃ±ade uno desde el botÃ³n "Amigos".</p>';
+    list.innerHTML = `<p class="placeholder-text">${t('group.detail.add_member_no_friends')}</p>`;
     return;
   }
 
-  // 2. Traer miembros actuales del grupo
   const { data: miembrosActuales } = await supabase
     .from('group_members')
     .select('user_id')
@@ -56,40 +49,34 @@ export async function cargarAmigosDisponibles(groupId) {
 
   const idsEnGrupo = (miembrosActuales || []).map(m => m.user_id);
 
-  // 3. Filtrar amigos que no estÃ©n ya en el grupo
   const amigosDisponibles = amistades
     .map(a => a.user_id === user.id ? a.friend : a.user)
     .filter(a => !idsEnGrupo.includes(a.id));
 
   if (amigosDisponibles.length === 0) {
-    list.innerHTML = '<p class="placeholder-text">Todos tus amigos ya estÃ¡n en este grupo.</p>';
+    list.innerHTML = `<p class="placeholder-text">${t('group.detail.add_member_all_in')}</p>`;
     return;
   }
 
-  // 4. Renderizar
   list.innerHTML = amigosDisponibles.map(a => `
     <div class="friend-card clickable" data-friend-id="${a.id}">
       <div class="friend-info">
         <h4>${a.full_name || a.email}</h4>
         <span>${a.email}</span>
       </div>
-      <button class="btn-small btn-accept">AÃ±adir</button>
+      <button class="btn-small btn-accept">${t('group.detail.add_member_add')}</button>
     </div>
   `).join('');
 
-  // 5. Listeners
   list.querySelectorAll('.clickable').forEach(card => {
     card.addEventListener('click', async () => {
       const friendId = card.dataset.friendId;
       await agregarMiembroAlGrupo(groupId, friendId);
-      await cargarAmigosDisponibles(groupId); // Recargar la lista
+      await cargarAmigosDisponibles(groupId);
     });
   });
 }
 
-// ==========================================
-// 3. AGREGAR MIEMBRO AL GRUPO
-// ==========================================
 async function agregarMiembroAlGrupo(groupId, userId) {
   const { error } = await supabase
     .from('group_members')
@@ -100,19 +87,15 @@ async function agregarMiembroAlGrupo(groupId, userId) {
 
   if (error) {
     if (error.code === '23505') {
-      alert('Ese amigo ya estÃ¡ en el grupo.');
+      alert(t('group.detail.add_member_already'));
     } else {
-      alert('Error al aÃ±adir: ' + error.message);
+      alert(t('group.detail.add_member_error', { mensaje: error.message }));
     }
   } else {
-    // Recargar la lista de miembros del grupo
     await cargarMiembrosDelGrupo(groupId);
   }
 }
 
-// ==========================================
-// 4. INICIALIZAR MODAL DE AÃ‘ADIR MIEMBRO
-// ==========================================
 export function initAddMemberModal() {
   const modal = document.getElementById('modal-add-member');
   const btnOpen = document.getElementById('btn-add-member');
