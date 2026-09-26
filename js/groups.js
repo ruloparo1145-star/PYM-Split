@@ -928,7 +928,8 @@ async function abrirCalculadora(groupId, groupName) {
     const difColor = diferencia > 0.01 ? '#e53e3e'
                    : diferencia < -0.01 ? '#38a169'
                    : '#718096';
-    const difSigno = diferencia > 0 ? '+';
+    // const difSigno = diferencia > 0 ? '+';
+    const difSigno = diferencia > 0 ? '+' : '';
 
     let noteKey = 'group.calc.diff_note_same';
     if (diferencia > 0.01) noteKey = 'group.calc.diff_note_up';
