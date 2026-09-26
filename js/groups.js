@@ -805,17 +805,34 @@ async function abrirCalculadora(groupId, groupName) {
   modal.classList.remove('hidden');
 
   try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      body.innerHTML = `<p class="error-msg">${t('group.calc.error')}</p>`;
+      return;
+    }
+
+    // Obtener grupo con closed_rate_usd
     const { data: grupoInfo } = await supabase
       .from('groups')
-      .select('currency')
+      .select('currency, closed_rate_usd, closed_total')
       .eq('id', groupId)
       .single();
 
     const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
+    // Obtener moneda preferida del usuario
+    const { data: perfil } = await supabase
+      .from('profiles')
+      .select('preferred_currency')
+      .eq('id', user.id)
+      .single();
+
+    const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
+
+    // Obtener gastos activos
     const { data: gastos } = await supabase
       .from('expenses')
-      .select('amount, currency, exchange_rate')
+      .select('id, amount, currency, exchange_rate')
       .eq('group_id', groupId)
       .eq('archived', false);
 
@@ -824,45 +841,160 @@ async function abrirCalculadora(groupId, groupName) {
       return;
     }
 
-    const { simularHoy } = await import('./currency.js');
-    const resultado = await simularHoy(gastos, monedaGrupo);
+    // Obtener mis splits
+    const expIds = gastos.map(g => g.id);
+    const { data: splits } = await supabase
+      .from('expense_splits')
+      .select('expense_id, amount_owed')
+      .in('expense_id', expIds)
+      .eq('user_id', user.id);
 
-    const difColor = resultado.diferencia > 0.01 ? '#e53e3e'
-                   : resultado.diferencia < -0.01 ? '#38a169'
+    if (!splits || splits.length === 0) {
+      body.innerHTML = `<p class="placeholder-text">${t('group.calc.no_participation')}</p>`;
+      return;
+    }
+
+    // Mapear splits por expense_id
+    const splitPorExpense = {};
+    splits.forEach(s => {
+      splitPorExpense[s.expense_id] = parseFloat(s.amount_owed) || 0;
+    });
+
+    // Calcular mi parte historica (en moneda del grupo, con tasas historicas)
+    // y mi parte hoy (con tasas actuales)
+    let miParteHistorico = 0; // en moneda del grupo, con tasas historicas del gasto
+    let miParteHoy = 0;       // en moneda del grupo, con tasas de HOY
+
+    for (const g of gastos) {
+      const monto = splitPorExpense[g.id];
+      if (!monto) continue;
+
+      const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+      const tasaGuardada = parseFloat(g.exchange_rate) || 1;
+
+      if (monedaGasto === monedaGrupo) {
+        // El gasto ya esta en la moneda del grupo
+        miParteHistorico += monto;
+        miParteHoy += monto;
+      } else {
+        // Gasto en otra moneda: usar tasa guardada para historico
+        miParteHistorico += monto * tasaGuardada;
+
+        // Para hoy: obtener tasa actual
+        const tasaHoy = await obtenerTasa(monedaGasto, monedaGrupo);
+        if (tasaHoy !== null) {
+          miParteHoy += monto * tasaHoy;
+        } else {
+          miParteHoy += monto * tasaGuardada;
+        }
+      }
+    }
+
+    // Convertir "Mi parte historica" a la moneda del usuario (aproximado)
+    // Usamos: closed_rate_usd (monedaGrupo -> USD historico) y tasaUSD->monedaUsuario actual
+    let miParteHistoricoEnUsuario = null;
+    if (monedaUsuario !== monedaGrupo) {
+      if (grupoInfo?.closed_rate_usd) {
+        // closed_rate_usd = cuantos USD vale 1 monedaGrupo (historico)
+        const usdHistorico = miParteHistorico * grupoInfo.closed_rate_usd;
+        // Ahora convertir USD -> monedaUsuario con tasa actual
+        const tasaUSDUsuario = await obtenerTasa('USD', monedaUsuario);
+        if (tasaUSDUsuario !== null) {
+          miParteHistoricoEnUsuario = usdHistorico * tasaUSDUsuario;
+        }
+      } else {
+        // No hay closed_rate_usd (grupo cerrado antes de esta feature)
+        // Usar tasa actual como aproximacion
+        const tasaActual = await obtenerTasa(monedaGrupo, monedaUsuario);
+        if (tasaActual !== null) {
+          miParteHistoricoEnUsuario = miParteHistorico * tasaActual;
+        }
+      }
+    }
+
+    // Convertir "Mi parte hoy" a la moneda del usuario
+    let miParteHoyEnUsuario = null;
+    if (monedaUsuario !== monedaGrupo) {
+      const tasaActual = await obtenerTasa(monedaGrupo, monedaUsuario);
+      if (tasaActual !== null) {
+        miParteHoyEnUsuario = miParteHoy * tasaActual;
+      }
+    }
+
+    // Diferencia (en moneda del grupo)
+    const diferencia = miParteHoy - miParteHistorico;
+    const porcentaje = miParteHistorico > 0 ? (diferencia / miParteHistorico * 100) : 0;
+
+    const difColor = diferencia > 0.01 ? '#e53e3e'
+                   : diferencia < -0.01 ? '#38a169'
                    : '#718096';
-    const difSigno = resultado.diferencia > 0 ? '+' : '';
+    const difSigno = diferencia > 0 ? '+';
 
     let noteKey = 'group.calc.diff_note_same';
-    if (resultado.diferencia > 0.01) noteKey = 'group.calc.diff_note_up';
-    else if (resultado.diferencia < -0.01) noteKey = 'group.calc.diff_note_down';
+    if (diferencia > 0.01) noteKey = 'group.calc.diff_note_up';
+    else if (diferencia < -0.01) noteKey = 'group.calc.diff_note_down';
+
+    // Aviso si no hay closed_rate_usd
+    const avisoHistorico = (!grupoInfo?.closed_rate_usd && monedaUsuario !== monedaGrupo)
+      ? `<p style="font-size: 0.7rem; color: #b7791f; background: #fffaf0; padding: 8px; border-radius: 8px; margin-bottom: 12px; text-align: center;">${t('group.calc.no_historic')}</p>`
+      : '';
+
+    // Bloque de conversion a moneda del usuario (si aplica)
+    const conversionHistorico = (miParteHistoricoEnUsuario != null)
+      ? `<p style="font-size: 1rem; color: #3182ce; margin-top: 4px;">~${miParteHistoricoEnUsuario.toFixed(2)} ${monedaUsuario}</p>`
+      : '';
+
+    const conversionHoy = (miParteHoyEnUsuario != null)
+      ? `<p style="font-size: 1rem; color: #3182ce; margin-top: 4px;">~${miParteHoyEnUsuario.toFixed(2)} ${monedaUsuario}</p>`
+      : '';
+
+    // Diferencia en moneda usuario (si ambos estan disponibles)
+    let difEnUsuarioHTML = '';
+    if (miParteHistoricoEnUsuario != null && miParteHoyEnUsuario != null) {
+      const difUsuario = miParteHoyEnUsuario - miParteHistoricoEnUsuario;
+      const difUsuarioSigno = difUsuario > 0 ? '+' : '';
+      const difUsuarioPct = miParteHistoricoEnUsuario > 0
+        ? (difUsuario / miParteHistoricoEnUsuario * 100)
+        : 0;
+      difEnUsuarioHTML = `
+        <p style="font-size: 0.9rem; font-weight: 600; color: ${difColor}; margin-top: 4px;">
+          ${difUsuarioSigno}${difUsuario.toFixed(2)} ${monedaUsuario} (${difUsuarioSigno}${difUsuarioPct.toFixed(1)}%)
+        </p>
+      `;
+    }
 
     body.innerHTML = `
       <p style="text-align: center; color: #718096; margin-bottom: 20px;">
         ${t('group.calc.group', { nombre: groupName })}
       </p>
 
+      ${avisoHistorico}
+
       <div style="background: #f8fafc; border-radius: 12px; padding: 15px; margin-bottom: 12px;">
-        <p style="font-size: 0.8rem; color: #718096; margin-bottom: 4px;">${t('group.calc.historic_label')}</p>
+        <p style="font-size: 0.8rem; color: #718096; margin-bottom: 4px;">${t('group.calc.my_part_historic')}</p>
         <p style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">
-          ${resultado.totalHistorico.toFixed(2)} ${resultado.moneda}
+          ${miParteHistorico.toFixed(2)} ${monedaGrupo}
         </p>
+        ${conversionHistorico}
       </div>
 
       <div style="background: #f0fdf4; border-radius: 12px; padding: 15px; margin-bottom: 12px; border: 1px solid #c6f6d5;">
-        <p style="font-size: 0.8rem; color: #4a5568; margin-bottom: 4px;">${t('group.calc.today_label')}</p>
+        <p style="font-size: 0.8rem; color: #4a5568; margin-bottom: 4px;">${t('group.calc.my_part_today')}</p>
         <p style="font-size: 1.5rem; font-weight: 700; color: #2ecc87;">
-          ${resultado.totalHoy.toFixed(2)} ${resultado.moneda}
+          ${miParteHoy.toFixed(2)} ${monedaGrupo}
         </p>
+        ${conversionHoy}
       </div>
 
       <div style="background: #ffffff; border-radius: 12px; padding: 15px; border: 2px solid ${difColor}20;">
         <p style="font-size: 0.8rem; color: #718096; margin-bottom: 4px;">${t('group.calc.diff_label')}</p>
         <p style="font-size: 1.2rem; font-weight: 700; color: ${difColor};">
-          ${difSigno}${resultado.diferencia.toFixed(2)} ${resultado.moneda}
+          ${difSigno}${diferencia.toFixed(2)} ${monedaGrupo}
           <small style="font-size: 0.8rem; font-weight: 400;">
-            (${difSigno}${resultado.porcentaje.toFixed(1)}%)
+            (${difSigno}${porcentaje.toFixed(1)}%)
           </small>
         </p>
+        ${difEnUsuarioHTML}
         <p style="font-size: 0.75rem; color: #a0aec0; margin-top: 6px;">
           ${t(noteKey)}
         </p>
