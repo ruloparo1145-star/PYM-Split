@@ -111,7 +111,8 @@
             <option value="otro" data-i18n="group.create.type.other">Other</option>
           </select>
         </div>
-        <div class="form-group">
+      
+<div class="form-group">
           <label for="group-currency" data-i18n="group.create.currency">Currency</label>
           <select id="group-currency" required>
             <option value="EUR">EUR - Euro</option>
@@ -147,8 +148,17 @@
             <option value="TRY">TRY - Turkish Lira</option>
             <option value="RUB">RUB - Russian Ruble</option>
             <option value="UAH">UAH - Ukrainian Hryvnia</option>
+            <option value="__other__" data-i18n="group.create.currency_other">Other...</option>
           </select>
+          <div id="group-currency-custom-wrap" class="hidden" style="margin-top: 8px;">
+            <label for="group-currency-custom" style="font-size: 0.8rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 4px;" data-i18n="group.create.currency_custom_label">
+              Currency code
+            </label>
+            <input type="text" id="group-currency-custom" data-i18n-placeholder="group.create.currency_custom_placeholder" placeholder="Ex: JPY" maxlength="3" style="text-transform: uppercase; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; width: 100%; text-transform: uppercase;">
+            <small id="group-currency-custom-error" style="color: #e53e3e; font-size: 0.75rem; display: none; margin-top: 4px;"></small>
+          </div>
         </div>
+        
         <div class="form-group">
           <label for="group-date-start" data-i18n="group.create.date_start">Start date (optional)</label>
           <input type="date" id="group-date-start">
