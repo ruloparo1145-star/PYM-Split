@@ -487,6 +487,11 @@ const selectCurrency = document.getElementById('group-currency');
     const nombre = document.getElementById('group-name').value.trim();
     const tipo = document.getElementById('group-type').value;
     const moneda = document.getElementById('group-currency').value;
+    // Resetear input custom si no se eligio "Otra"
+    if (moneda !== '__other__') {
+      const customInputReset = document.getElementById('group-currency-custom');
+      if (customInputReset) customInputReset.value = '';
+    }
 
     try {
       await crearGrupo(nombre, tipo, moneda);
