@@ -767,21 +767,26 @@ export const TRADUCCIONES = {
     'group.rate.no_auth': 'Not authenticated',
 
     // ---------- GROUPS: TODAY CALCULATOR ----------
+// ---------- GROUPS: TODAY CALCULATOR ----------
     'group.calc.title': 'Today calculator',
     'group.calc.modal_title': 'Today calculator',
     'group.calc.modal_close': 'Close',
     'group.calc.group': 'Group: {nombre}',
-    'group.calc.historic_label': 'Total spent (with rates at the time)',
-    'group.calc.today_label': 'If you did it TODAY',
+    'group.calc.my_part_historic': 'My share (rates at the time)',
+    'group.calc.my_part_today': 'My share (TODAY rates)',
+    'group.calc.total_historic': 'Group total (rates at the time)',
+    'group.calc.total_today': 'Group total (TODAY rates)',
     'group.calc.diff_label': 'Difference',
     'group.calc.diff_note_up': 'The currency went up compared to the trip time.',
     'group.calc.diff_note_down': 'The currency went down compared to the trip time.',
     'group.calc.diff_note_same': 'The currency is the same as at the trip time.',
     'group.calc.footer': 'This calculation is informative only. It does not modify any data.',
     'group.calc.empty': 'This group has no expenses.',
+    'group.calc.no_participation': 'You did not participate in expenses of this group.',
+    'group.calc.no_historic': 'Historic rates not available (the group was closed before this update).',
     'group.calc.error': 'Error calculating.',
     'group.calc.loading': 'Calculating...',
-
+    
     // ---------- BALANCE / DEBTS ----------
     'debt.settle': 'Settle',
     'debt.settle_confirm': 'Confirm that {monto} {moneda} was paid?',
