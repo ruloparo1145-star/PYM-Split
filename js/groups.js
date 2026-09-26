@@ -432,12 +432,50 @@ export function initGroupModal() {
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) modal.classList.add('hidden');
   });
+  
+const selectCurrency = document.getElementById('group-currency');
+  const customWrap = document.getElementById('group-currency-custom-wrap');
+  const customInput = document.getElementById('group-currency-custom');
+  const customError = document.getElementById('group-currency-custom-error');
+  const currencyEl = document.getElementById('group-manual-rate-currency');
 
-  const selectCurrency = document.getElementById('group-currency');
   selectCurrency?.addEventListener('change', (e) => {
-    const currencyEl = document.getElementById('group-manual-rate-currency');
-    if (currencyEl) currencyEl.textContent = e.target.value || 'ARS';
+    const valor = e.target.value;
+
+    if (valor === '__other__') {
+      // Mostrar input custom
+      customWrap?.classList.remove('hidden');
+      if (customInput) {
+        customInput.value = '';
+        customInput.focus();
+      }
+      if (currencyEl) currencyEl.textContent = 'XXX';
+      if (customError) customError.style.display = 'none';
+    } else {
+      // Ocultar input custom
+      customWrap?.classList.add('hidden');
+      if (customInput) customInput.value = '';
+      if (currencyEl) currencyEl.textContent = valor || 'ARS';
+      if (customError) customError.style.display = 'none';
+    }
   });
+
+  // Al escribir en el input custom, actualizar el label de cotizacion
+  customInput?.addEventListener('input', (e) => {
+    let valor = (e.target.value || '').toUpperCase().replace(/[^A-Z]/g, '');
+    e.target.value = valor;
+    if (currencyEl) currencyEl.textContent = valor || 'XXX';
+
+    // Validacion en vivo
+    if (customError) {
+      if (valor.length > 0 && valor.length !== 3) {
+        customError.textContent = t('group.create.currency_custom_error');
+        customError.style.display = 'block';
+      } else {
+        customError.style.display = 'none';
+      }
+    }
+  });  
 
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
