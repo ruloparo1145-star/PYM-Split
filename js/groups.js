@@ -749,13 +749,25 @@ async function cerrarComputo(groupId) {
     }
   });
 
+  // Guardar la tasa del momento: cuantos USD vale 1 unidad de la moneda del grupo
+  let closedRateUSD = null;
+  if (monedaGrupo === 'USD') {
+    closedRateUSD = 1;
+  } else {
+    const tasaUSD = await obtenerTasa(monedaGrupo, 'USD');
+    if (tasaUSD !== null) {
+      closedRateUSD = tasaUSD;
+    }
+  }
+
   const hoy = new Date().toISOString().split('T')[0];
 
   const { error } = await supabase
     .from('groups')
     .update({
       date_closed: hoy,
-      closed_total: parseFloat(total.toFixed(2))
+      closed_total: parseFloat(total.toFixed(2)),
+      closed_rate_usd: closedRateUSD
     })
     .eq('id', groupId);
 
