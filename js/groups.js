@@ -329,11 +329,25 @@ export function toggleArchivados() {
 // ==========================================
 // 5. CREAR GRUPO
 // ==========================================
+
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error(t('group.create.no_auth'));
 
+  // Si se eligio "Otra", usar el codigo custom
+  if (moneda === '__other__') {
+    const customInput = document.getElementById('group-currency-custom');
+    const customCode = (customInput?.value || '').trim().toUpperCase();
+
+    // Validar: exactamente 3 letras A-Z
+    if (!/^[A-Z]{3}$/.test(customCode)) {
+      throw new Error(t('group.create.currency_custom_error'));
+    }
+    moneda = customCode;
+  }
+
   const dateStart = document.getElementById('group-date-start')?.value || null;
+  
   const dateEnd = document.getElementById('group-date-end')?.value || null;
   const manualRateInput = document.getElementById('group-manual-rate')?.value;
   const manualRate = manualRateInput ? parseFloat(manualRateInput) : null;
