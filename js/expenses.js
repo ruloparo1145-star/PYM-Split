@@ -73,7 +73,7 @@ export async function cargarMiembrosDelGrupo(groupId) {
 
   selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>` +
     miembros.map(m => `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`).join('');
-
+  
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -82,9 +82,26 @@ export async function cargarMiembrosDelGrupo(groupId) {
 
   if (grupoInfo && grupoInfo.currency) {
     const selectMoneda = document.getElementById('expense-currency');
-    if (selectMoneda) selectMoneda.value = grupoInfo.currency;
-  }
+    if (selectMoneda) {
+      const monedaGrupo = grupoInfo.currency.toUpperCase();
 
+      // Verificar si la moneda del grupo ya existe como opcion
+      const existeOpcion = Array.from(selectMoneda.options).some(
+        opt => opt.value.toUpperCase() === monedaGrupo
+      );
+
+      // Si no existe, agregarla como opcion (ej: JPY custom)
+      if (!existeOpcion) {
+        const nuevaOpcion = document.createElement('option');
+        nuevaOpcion.value = monedaGrupo;
+        nuevaOpcion.textContent = monedaGrupo + ' - ' + monedaGrupo;
+        selectMoneda.appendChild(nuevaOpcion);
+      }
+
+      selectMoneda.value = monedaGrupo;
+    }
+  }
+ 
   renderizarSplitInputs(miembros);
 }
 
