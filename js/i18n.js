@@ -220,21 +220,26 @@ export const TRADUCCIONES = {
     'group.rate.no_auth': 'No autenticado',
 
     // ---------- GRUPOS: CALCULADORA HOY ----------
+// ---------- GRUPOS: CALCULADORA HOY ----------
     'group.calc.title': 'Calculadora de hoy',
     'group.calc.modal_title': 'Calculadora de hoy',
     'group.calc.modal_close': 'Cerrar',
     'group.calc.group': 'Grupo: {nombre}',
-    'group.calc.historic_label': 'Total gastado (con tasas del momento)',
-    'group.calc.today_label': 'Si lo hicieras HOY',
+    'group.calc.my_part_historic': 'Mi parte (tasas del momento)',
+    'group.calc.my_part_today': 'Mi parte (tasas de HOY)',
+    'group.calc.total_historic': 'Total del grupo (tasas del momento)',
+    'group.calc.total_today': 'Total del grupo (tasas de HOY)',
     'group.calc.diff_label': 'Diferencia',
     'group.calc.diff_note_up': 'La moneda subio respecto al momento del viaje.',
     'group.calc.diff_note_down': 'La moneda bajo respecto al momento del viaje.',
     'group.calc.diff_note_same': 'La moneda esta igual respecto al momento del viaje.',
     'group.calc.footer': 'Este calculo es solo informativo. No modifica ningun dato.',
     'group.calc.empty': 'Este grupo no tiene gastos.',
+    'group.calc.no_participation': 'No participaste en gastos de este grupo.',
+    'group.calc.no_historic': 'Tasas historicas no disponibles (el grupo se cerro antes de esta actualizacion).',
     'group.calc.error': 'Error al calcular.',
     'group.calc.loading': 'Calculando...',
-
+    
     // ---------- BALANCE / DEUDAS ----------
     'debt.settle': 'Saldar',
     'debt.settle_confirm': 'Confirmas que se pagaron {monto} {moneda}?',
