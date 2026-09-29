@@ -271,12 +271,6 @@ export async function cargarGrupos() {
 // ==========================================
 // 2. ARCHIVAR / DESARCHIVAR GRUPO
 // ==========================================
-// ==========================================
-// 2. ARCHIVAR / DESARCHIVAR GRUPO
-// ==========================================
-// ==========================================
-// 2. ARCHIVAR / DESARCHIVAR GRUPO
-// ==========================================
 export async function archivarGrupo(groupId, archivar) {
   // Si vamos a archivar el grupo (no restaurar), verificar que el computo este cerrado
   if (archivar) {
@@ -303,6 +297,7 @@ export async function archivarGrupo(groupId, archivar) {
     throw error;
   }
 }
+
 // ==========================================
 // 3. ELIMINAR GRUPO
 // ==========================================
@@ -329,7 +324,6 @@ export function toggleArchivados() {
 // ==========================================
 // 5. CREAR GRUPO
 // ==========================================
-
 export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error(t('group.create.no_auth'));
@@ -433,7 +427,7 @@ export function initGroupModal() {
     if (e.target === modal) modal.classList.add('hidden');
   });
   
-const selectCurrency = document.getElementById('group-currency');
+  const selectCurrency = document.getElementById('group-currency');
   const customWrap = document.getElementById('group-currency-custom-wrap');
   const customInput = document.getElementById('group-currency-custom');
   const customError = document.getElementById('group-currency-custom-error');
@@ -541,7 +535,7 @@ async function abrirDetalleGrupo(groupId) {
   modal.dataset.manualRate = grupo?.manual_exchange_rate || '';
   modal.dataset.groupArchived = grupo?.archived ? 'true' : 'false';
 
-const selectFiltro = document.getElementById('filter-category');
+  const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) selectFiltro.value = '';
 
   const monedaGrupo = (grupo?.currency || 'EUR').toUpperCase();
@@ -590,6 +584,12 @@ const selectFiltro = document.getElementById('filter-category');
   if (btnCalc) {
     btnCalc.style.display = estaArchivado ? 'inline-block' : 'none';
     btnCalc.textContent = t('group.btn.calc_today');
+  }
+
+  // ðŸ†• Ocultar botÃ³n "+ AÃ±adir" si el grupo estÃ¡ archivado
+  const btnAddExpense = document.getElementById('btn-add-expense-from-detail');
+  if (btnAddExpense) {
+    btnAddExpense.style.display = estaArchivado ? 'none' : 'inline-block';
   }
 
   modal.classList.remove('hidden');
@@ -928,7 +928,6 @@ async function abrirCalculadora(groupId, groupName) {
     const difColor = diferencia > 0.01 ? '#e53e3e'
                    : diferencia < -0.01 ? '#38a169'
                    : '#718096';
-    // const difSigno = diferencia > 0 ? '+';
     const difSigno = diferencia > 0 ? '+' : '';
 
     let noteKey = 'group.calc.diff_note_same';
@@ -1027,8 +1026,16 @@ if (!window.__groupDetailListenersAttached) {
   });
 
   document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
-    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
-    document.getElementById('modal-group-detail').classList.add('hidden');
+    const modal = document.getElementById('modal-group-detail');
+
+    // ðŸ†• Bloquear si el grupo estÃ¡ archivado
+    if (modal.dataset.groupArchived === 'true') {
+      alert(t('group.archived.no_add_expense') || 'No se pueden aÃ±adir gastos a un grupo archivado.');
+      return;
+    }
+
+    const groupId = modal.dataset.groupId;
+    modal.classList.add('hidden');
     document.getElementById('fab-add').click();
     setTimeout(() => {
       const select = document.getElementById('expense-group');
