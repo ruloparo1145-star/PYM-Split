@@ -112,7 +112,7 @@
           </select>
         </div>
       
-<div class="form-group">
+        <div class="form-group">
           <label for="group-currency" data-i18n="group.create.currency">Currency</label>
           <select id="group-currency" required>
             <option value="EUR">EUR - Euro</option>
@@ -178,6 +178,19 @@
             If the rate is not available online, this will be used. If empty, it stays at 0.
           </small>
         </div>
+
+        <!-- ðŸ†• TEST API: comprueba si la moneda tiene cotizaciÃ³n automÃ¡tica -->
+        <div class="form-group">
+          <button type="button" id="btn-test-api-group"
+                  class="btn-secondary"
+                  style="width: 100%; background: #ebf4ff; color: #2b6cb0; font-weight: 600; padding: 10px;">
+            ðŸŒ� <span data-i18n="group.create.test_api">Test API - check rate</span>
+          </button>
+          <p id="group-test-api-result"
+             style="display: none; margin: 10px 0 0 0; padding: 10px;
+                    border-radius: 8px; font-size: 0.85rem; text-align: center;"></p>
+        </div>
+
         <p id="group-error" class="error-msg"></p>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-group" class="btn-secondary" data-i18n="group.create.cancel">Cancel</button>
@@ -839,7 +852,7 @@
           </small>
         </div>
 
-<p id="profile-error" class="error-msg"></p>
+        <p id="profile-error" class="error-msg"></p>
         <p id="profile-success" class="success-msg" style="text-align: center; font-size: 0.85rem;"></p>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-profile" class="btn-secondary" data-i18n="profile.cancel">Cancel</button>
@@ -852,9 +865,6 @@
           Export my data
         </button>
       </div>
-    </div>
-  </div>
-      
     </div>
   </div>
 
