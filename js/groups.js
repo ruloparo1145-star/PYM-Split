@@ -519,7 +519,7 @@ export function initGroupModal() {
       codMon = (customInput?.value || '').trim().toUpperCase();
       if (!/^[A-Z]{3}$/.test(codMon)) {
         mostrarResultadoAPI(
-          'âš ï¸� EscribÃ­ un cÃ³digo de 3 letras en el campo (ej: JPY).',
+          'âš ï¸ EscribÃ­ un cÃ³digo de 3 letras en el campo (ej: JPY).',
           'warn'
         );
         return;
@@ -528,7 +528,7 @@ export function initGroupModal() {
       codMon = (valorSelect || 'EUR').toUpperCase();
     }
 
-    mostrarResultadoAPI('â�³ Consultando cotizaciÃ³n...', 'info');
+    mostrarResultadoAPI('â³ Consultando cotizaciÃ³n...', 'info');
 
     try {
       const { obtenerTasa } = await import('./currency.js');
@@ -539,12 +539,12 @@ export function initGroupModal() {
         const mensaje = `âœ… 1 ${codMon} = ${tasa.toFixed(decimales)} USD Â· CotizaciÃ³n obtenida.`;
         mostrarResultadoAPI(mensaje, 'ok');
       } else {
-        const mensaje = `âš ï¸� No se pudo obtener ${codMon} â†’ USD. PodÃ©s usar la "CotizaciÃ³n manual".`;
+        const mensaje = `âš ï¸ No se pudo obtener ${codMon} â†’ USD. PodÃ©s usar la "CotizaciÃ³n manual".`;
         mostrarResultadoAPI(mensaje, 'warn');
       }
     } catch (err) {
       console.error('Error Test API:', err);
-      mostrarResultadoAPI('â�Œ Error al consultar la API. RevisÃ¡ la consola.', 'error');
+      mostrarResultadoAPI('âŒ Error al consultar la API. RevisÃ¡ la consola.', 'error');
     }
   });
 
