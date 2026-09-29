@@ -272,7 +272,6 @@ export async function cargarGrupos() {
 // 2. ARCHIVAR / DESARCHIVAR GRUPO
 // ==========================================
 export async function archivarGrupo(groupId, archivar) {
-  // Si vamos a archivar el grupo (no restaurar), verificar que el computo este cerrado
   if (archivar) {
     const { data: grupoInfo } = await supabase
       .from('groups')
@@ -328,12 +327,10 @@ export async function crearGrupo(nombre, tipo, moneda) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error(t('group.create.no_auth'));
 
-  // Si se eligio "Otra", usar el codigo custom
   if (moneda === '__other__') {
     const customInput = document.getElementById('group-currency-custom');
     const customCode = (customInput?.value || '').trim().toUpperCase();
 
-    // Validar: exactamente 3 letras A-Z
     if (!/^[A-Z]{3}$/.test(customCode)) {
       throw new Error(t('group.create.currency_custom_error'));
     }
@@ -403,6 +400,13 @@ export function initGroupModal() {
     errorMsg.textContent = '';
     form.reset();
 
+    // Limpiar mensaje del Test API
+    const resultadoAPI = document.getElementById('group-test-api-result');
+    if (resultadoAPI) {
+      resultadoAPI.style.display = 'none';
+      resultadoAPI.textContent = '';
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: perfil } = await supabase
@@ -437,7 +441,6 @@ export function initGroupModal() {
     const valor = e.target.value;
 
     if (valor === '__other__') {
-      // Mostrar input custom
       customWrap?.classList.remove('hidden');
       if (customInput) {
         customInput.value = '';
@@ -446,7 +449,6 @@ export function initGroupModal() {
       if (currencyEl) currencyEl.textContent = 'XXX';
       if (customError) customError.style.display = 'none';
     } else {
-      // Ocultar input custom
       customWrap?.classList.add('hidden');
       if (customInput) customInput.value = '';
       if (currencyEl) currencyEl.textContent = valor || 'ARS';
@@ -454,13 +456,11 @@ export function initGroupModal() {
     }
   });
 
-  // Al escribir en el input custom, actualizar el label de cotizacion
   customInput?.addEventListener('input', (e) => {
     let valor = (e.target.value || '').toUpperCase().replace(/[^A-Z]/g, '');
     e.target.value = valor;
     if (currencyEl) currencyEl.textContent = valor || 'XXX';
 
-    // Validacion en vivo
     if (customError) {
       if (valor.length > 0 && valor.length !== 3) {
         customError.textContent = t('group.create.currency_custom_error');
@@ -481,7 +481,6 @@ export function initGroupModal() {
     const nombre = document.getElementById('group-name').value.trim();
     const tipo = document.getElementById('group-type').value;
     const moneda = document.getElementById('group-currency').value;
-    // Resetear input custom si no se eligio "Otra"
     if (moneda !== '__other__') {
       const customInputReset = document.getElementById('group-currency-custom');
       if (customInputReset) customInputReset.value = '';
@@ -500,6 +499,72 @@ export function initGroupModal() {
       btnSubmit.textContent = t('group.create.submit');
     }
   });
+
+  // ==========================================
+  // ðŸ†• BOTÃ“N TEST API
+  // ==========================================
+  const btnTestAPI = document.getElementById('btn-test-api-group');
+  const resultadoAPI = document.getElementById('group-test-api-result');
+
+  btnTestAPI?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!selectCurrency) return;
+
+    let codMon = 'EUR';
+    const valorSelect = selectCurrency.value;
+
+    if (valorSelect === '__other__') {
+      codMon = (customInput?.value || '').trim().toUpperCase();
+      if (!/^[A-Z]{3}$/.test(codMon)) {
+        mostrarResultadoAPI(
+          'âš ï¸� EscribÃ­ un cÃ³digo de 3 letras en el campo (ej: JPY).',
+          'warn'
+        );
+        return;
+      }
+    } else {
+      codMon = (valorSelect || 'EUR').toUpperCase();
+    }
+
+    mostrarResultadoAPI('â�³ Consultando cotizaciÃ³n...', 'info');
+
+    try {
+      const { obtenerTasa } = await import('./currency.js');
+      const tasa = await obtenerTasa(codMon, 'USD');
+
+      if (tasa && tasa > 0) {
+        const decimales = tasa < 0.01 ? 8 : 6;
+        const mensaje = `âœ… 1 ${codMon} = ${tasa.toFixed(decimales)} USD Â· CotizaciÃ³n obtenida.`;
+        mostrarResultadoAPI(mensaje, 'ok');
+      } else {
+        const mensaje = `âš ï¸� No se pudo obtener ${codMon} â†’ USD. PodÃ©s usar la "CotizaciÃ³n manual".`;
+        mostrarResultadoAPI(mensaje, 'warn');
+      }
+    } catch (err) {
+      console.error('Error Test API:', err);
+      mostrarResultadoAPI('â�Œ Error al consultar la API. RevisÃ¡ la consola.', 'error');
+    }
+  });
+
+  function mostrarResultadoAPI(texto, tipo) {
+    if (!resultadoAPI) return;
+
+    const estilos = {
+      info:  { bg: '#ebf8ff', color: '#2c5282' },
+      ok:    { bg: '#f0fff4', color: '#276749' },
+      warn:  { bg: '#fffaf0', color: '#975a16' },
+      error: { bg: '#fff5f5', color: '#c53030' }
+    };
+
+    const est = estilos[tipo] || estilos.info;
+
+    resultadoAPI.textContent = texto;
+    resultadoAPI.style.display = 'block';
+    resultadoAPI.style.background = est.bg;
+    resultadoAPI.style.color = est.color;
+  }
 }
 
 // ==========================================
@@ -586,7 +651,7 @@ async function abrirDetalleGrupo(groupId) {
     btnCalc.textContent = t('group.btn.calc_today');
   }
 
-  // ðŸ†• Ocultar botÃ³n "+ AÃ±adir" si el grupo estÃ¡ archivado
+  // Ocultar botÃ³n "+ AÃ±adir" si el grupo estÃ¡ archivado
   const btnAddExpense = document.getElementById('btn-add-expense-from-detail');
   if (btnAddExpense) {
     btnAddExpense.style.display = estaArchivado ? 'none' : 'inline-block';
@@ -749,7 +814,6 @@ async function cerrarComputo(groupId) {
     }
   });
 
-  // Guardar la tasa del momento: cuantos USD vale 1 unidad de la moneda del grupo
   let closedRateUSD = null;
   if (monedaGrupo === 'USD') {
     closedRateUSD = 1;
@@ -811,7 +875,6 @@ async function abrirCalculadora(groupId, groupName) {
       return;
     }
 
-    // Obtener grupo con closed_rate_usd
     const { data: grupoInfo } = await supabase
       .from('groups')
       .select('currency, closed_rate_usd, closed_total')
@@ -820,7 +883,6 @@ async function abrirCalculadora(groupId, groupName) {
 
     const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
-    // Obtener moneda preferida del usuario
     const { data: perfil } = await supabase
       .from('profiles')
       .select('preferred_currency')
@@ -829,7 +891,6 @@ async function abrirCalculadora(groupId, groupName) {
 
     const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
 
-    // Obtener gastos activos
     const { data: gastos } = await supabase
       .from('expenses')
       .select('id, amount, currency, exchange_rate')
@@ -841,7 +902,6 @@ async function abrirCalculadora(groupId, groupName) {
       return;
     }
 
-    // Obtener mis splits
     const expIds = gastos.map(g => g.id);
     const { data: splits } = await supabase
       .from('expense_splits')
@@ -854,16 +914,13 @@ async function abrirCalculadora(groupId, groupName) {
       return;
     }
 
-    // Mapear splits por expense_id
     const splitPorExpense = {};
     splits.forEach(s => {
       splitPorExpense[s.expense_id] = parseFloat(s.amount_owed) || 0;
     });
 
-    // Calcular mi parte historica (en moneda del grupo, con tasas historicas)
-    // y mi parte hoy (con tasas actuales)
-    let miParteHistorico = 0; // en moneda del grupo, con tasas historicas del gasto
-    let miParteHoy = 0;       // en moneda del grupo, con tasas de HOY
+    let miParteHistorico = 0;
+    let miParteHoy = 0;
 
     for (const g of gastos) {
       const monto = splitPorExpense[g.id];
@@ -873,14 +930,11 @@ async function abrirCalculadora(groupId, groupName) {
       const tasaGuardada = parseFloat(g.exchange_rate) || 1;
 
       if (monedaGasto === monedaGrupo) {
-        // El gasto ya esta en la moneda del grupo
         miParteHistorico += monto;
         miParteHoy += monto;
       } else {
-        // Gasto en otra moneda: usar tasa guardada para historico
         miParteHistorico += monto * tasaGuardada;
 
-        // Para hoy: obtener tasa actual
         const tasaHoy = await obtenerTasa(monedaGasto, monedaGrupo);
         if (tasaHoy !== null) {
           miParteHoy += monto * tasaHoy;
@@ -890,21 +944,15 @@ async function abrirCalculadora(groupId, groupName) {
       }
     }
 
-    // Convertir "Mi parte historica" a la moneda del usuario (aproximado)
-    // Usamos: closed_rate_usd (monedaGrupo -> USD historico) y tasaUSD->monedaUsuario actual
     let miParteHistoricoEnUsuario = null;
     if (monedaUsuario !== monedaGrupo) {
       if (grupoInfo?.closed_rate_usd) {
-        // closed_rate_usd = cuantos USD vale 1 monedaGrupo (historico)
         const usdHistorico = miParteHistorico * grupoInfo.closed_rate_usd;
-        // Ahora convertir USD -> monedaUsuario con tasa actual
         const tasaUSDUsuario = await obtenerTasa('USD', monedaUsuario);
         if (tasaUSDUsuario !== null) {
           miParteHistoricoEnUsuario = usdHistorico * tasaUSDUsuario;
         }
       } else {
-        // No hay closed_rate_usd (grupo cerrado antes de esta feature)
-        // Usar tasa actual como aproximacion
         const tasaActual = await obtenerTasa(monedaGrupo, monedaUsuario);
         if (tasaActual !== null) {
           miParteHistoricoEnUsuario = miParteHistorico * tasaActual;
@@ -912,7 +960,6 @@ async function abrirCalculadora(groupId, groupName) {
       }
     }
 
-    // Convertir "Mi parte hoy" a la moneda del usuario
     let miParteHoyEnUsuario = null;
     if (monedaUsuario !== monedaGrupo) {
       const tasaActual = await obtenerTasa(monedaGrupo, monedaUsuario);
@@ -921,7 +968,6 @@ async function abrirCalculadora(groupId, groupName) {
       }
     }
 
-    // Diferencia (en moneda del grupo)
     const diferencia = miParteHoy - miParteHistorico;
     const porcentaje = miParteHistorico > 0 ? (diferencia / miParteHistorico * 100) : 0;
 
@@ -934,12 +980,10 @@ async function abrirCalculadora(groupId, groupName) {
     if (diferencia > 0.01) noteKey = 'group.calc.diff_note_up';
     else if (diferencia < -0.01) noteKey = 'group.calc.diff_note_down';
 
-    // Aviso si no hay closed_rate_usd
     const avisoHistorico = (!grupoInfo?.closed_rate_usd && monedaUsuario !== monedaGrupo)
       ? `<p style="font-size: 0.7rem; color: #b7791f; background: #fffaf0; padding: 8px; border-radius: 8px; margin-bottom: 12px; text-align: center;">${t('group.calc.no_historic')}</p>`
       : '';
 
-    // Bloque de conversion a moneda del usuario (si aplica)
     const conversionHistorico = (miParteHistoricoEnUsuario != null)
       ? `<p style="font-size: 1rem; color: #3182ce; margin-top: 4px;">~${miParteHistoricoEnUsuario.toFixed(2)} ${monedaUsuario}</p>`
       : '';
@@ -948,7 +992,6 @@ async function abrirCalculadora(groupId, groupName) {
       ? `<p style="font-size: 1rem; color: #3182ce; margin-top: 4px;">~${miParteHoyEnUsuario.toFixed(2)} ${monedaUsuario}</p>`
       : '';
 
-    // Diferencia en moneda usuario (si ambos estan disponibles)
     let difEnUsuarioHTML = '';
     if (miParteHistoricoEnUsuario != null && miParteHoyEnUsuario != null) {
       const difUsuario = miParteHoyEnUsuario - miParteHistoricoEnUsuario;
@@ -1028,7 +1071,7 @@ if (!window.__groupDetailListenersAttached) {
   document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
     const modal = document.getElementById('modal-group-detail');
 
-    // ðŸ†• Bloquear si el grupo estÃ¡ archivado
+    // Bloquear si el grupo estÃ¡ archivado
     if (modal.dataset.groupArchived === 'true') {
       alert(t('group.archived.no_add_expense') || 'No se pueden aÃ±adir gastos a un grupo archivado.');
       return;
