@@ -501,7 +501,7 @@ export function initGroupModal() {
   });
 
   // ==========================================
-  // ðŸ†• BOTÃ“N TEST API
+  // BOTON TEST API
   // ==========================================
   const btnTestAPI = document.getElementById('btn-test-api-group');
   const resultadoAPI = document.getElementById('group-test-api-result');
@@ -519,7 +519,7 @@ export function initGroupModal() {
       codMon = (customInput?.value || '').trim().toUpperCase();
       if (!/^[A-Z]{3}$/.test(codMon)) {
         mostrarResultadoAPI(
-          'âš ï¸ EscribÃ­ un cÃ³digo de 3 letras en el campo (ej: JPY).',
+          '[!] Escribi un codigo de 3 letras en el campo (ej: JPY).',
           'warn'
         );
         return;
@@ -528,7 +528,7 @@ export function initGroupModal() {
       codMon = (valorSelect || 'EUR').toUpperCase();
     }
 
-    mostrarResultadoAPI('â³ Consultando cotizaciÃ³n...', 'info');
+    mostrarResultadoAPI('Consultando cotizacion...', 'info');
 
     try {
       const { obtenerTasa } = await import('./currency.js');
@@ -536,15 +536,15 @@ export function initGroupModal() {
 
       if (tasa && tasa > 0) {
         const decimales = tasa < 0.01 ? 8 : 6;
-        const mensaje = `âœ… 1 ${codMon} = ${tasa.toFixed(decimales)} USD Â· CotizaciÃ³n obtenida.`;
+        const mensaje = `[OK] 1 ${codMon} = ${tasa.toFixed(decimales)} USD - Cotizacion obtenida.`;
         mostrarResultadoAPI(mensaje, 'ok');
       } else {
-        const mensaje = `âš ï¸ No se pudo obtener ${codMon} â†’ USD. PodÃ©s usar la "CotizaciÃ³n manual".`;
+        const mensaje = `[?] No se pudo obtener ${codMon} -> USD. Podes usar la "Cotizacion manual".`;
         mostrarResultadoAPI(mensaje, 'warn');
       }
     } catch (err) {
       console.error('Error Test API:', err);
-      mostrarResultadoAPI('âŒ Error al consultar la API. RevisÃ¡ la consola.', 'error');
+      mostrarResultadoAPI('[X] Error al consultar la API. Revisa la consola.', 'error');
     }
   });
 
@@ -651,7 +651,7 @@ async function abrirDetalleGrupo(groupId) {
     btnCalc.textContent = t('group.btn.calc_today');
   }
 
-  // Ocultar botÃ³n "+ AÃ±adir" si el grupo estÃ¡ archivado
+  // Ocultar boton "+ Anadir" si el grupo esta archivado
   const btnAddExpense = document.getElementById('btn-add-expense-from-detail');
   if (btnAddExpense) {
     btnAddExpense.style.display = estaArchivado ? 'none' : 'inline-block';
@@ -1071,9 +1071,9 @@ if (!window.__groupDetailListenersAttached) {
   document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
     const modal = document.getElementById('modal-group-detail');
 
-    // Bloquear si el grupo estÃ¡ archivado
+    // Bloquear si el grupo esta archivado
     if (modal.dataset.groupArchived === 'true') {
-      alert(t('group.archived.no_add_expense') || 'No se pueden aÃ±adir gastos a un grupo archivado.');
+      alert(t('group.archived.no_add_expense') || 'No se pueden anadir gastos a un grupo archivado.');
       return;
     }
 
