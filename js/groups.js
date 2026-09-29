@@ -506,7 +506,7 @@ export function initGroupModal() {
   const btnTestAPI = document.getElementById('btn-test-api-group');
   const resultadoAPI = document.getElementById('group-test-api-result');
 
-  btnTestAPI?.addEventListener('click', async (e) => {
+   btnTestAPI?.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -519,7 +519,7 @@ export function initGroupModal() {
       codMon = (customInput?.value || '').trim().toUpperCase();
       if (!/^[A-Z]{3}$/.test(codMon)) {
         mostrarResultadoAPI(
-          '[!] Escribi un codigo de 3 letras en el campo (ej: JPY).',
+          t('group.test_api.invalid_code'),
           'warn'
         );
         return;
@@ -528,7 +528,7 @@ export function initGroupModal() {
       codMon = (valorSelect || 'EUR').toUpperCase();
     }
 
-    mostrarResultadoAPI('Consultando cotizacion...', 'info');
+    mostrarResultadoAPI(t('group.test_api.checking'), 'info');
 
     try {
       const { obtenerTasa } = await import('./currency.js');
@@ -536,15 +536,18 @@ export function initGroupModal() {
 
       if (tasa && tasa > 0) {
         const decimales = tasa < 0.01 ? 8 : 6;
-        const mensaje = `[OK] 1 ${codMon} = ${tasa.toFixed(decimales)} USD - Cotizacion obtenida.`;
+        const mensaje = t('group.test_api.success', {
+          moneda: codMon,
+          tasa: tasa.toFixed(decimales)
+        });
         mostrarResultadoAPI(mensaje, 'ok');
       } else {
-        const mensaje = `[?] No se pudo obtener ${codMon} -> USD. Podes usar la "Cotizacion manual".`;
+        const mensaje = t('group.test_api.failed', { moneda: codMon });
         mostrarResultadoAPI(mensaje, 'warn');
       }
     } catch (err) {
       console.error('Error Test API:', err);
-      mostrarResultadoAPI('[X] Error al consultar la API. Revisa la consola.', 'error');
+      mostrarResultadoAPI(t('group.test_api.error'), 'error');
     }
   });
 
