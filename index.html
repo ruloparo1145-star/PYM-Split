@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PYM Split</title>
+  <title>PYM Split - Dashboard</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon-192.png">
   <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 
   <script type="importmap">
   {
@@ -16,52 +18,896 @@
   }
   </script>
 </head>
-<body>
-  <div class="auth-container">
-    <div class="auth-card">
-      <div class="auth-header">
-        <img src="icon-192.png" alt="PYM Split" class="auth-logo">
+<body class="app-body">
+  <div class="app-container">
+    <header class="app-header">
+      <div class="header-left">
+        <img src="icon-192.png" alt="PYM Split" class="header-logo">
         <h1>PYM Split</h1>
-        <p class="auth-subtitle" data-i18n="index.subtitle">Split expenses, not friendships</p>
+      </div>
+      <div class="header-right">
+        <button id="btn-manual" class="btn-small" data-i18n-title="header.manual" title="User manual">?</button>
+        <button id="btn-friends" class="btn-small" data-i18n="header.friends">Friends</button>
+        <button id="btn-profile" class="btn-small" data-i18n="header.profile">Profile</button>
+        <button id="btn-logout" class="btn-logout" data-i18n="header.logout">Sign out</button>
+      </div>
+    </header>
+
+    <main class="app-main">
+      <div class="welcome-section">
+        <div class="welcome-header">
+          <div>
+            <h2 id="welcome-message">Hola, ...</h2>
+            <p data-i18n="dashboard.welcome_sub">Welcome to your expense manager</p>
+          </div>
+          <button id="btn-ver-historico" class="btn-ver-grafico" data-i18n-title="dashboard.see_history" title="See history" data-i18n="dashboard.see_history">
+            See history
+          </button>
+        </div>
       </div>
 
-      <div class="auth-tabs">
-        <button id="tab-login" class="tab-btn active" type="button" data-i18n="index.tab_login">Sign in</button>
-        <button id="tab-register" class="tab-btn" type="button" data-i18n="index.tab_register">Create account</button>
+      <div class="dashboard-tabs">
+        <button class="dash-tab active" data-range="active" data-i18n="dashboard.tab.active">Active groups</button>
+        <button class="dash-tab" data-range="archived" data-i18n="dashboard.tab.archived">Archived groups</button>
+        <button class="dash-tab" data-range="all" data-i18n="dashboard.tab.all">All</button>
       </div>
 
-      <form id="form-login" class="auth-form">
-        <div class="form-group">
-          <label for="login-email" data-i18n="index.email">Email</label>
-          <input type="email" id="login-email" data-i18n-placeholder="index.email_placeholder" placeholder="you@email.com" required autocomplete="email">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label" id="stat-total-label" data-i18n="dashboard.total.active">Total spent in active groups</div>
+          <div class="stat-value" id="stat-total-mes">--</div>
         </div>
-        <div class="form-group">
-          <label for="login-password" data-i18n="index.password">Password</label>
-          <input type="password" id="login-password" placeholder="                        " required autocomplete="current-password">
+        <div class="stat-card stat-positive">
+          <div class="stat-label" data-i18n="dashboard.they_owe">They owe you</div>
+          <div class="stat-value" id="stat-te-deben">--</div>
         </div>
-        <button type="submit" class="btn-primary" id="btn-login" data-i18n="index.login_button">Sign in</button>
-        <p id="login-error" class="error-msg"></p>
-      </form>
+        <div class="stat-card stat-negative">
+          <div class="stat-label" data-i18n="dashboard.you_owe">You owe</div>
+          <div class="stat-value" id="stat-debes">--</div>
+        </div>
+      </div>
 
-      <form id="form-register" class="auth-form hidden">
+      <div class="section-card">
+        <div class="section-header">
+          <h3 data-i18n="dashboard.recent">Recent activity</h3>
+        </div>
+        <div id="dashboard-recent">
+          <p class="placeholder-text" data-i18n="dashboard.loading">Loading...</p>
+        </div>
+      </div>
+
+      <div class="section-card" id="groups-section">
+        <div class="section-header">
+          <h3 data-i18n="dashboard.groups">My Groups</h3>
+          <div style="display: flex; gap: 6px;">
+            <button id="btn-toggle-archived" class="btn-small" style="background: #fefcbf; color: #b7791f;" data-i18n="dashboard.btn_archived">Archived</button>
+            <button id="btn-new-group" class="btn-small" data-i18n="dashboard.btn_new">+ New</button>
+          </div>
+        </div>
+        <div id="groups-list">
+          <p class="placeholder-text" data-i18n="dashboard.loading">Loading...</p>
+        </div>
+      </div>
+    </main>
+
+    <button id="fab-add" class="fab" title="Add Expense">+</button>
+  </div>
+
+  <!-- MODAL: Crear Grupo -->
+  <div id="modal-group" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 data-i18n="group.create.title">Create New Group</h3>
+      <form id="form-group">
         <div class="form-group">
-          <label for="register-name" data-i18n="index.register_name">Full name</label>
-          <input type="text" id="register-name" data-i18n-placeholder="index.register_name_placeholder" placeholder="John Smith" required autocomplete="name">
+          <label for="group-name" data-i18n="group.create.name">Group Name</label>
+          <input type="text" id="group-name" data-i18n-placeholder="group.create.name_placeholder" placeholder="Ex: Trip to Bariloche" required>
         </div>
         <div class="form-group">
-          <label for="register-email" data-i18n="index.email">Email</label>
-          <input type="email" id="register-email" data-i18n-placeholder="index.email_placeholder" placeholder="you@email.com" required autocomplete="email">
+          <label for="group-type" data-i18n="group.create.type">Type</label>
+          <select id="group-type" required>
+            <option value="viaje" data-i18n="group.create.type.trip">Trip</option>
+            <option value="depto" data-i18n="group.create.type.flat">Apartment</option>
+            <option value="salidas" data-i18n="group.create.type.outings">Outings</option>
+            <option value="otro" data-i18n="group.create.type.other">Other</option>
+          </select>
+        </div>
+      
+        <div class="form-group">
+          <label for="group-currency" data-i18n="group.create.currency">Currency</label>
+          <select id="group-currency" required>
+            <option value="EUR">EUR - Euro</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="UYU">UYU - Uruguayan Peso</option>
+            <option value="BOB">BOB - Bolivian Boliviano</option>
+            <option value="PYG">PYG - Paraguayan Guarani</option>
+            <option value="VES">VES - Venezuelan Bolivar</option>
+            <option value="PAB">PAB - Panamanian Balboa</option>
+            <option value="CRC">CRC - Costa Rican Colon</option>
+            <option value="GTQ">GTQ - Guatemalan Quetzal</option>
+            <option value="DOP">DOP - Dominican Peso</option>
+            <option value="HNL">HNL - Honduran Lempira</option>
+            <option value="NIO">NIO - Nicaraguan Cordoba</option>
+            <option value="CUP">CUP - Cuban Peso</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="CHF">CHF - Swiss Franc</option>
+            <option value="NOK">NOK - Norwegian Krone</option>
+            <option value="SEK">SEK - Swedish Krona</option>
+            <option value="DKK">DKK - Danish Krone</option>
+            <option value="PLN">PLN - Polish Zloty</option>
+            <option value="CZK">CZK - Czech Koruna</option>
+            <option value="HUF">HUF - Hungarian Forint</option>
+            <option value="RON">RON - Romanian Leu</option>
+            <option value="BGN">BGN - Bulgarian Lev</option>
+            <option value="TRY">TRY - Turkish Lira</option>
+            <option value="RUB">RUB - Russian Ruble</option>
+            <option value="UAH">UAH - Ukrainian Hryvnia</option>
+            <option value="__other__" data-i18n="group.create.currency_other">Other...</option>
+          </select>
+          <div id="group-currency-custom-wrap" class="hidden" style="margin-top: 8px;">
+            <label for="group-currency-custom" style="font-size: 0.8rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 4px;" data-i18n="group.create.currency_custom_label">
+              Currency code
+            </label>
+            <input type="text" id="group-currency-custom" data-i18n-placeholder="group.create.currency_custom_placeholder" placeholder="Ex: JPY" maxlength="3" style="text-transform: uppercase; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem; width: 100%; text-transform: uppercase;">
+            <small id="group-currency-custom-error" style="color: #e53e3e; font-size: 0.75rem; display: none; margin-top: 4px;"></small>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="group-date-start" data-i18n="group.create.date_start">Start date (optional)</label>
+          <input type="date" id="group-date-start">
         </div>
         <div class="form-group">
-          <label for="register-password" data-i18n="index.password">Password</label>
-          <input type="password" id="register-password" data-i18n-placeholder="index.password_placeholder" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+          <label for="group-date-end" data-i18n="group.create.date_end">End date (optional)</label>
+          <input type="date" id="group-date-end">
         </div>
-        <button type="submit" class="btn-primary" id="btn-register" data-i18n="index.register_button">Create account</button>
-        <p id="register-error" class="error-msg"></p>
+        <div class="form-group">
+          <label for="group-manual-rate" data-i18n="group.create.manual_rate">Manual exchange rate (optional)</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="group-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 EUR =</span>
+            <input type="number" id="group-manual-rate" data-i18n-placeholder="group.create.manual_rate_placeholder" placeholder="Ex: 1200" step="0.01" min="0" style="flex: 1; padding: 10px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+            <span id="group-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
+          </div>
+          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="group.create.manual_rate_hint">
+            If the rate is not available online, this will be used. If empty, it stays at 0.
+          </small>
+        </div>
+
+        <!-- ðŸ†• TEST API: comprueba si la moneda tiene cotizaciÃ³n automÃ¡tica -->
+        <div class="form-group">
+          <button type="button" id="btn-test-api-group"
+                  class="btn-secondary"
+                  style="width: 100%; background: #ebf4ff; color: #2b6cb0; font-weight: 600; padding: 10px;">
+            ðŸŒ� <span data-i18n="group.create.test_api">Test API - check rate</span>
+          </button>
+          <p id="group-test-api-result"
+             style="display: none; margin: 10px 0 0 0; padding: 10px;
+                    border-radius: 8px; font-size: 0.85rem; text-align: center;"></p>
+        </div>
+
+        <p id="group-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-group" class="btn-secondary" data-i18n="group.create.cancel">Cancel</button>
+          <button type="submit" class="btn-primary" data-i18n="group.create.submit">Create Group</button>
+        </div>
       </form>
     </div>
   </div>
 
-  <script type="module" src="js/auth.js"></script>
+  <!-- MODAL: Amigos -->
+  <div id="modal-friends" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <h3 data-i18n="friends.title">Friends Management</h3>
+      <form id="form-add-friend" style="margin-bottom: 20px;">
+        <div class="form-group">
+          <label for="friend-email" data-i18n="friends.add_label">Add friend by email</label>
+          <div style="display: flex; gap: 10px;">
+            <input type="email" id="friend-email" data-i18n-placeholder="friends.add_placeholder" placeholder="friend@email.com" required style="flex:1;">
+            <button type="submit" class="btn-primary" style="width: auto; padding: 0 20px;" data-i18n="friends.add_button">Send</button>
+          </div>
+          <p id="friend-error" class="error-msg" style="text-align: left; margin-top: 5px;"></p>
+        </div>
+      </form>
+      <div style="border-top: 1px solid #edf2f7; padding-top: 15px;">
+        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;" data-i18n="friends.requests_title">Pending Requests</h4>
+        <div id="friend-requests-list"><p class="placeholder-text" data-i18n="friends.requests_loading">Loading...</p></div>
+      </div>
+      <div style="border-top: 1px solid #edf2f7; padding-top: 15px; margin-top: 15px;">
+        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #4a5568;" data-i18n="friends.list_title">My Friends</h4>
+        <div id="friends-list"><p class="placeholder-text" data-i18n="friends.list_loading">Loading...</p></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-friends" class="btn-secondary" data-i18n="friends.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Anadir Gasto -->
+  <div id="modal-expense" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 data-i18n="expense.create.title">New Expense</h3>
+      <form id="form-expense">
+        <div class="form-group">
+          <label for="expense-description" data-i18n="expense.create.description">What was it?</label>
+          <input type="text" id="expense-description" data-i18n-placeholder="expense.create.description_placeholder" placeholder="Ex: Dinner at the restaurant" required>
+        </div>
+        <div class="form-group">
+          <label for="expense-amount" data-i18n="expense.create.amount">Amount</label>
+          <input type="number" id="expense-amount" data-i18n-placeholder="expense.create.amount_placeholder" placeholder="0.00" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="expense-group" data-i18n="expense.create.group">Group</label>
+          <select id="expense-group" required><option value="">Select group...</option></select>
+        </div>
+        <div class="form-group">
+          <label for="expense-paid-by" data-i18n="expense.create.paid_by">Who paid?</label>
+          <select id="expense-paid-by" required><option value="">Select who paid...</option></select>
+        </div>
+        <div class="form-group">
+          <label for="expense-currency" data-i18n="expense.create.currency">Currency</label>
+          <select id="expense-currency" required>
+            <option value="EUR">EUR - Euro</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="UYU">UYU - Uruguayan Peso</option>
+            <option value="BOB">BOB - Bolivian Boliviano</option>
+            <option value="PYG">PYG - Paraguayan Guarani</option>
+            <option value="VES">VES - Venezuelan Bolivar</option>
+            <option value="PAB">PAB - Panamanian Balboa</option>
+            <option value="CRC">CRC - Costa Rican Colon</option>
+            <option value="GTQ">GTQ - Guatemalan Quetzal</option>
+            <option value="DOP">DOP - Dominican Peso</option>
+            <option value="HNL">HNL - Honduran Lempira</option>
+            <option value="NIO">NIO - Nicaraguan Cordoba</option>
+            <option value="CUP">CUP - Cuban Peso</option>
+            <option value="CAD">CAD - Canadian Dollar</option>
+            <option value="GBP">GBP - British Pound</option>
+            <option value="CHF">CHF - Swiss Franc</option>
+            <option value="NOK">NOK - Norwegian Krone</option>
+            <option value="SEK">SEK - Swedish Krona</option>
+            <option value="DKK">DKK - Danish Krone</option>
+            <option value="PLN">PLN - Polish Zloty</option>
+            <option value="CZK">CZK - Czech Koruna</option>
+            <option value="HUF">HUF - Hungarian Forint</option>
+            <option value="RON">RON - Romanian Leu</option>
+            <option value="BGN">BGN - Bulgarian Lev</option>
+            <option value="TRY">TRY - Turkish Lira</option>
+            <option value="RUB">RUB - Russian Ruble</option>
+            <option value="UAH">UAH - Ukrainian Hryvnia</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="expense-category" data-i18n="expense.create.category">Category</label>
+          <select id="expense-category">
+            <option value="otros" data-i18n="cat.otros">Other</option>
+            <option value="comida" data-i18n="cat.comida">Food</option>
+            <option value="transporte" data-i18n="cat.transporte">Transport</option>
+            <option value="alojamiento" data-i18n="cat.alojamiento">Accommodation</option>
+            <option value="supermercado" data-i18n="cat.supermercado">Groceries</option>
+            <option value="ocio" data-i18n="cat.ocio">Entertainment</option>
+            <option value="salud" data-i18n="cat.salud">Health</option>
+            <option value="servicios" data-i18n="cat.servicios">Services</option>
+            <option value="compras" data-i18n="cat.compras">Shopping</option>
+            <option value="viajes" data-i18n="cat.viajes">Travel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="split-type" data-i18n="expense.create.split_type">Split type:</label>
+          <select id="split-type" required>
+            <option value="equal" data-i18n="expense.create.split_equal">Equal parts</option>
+            <option value="percentage" data-i18n="expense.create.split_percentage">By percentage (%)</option>
+            <option value="exact" data-i18n="expense.create.split_exact">Exact amounts</option>
+            <option value="shares" data-i18n="expense.create.split_shares">By shares</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label data-i18n="expense.create.split_between">Split between:</label>
+          <div id="expense-split-members" class="split-members-list">
+            <p class="placeholder-text" style="padding: 10px 0;" data-i18n="expense.create.split_no_group">Select a group to see members...</p>
+          </div>
+        </div>
+        <div class="form-group">
+          <label data-i18n="expense.create.split_summary">Split summary:</label>
+          <div id="split-summary" style="padding: 10px; background: #f8fafc; border-radius: 10px; font-size: 0.85rem; color: #4a5568;">
+            <p data-i18n="expense.create.split_no_group_hint">Select a group and adjust the values.</p>
+          </div>
+        </div>
+        <p id="expense-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-expense" class="btn-secondary" data-i18n="expense.create.cancel">Cancel</button>
+          <button type="submit" class="btn-primary" data-i18n="expense.create.submit">Save Expense</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Detalle del Grupo -->
+  <div id="modal-group-detail" class="modal-overlay hidden">
+    <div class="modal-content modal-detail-content">
+      <div class="modal-scrollable">
+        <h3 id="detail-group-name" data-i18n="group.detail.title">Group Details</h3>
+
+        <div id="group-info-badges" style="text-align: center; margin-bottom: 10px;"></div>
+
+        <div id="group-action-buttons" style="display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; flex-wrap: wrap;">
+          <button id="btn-calculate-today" class="btn-calculate-today" style="display: none;">
+            Calculate in today's rate
+          </button>
+          <button id="btn-edit-manual-rate" class="btn-edit-manual-rate" style="display: none;">
+            Edit rate
+          </button>
+          <button id="btn-close-computo" class="btn-close-computo" style="display: none;">
+            Close calculation
+          </button>
+          <button id="btn-reopen-computo" class="btn-reopen-computo" style="display: none;">
+            Reopen
+          </button>
+        </div>
+
+        <div id="manual-rate-editor" class="manual-rate-editor hidden">
+          <label style="font-size: 0.85rem; font-weight: 600; color: #4a5568; display: block; margin-bottom: 6px;" data-i18n="group.rate.label">
+            Manual rate
+          </label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span id="edit-manual-rate-label" style="font-weight: 600; color: #4a5568; font-size: 0.9rem; white-space: nowrap;">1 EUR =</span>
+            <input type="number" id="edit-manual-rate-input" placeholder="Ex: 1200" step="0.01" min="0" style="flex: 1; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-size: 0.9rem;">
+            <span id="edit-manual-rate-currency" style="font-weight: 600; color: #4a5568; font-size: 0.9rem;">ARS</span>
+          </div>
+          <div style="display: flex; gap: 8px; margin-top: 8px; justify-content: flex-end;">
+            <button type="button" id="btn-cancel-manual-rate" class="btn-secondary" style="padding: 6px 12px; font-size: 0.8rem;" data-i18n="group.rate.cancel">Cancel</button>
+            <button type="button" id="btn-save-manual-rate" class="btn-primary" style="padding: 6px 12px; font-size: 0.8rem; width: auto;" data-i18n="group.rate.save">Save</button>
+          </div>
+          <p id="manual-rate-error" class="error-msg" style="text-align: left; font-size: 0.75rem; margin-top: 6px;"></p>
+        </div>
+
+        <div class="balance-section">
+          <h4 data-i18n="group.detail.balance">Balance</h4>
+          <div id="group-balance"><p class="placeholder-text" data-i18n="group.detail.balance_loading">Calculating balances...</p></div>
+        </div>
+
+        <div class="expenses-section">
+          <div class="section-header">
+            <h4 data-i18n="group.detail.expenses_section">Expenses</h4>
+            <button id="btn-add-expense-from-detail" class="btn-small" data-i18n="group.detail.expenses_add">+ Add</button>
+          </div>
+          <div class="form-group" style="margin-bottom: 10px;">
+            <select id="filter-category">
+              <option value="" data-i18n="category.filter.all">All categories</option>
+              <option value="comida" data-i18n="cat.comida">Food</option>
+              <option value="transporte" data-i18n="cat.transporte">Transport</option>
+              <option value="alojamiento" data-i18n="cat.alojamiento">Accommodation</option>
+              <option value="supermercado" data-i18n="cat.supermercado">Groceries</option>
+              <option value="ocio" data-i18n="cat.ocio">Entertainment</option>
+              <option value="salud" data-i18n="cat.salud">Health</option>
+              <option value="servicios" data-i18n="cat.servicios">Services</option>
+              <option value="compras" data-i18n="cat.compras">Shopping</option>
+              <option value="viajes" data-i18n="cat.viajes">Travel</option>
+              <option value="otros" data-i18n="cat.otros">Other</option>
+            </select>
+          </div>
+          <div id="group-expenses-list"><p class="placeholder-text" data-i18n="group.detail.expenses_loading">Loading expenses...</p></div>
+
+          <div id="group-archived-badge" class="group-archived-badge hidden"></div>
+
+          <div class="archived-toggle-wrap">
+            <button type="button" id="btn-toggle-archived-expenses" class="btn-toggle-archived-expenses">
+              &#128230; View archived expenses
+            </button>
+          </div>
+
+          <div id="group-archived-expenses" class="group-archived-expenses hidden">
+            <p class="placeholder-text" data-i18n="dashboard.loading">Loading...</p>
+          </div>
+        </div>
+
+        <div class="members-section">
+          <div class="section-header">
+            <h4 data-i18n="group.detail.members_section">Members</h4>
+            <button id="btn-add-member" class="btn-small" data-i18n="group.detail.members_add">+ Add member</button>
+          </div>
+          <div id="group-members-list"><p class="placeholder-text" data-i18n="group.detail.members_loading">Loading members...</p></div>
+        </div>
+
+        <div class="extras-toggle-wrap">
+          <button type="button" id="btn-toggle-extras" class="btn-toggle-extras">
+            &#128202; View charts, totals and history
+          </button>
+        </div>
+
+        <div id="group-extras" class="group-extras hidden">
+          <div class="charts-section">
+            <div class="section-header"><h4 data-i18n="group.detail.charts_by_person">Chart by person</h4></div>
+            <div class="chart-container"><canvas id="chart-by-person"></canvas></div>
+          </div>
+
+          <div class="charts-section">
+            <div class="section-header"><h4 data-i18n="group.detail.charts_by_category">Chart by category</h4></div>
+            <div class="chart-container"><canvas id="chart-by-category"></canvas></div>
+          </div>
+
+          <div class="totals-section">
+            <div class="section-header"><h4 data-i18n="group.detail.totals_by_category">Totals by category</h4></div>
+            <div id="group-category-totals"><p class="placeholder-text" data-i18n="group.detail.no_data">No data.</p></div>
+          </div>
+
+          <div class="history-section">
+            <div class="section-header"><h4 data-i18n="group.detail.history_section">History</h4></div>
+            <div id="group-history-list"><p class="placeholder-text" data-i18n="group.detail.history_loading">Loading history...</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions modal-actions-sticky">
+        <button type="button" id="btn-close-detail" class="btn-close-detail" data-i18n="group.detail.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Anadir miembro -->
+  <div id="modal-add-member" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 data-i18n="group.detail.add_member_title">Add member to group</h3>
+      <p style="font-size: 0.85rem; color: #718096; text-align: center; margin-bottom: 15px;" data-i18n="group.detail.add_member_hint">
+        Select a friend to add to this group
+      </p>
+      <div id="available-friends-list"><p class="placeholder-text" data-i18n="group.detail.add_member_loading">Loading friends...</p></div>
+      <div class="modal-actions">
+        <button type="button" id="btn-cancel-add-member" class="btn-secondary" data-i18n="group.detail.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Detalle del Gasto -->
+  <div id="modal-expense-detail" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <h3 data-i18n="expense.detail.title">Expense Details</h3>
+      <div id="expense-detail-content" style="padding: 15px 0;">
+        <p class="placeholder-text" data-i18n="expense.detail.loading">Loading...</p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-edit-expense" class="btn-secondary" style="background: #ebf4ff; color: #3182ce;" data-i18n="expense.detail.edit">Edit</button>
+        <button type="button" id="btn-delete-expense" class="btn-secondary" style="background: #fefcbf; color: #b7791f;" data-i18n="expense.detail.archive">Archive</button>
+        <button type="button" id="btn-close-expense-detail" class="btn-secondary" data-i18n="expense.detail.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Editar Gasto -->
+  <div id="modal-expense-edit" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 data-i18n="expense.edit.title">Edit Expense</h3>
+      <form id="form-expense-edit">
+        <input type="hidden" id="edit-expense-id">
+        <div class="form-group">
+          <label for="edit-expense-description" data-i18n="expense.edit.description">What was it?</label>
+          <input type="text" id="edit-expense-description" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-expense-amount" data-i18n="expense.edit.amount">Amount</label>
+          <input type="number" id="edit-expense-amount" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-expense-category" data-i18n="expense.edit.category">Category</label>
+          <select id="edit-expense-category">
+            <option value="otros" data-i18n="cat.otros">Other</option>
+            <option value="comida" data-i18n="cat.comida">Food</option>
+            <option value="transporte" data-i18n="cat.transporte">Transport</option>
+            <option value="alojamiento" data-i18n="cat.alojamiento">Accommodation</option>
+            <option value="supermercado" data-i18n="cat.supermercado">Groceries</option>
+            <option value="ocio" data-i18n="cat.ocio">Entertainment</option>
+            <option value="salud" data-i18n="cat.salud">Health</option>
+            <option value="servicios" data-i18n="cat.servicios">Services</option>
+            <option value="compras" data-i18n="cat.compras">Shopping</option>
+            <option value="viajes" data-i18n="cat.viajes">Travel</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="edit-expense-currency" data-i18n="expense.edit.currency">Currency</label>
+          <select id="edit-expense-currency" required>
+            <option value="EUR">EUR - Euro</option>
+            <option value="USD">USD - US Dollar</option>
+            <option value="ARS">ARS - Argentine Peso</option>
+            <option value="MXN">MXN - Mexican Peso</option>
+            <option value="BRL">BRL - Brazilian Real</option>
+            <option value="CLP">CLP - Chilean Peso</option>
+            <option value="COP">COP - Colombian Peso</option>
+            <option value="PEN">PEN - Peruvian Sol</option>
+            <option value="UYU">UYU - Uruguayan Peso</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="edit-expense-paid-by" data-i18n="expense.edit.paid_by">Who paid?</label>
+          <select id="edit-expense-paid-by" required></select>
+        </div>
+        <p id="edit-expense-error" class="error-msg"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-edit" class="btn-secondary" data-i18n="expense.edit.cancel">Cancel</button>
+          <button type="submit" class="btn-primary" data-i18n="expense.edit.submit">Save changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Manual de uso -->
+  <div id="modal-manual" class="modal-overlay hidden">
+    <div class="modal-content manual-content">
+      <h3 data-i18n="manual.title">User manual</h3>
+      <div class="manual-body">
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.what_is.title">What is PYM Split?</h4>
+          <p data-i18n-html="manual.what_is.p1">PYM Split is an app to split expenses...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s1.title">1. Create an account</h4>
+          <p data-i18n-html="manual.s1.p1">On the home screen, tap Create account...</p>
+          <p data-i18n-html="manual.s1.p2">After registering, check your email...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s2.title">2. Complete your Profile</h4>
+          <p data-i18n-html="manual.s2.p1">Tap the Profile button at the top right...</p>
+          <ul>
+            <li data-i18n-html="manual.s2.li1">Edit your name.</li>
+            <li data-i18n-html="manual.s2.li2">Add your phone (optional).</li>
+            <li data-i18n-html="manual.s2.li3">Choose your preferred currency.</li>
+            <li data-i18n-html="manual.s2.li4">Choose the app language.</li>
+          </ul>
+          <p data-i18n-html="manual.s2.p2">The preferred currency defines...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s3.title">3. Add friends</h4>
+          <p data-i18n-html="manual.s3.p1">Tap the Friends button at the top right.</p>
+          <ul>
+            <li data-i18n-html="manual.s3.li1">Type your friend email and tap Send.</li>
+            <li data-i18n-html="manual.s3.li2">Your friend will receive a request...</li>
+            <li data-i18n-html="manual.s3.li3">You can also accept or reject requests...</li>
+          </ul>
+          <p data-i18n-html="manual.s3.p2">Note: your friend must be registered...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s4.title">4. Create a group</h4>
+          <p data-i18n-html="manual.s4.p1">On the home screen, tap + New above My Groups.</p>
+          <ul>
+            <li data-i18n-html="manual.s4.li1">Name: e.g. Trip to Cancun...</li>
+            <li data-i18n-html="manual.s4.li2">Type: trip, apartment, outings or other.</li>
+            <li data-i18n-html="manual.s4.li3">Currency: the group main currency.</li>
+            <li data-i18n-html="manual.s4.li4">Start and end date (optional).</li>
+            <li data-i18n-html="manual.s4.li5">Manual rate (optional).</li>
+          </ul>
+          <p data-i18n-html="manual.s4.p2">Tap Create Group and that is it...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s5.title">5. Add friends to the group</h4>
+          <p data-i18n-html="manual.s5.p1">Open the group and tap + Add member.</p>
+          <p data-i18n-html="manual.s5.p2">Select one of your friends from the list...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s6.title">6. Add an expense</h4>
+          <p data-i18n-html="manual.s6.p1">Tap the + button (bottom right).</p>
+          <ul>
+            <li data-i18n-html="manual.s6.li1">What was it: e.g. Dinner, Taxi...</li>
+            <li data-i18n-html="manual.s6.li2">Amount: how much it cost.</li>
+            <li data-i18n-html="manual.s6.li3">Group: which group it belongs to.</li>
+            <li data-i18n-html="manual.s6.li4">Who paid: who put in the money.</li>
+            <li data-i18n-html="manual.s6.li5">Currency: in which currency it was paid.</li>
+            <li data-i18n-html="manual.s6.li6">Category: food, transport, etc.</li>
+            <li data-i18n-html="manual.s6.li7">Split type: how it is divided.</li>
+          </ul>
+          <p data-i18n-html="manual.s6.p2">After saving, the main dashboard updates...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s7.title">7. Split types</h4>
+          <ul>
+            <li data-i18n-html="manual.s7.li1">Equal parts: the total is divided equally...</li>
+            <li data-i18n-html="manual.s7.li2">By percentage: you assign a % to each...</li>
+            <li data-i18n-html="manual.s7.li3">Exact amounts: you enter the exact amount...</li>
+            <li data-i18n-html="manual.s7.li4">By shares: e.g. one has 2 shares...</li>
+          </ul>
+          <p data-i18n-html="manual.s7.p1">You can check or uncheck people...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s8.title">8. Multiple currencies</h4>
+          <p data-i18n-html="manual.s8.p1">Each group has its main currency...</p>
+          <p data-i18n-html="manual.s8.p2">Example: a group in MXN...</p>
+          <p data-i18n-html="manual.s8.p3">In your Profile you choose your preferred currency...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s9.title">9. Automatic and manual rates</h4>
+          <p data-i18n-html="manual.s9.p1">The app tries to get the rate from 2 automatic sources:</p>
+          <ul>
+            <li data-i18n-html="manual.s9.li1">Frankfurter (European Central Bank): EUR, USD, MXN, BRL, CLP, etc.</li>
+            <li data-i18n-html="manual.s9.li2">DolarAPI (Argentina): ARS, and other Latin American currencies.</li>
+          </ul>
+          <p data-i18n-html="manual.s9.p2">If the currency is not in either of them...</p>
+          <p data-i18n-html="manual.s9.p3">Important: the manual rate is always saved against USD...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s10.title">10. Edit the manual rate</h4>
+          <p data-i18n-html="manual.s10.p1">If a group has a manual rate, the Edit rate button appears...</p>
+          <p data-i18n-html="manual.s10.p2">When you tap it, you can change the value...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s11.title">11. View the group balance</h4>
+          <p data-i18n-html="manual.s11.p1">When you open a group, the Balance appears at the top...</p>
+          <p data-i18n-html="manual.s11.p2">The app simplifies debts: if A owes B...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s12.title">12. Trip total and My share</h4>
+          <p data-i18n-html="manual.s12.p1">In the group details, above the balance, 2 numbers are shown:</p>
+          <ul>
+            <li data-i18n-html="manual.s12.li1">Trip total: how much was spent in total.</li>
+            <li data-i18n-html="manual.s12.li2">My share: how much corresponds to you...</li>
+          </ul>
+          <p data-i18n-html="manual.s12.p2">If your preferred currency differs from the group...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s13.title">13. Calculate in today rate</h4>
+          <p data-i18n-html="manual.s13.p1">In the details of an archived group...</p>
+          <ul>
+            <li data-i18n-html="manual.s13.li1">The total spent with the rates at the time...</li>
+            <li data-i18n-html="manual.s13.li2">The total it would cost with today rates.</li>
+            <li data-i18n-html="manual.s13.li3">The difference (how much it went up or down).</li>
+          </ul>
+          <p data-i18n-html="manual.s13.p2">It is informative only.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s14.title">14. Close the calculation of a trip</h4>
+          <p data-i18n-html="manual.s14.p1">When the trip ends, tap Close calculation...</p>
+          <ul>
+            <li data-i18n-html="manual.s14.li1">The closing date (automatic, not editable).</li>
+            <li data-i18n-html="manual.s14.li2">The final total of the trip in the group currency.</li>
+          </ul>
+          <p data-i18n-html="manual.s14.p2">If you made a mistake, you can tap Reopen...</p>
+          <p data-i18n-html="manual.s14.p3">This is useful to leave the trip result frozen.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s15.title">15. Settle debts</h4>
+          <p data-i18n-html="manual.s15.p1">When someone has already paid outside...</p>
+          <p data-i18n-html="manual.s15.p2">You confirm and the balance updates automatically.</p>
+          <p data-i18n-html="manual.s15.p3">Note: the app does NOT move money...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s16.title">16. Main dashboard</h4>
+          <p data-i18n-html="manual.s16.p1">The home screen shows:</p>
+          <ul>
+            <li data-i18n-html="manual.s16.li1">Range tabs: Active groups / Archived groups / All.</li>
+            <li data-i18n-html="manual.s16.li2">3 cards: Total spent, They owe you, You owe...</li>
+            <li data-i18n-html="manual.s16.li3">Recent activity: the 5 most recent expenses.</li>
+            <li data-i18n-html="manual.s16.li4">See history button: opens the chart + table...</li>
+          </ul>
+          <p data-i18n-html="manual.s16.p2">All amounts are automatically converted...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s17.title">17. Monthly history</h4>
+          <p data-i18n-html="manual.s17.p1">Tap the See history button...</p>
+          <p data-i18n-html="manual.s17.p2">A modal opens with:</p>
+          <ul>
+            <li data-i18n-html="manual.s17.li1">Bar chart: how much was spent each month.</li>
+            <li data-i18n-html="manual.s17.li2">Table: month, number of expenses and total.</li>
+            <li data-i18n-html="manual.s17.li3">Final row: total of the last 12 months.</li>
+          </ul>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s18.title">18. Group history and charts</h4>
+          <p data-i18n-html="manual.s18.p1">Inside each group, further down, you will see...</p>
+          <ul>
+            <li data-i18n-html="manual.s18.li1">Charts: how much each person paid...</li>
+            <li data-i18n-html="manual.s18.li2">Totals by category: breakdown...</li>
+            <li data-i18n-html="manual.s18.li3">History: all movements...</li>
+          </ul>
+          <p data-i18n-html="manual.s18.p2">Tap it again to hide them...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s19.title">19. Filters</h4>
+          <p data-i18n-html="manual.s19.p1">In the expense list of a group, you can filter by category...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s20.title">20. Edit or archive an expense</h4>
+          <p data-i18n-html="manual.s20.p1">Tap any expense in the list. The details open, with 2 buttons:</p>
+          <ul>
+            <li data-i18n-html="manual.s20.li1">Edit: change description, amount, category...</li>
+            <li data-i18n-html="manual.s20.li2">Archive: the expense stops being part...</li>
+          </ul>
+          <p data-i18n-html="manual.s20.p2">Archived expenses appear in a special button...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s21.title">21. Archive and restore groups</h4>
+          <p data-i18n-html="manual.s21.p1">Each group has an archive button...</p>
+          <p data-i18n-html="manual.s21.p2">Important: to archive a group you must first close its calculation.</p>
+          <p data-i18n-html="manual.s21.p3">To see archived groups, tap the Archived button...</p>
+          <p data-i18n-html="manual.s21.p4">There you can restore them or permanently delete them.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s22.title">22. Delete a group</h4>
+          <p data-i18n-html="manual.s22.p1">A group can only be deleted after archiving it...</p>
+          <p data-i18n-html="manual.s22.p2">Warning: deleting a group removes ALL its expenses...</p>
+          <p data-i18n-html="manual.s22.p3">If you want to keep the history, use archive instead of delete.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.s23.title">23. Install as an app on your phone</h4>
+          <p data-i18n-html="manual.s23.ios_label"><strong>iPhone (Safari):</strong></p>
+          <ul>
+            <li data-i18n-html="manual.s23.ios_li1">Open the app.</li>
+            <li data-i18n-html="manual.s23.ios_li2">Tap the Share button (arrow up).</li>
+            <li data-i18n-html="manual.s23.ios_li3">Choose "Add to Home Screen".</li>
+          </ul>
+          <p data-i18n-html="manual.s23.android_label"><strong>Android (Chrome):</strong></p>
+          <ul>
+            <li data-i18n-html="manual.s23.android_li1">Open the app.</li>
+            <li data-i18n-html="manual.s23.android_li2">Menu (3 dots) - "Install app".</li>
+          </ul>
+          <p data-i18n-html="manual.s23.p1">It will look like a normal app, with its icon.</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.faq.title">Frequently asked questions</h4>
+          <p data-i18n-html="manual.faq.q1">Does the app move money?...</p>
+          <p data-i18n-html="manual.faq.q2">Can I use multiple currencies?...</p>
+          <p data-i18n-html="manual.faq.q3">What if the currency is not available online?...</p>
+          <p data-i18n-html="manual.faq.q4">What if I make a mistake when adding an expense?...</p>
+          <p data-i18n-html="manual.faq.q5">Can I use the app without internet?...</p>
+          <p data-i18n-html="manual.faq.q6">Who can see my expenses?...</p>
+          <p data-i18n-html="manual.faq.q7">How many people can be in a group?...</p>
+          <p data-i18n-html="manual.faq.q8">Can I use the same account on multiple devices?...</p>
+          <p data-i18n-html="manual.faq.q9">Does the app work on iPhone and Android?...</p>
+        </section>
+
+        <section class="manual-section">
+          <h4 data-i18n="manual.guestbook.title">Guestbook</h4>
+          <p data-i18n-html="manual.guestbook.p1">Leave us your comment, suggestion or greeting...</p>
+
+          <form id="form-guestbook" style="margin-top: 12px; margin-bottom: 20px;">
+            <div class="form-group">
+              <textarea id="guestbook-message" data-i18n-placeholder="guestbook.placeholder" placeholder="Write your comment..." rows="3" maxlength="500" required style="width: 100%; padding: 10px 14px; border: 2px solid #e2e8f0; border-radius: 10px; font-family: inherit; font-size: 0.9rem; resize: vertical; outline: none;"></textarea>
+              <small style="color: #a0aec0; font-size: 0.75rem; text-align: right; display: block; margin-top: 4px;" data-i18n="guestbook.max_chars">
+                Maximum 500 characters
+              </small>
+            </div>
+            <div style="display: flex; justify-content: flex-end; margin-top: 8px;">
+              <button type="submit" class="btn-primary" style="width: auto; padding: 10px 20px;" data-i18n="guestbook.publish">Publish</button>
+            </div>
+            <p id="guestbook-error" class="error-msg" style="text-align: left;"></p>
+          </form>
+
+          <div id="guestbook-list" style="margin-top: 15px;">
+            <p class="placeholder-text" data-i18n="guestbook.loading">Loading comments...</p>
+          </div>
+        </section>
+
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="btn-close-manual" class="btn-secondary" data-i18n="manual.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Mi Perfil -->
+  <div id="modal-profile" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h3 data-i18n="profile.title">My Profile</h3>
+      <form id="form-profile">
+        <div class="form-group">
+          <label for="profile-email" data-i18n="profile.email">Email</label>
+          <input type="email" id="profile-email" disabled style="background: #f7fafc; color: #718096;">
+        </div>
+        <div class="form-group">
+          <label for="profile-name" data-i18n="profile.name">Name</label>
+          <input type="text" id="profile-name" data-i18n-placeholder="profile.name_placeholder" placeholder="Your full name">
+        </div>
+        <div class="form-group">
+          <label for="profile-phone" data-i18n="profile.phone">Phone (optional)</label>
+          <input type="tel" id="profile-phone" placeholder="+1 555 123 4567">
+        </div>
+        <div class="form-group">
+          <label for="profile-currency" data-i18n="profile.currency">Preferred currency</label>
+          <select id="profile-currency" required>
+            <option value="EUR">EUR - Euro</option>
+          </select>
+          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.currency_hint">
+            The dashboard will show totals in this currency.
+          </small>
+        </div>
+        <div class="form-group">
+          <label for="profile-language" data-i18n="profile.language">Language</label>
+          <select id="profile-language" required>
+            <option value="en">English (US)</option>
+            <option value="es">Spanish</option>
+          </select>
+          <small style="color: #718096; font-size: 0.75rem; margin-top: 4px; display: block;" data-i18n="profile.language_hint">
+            Choose the app language.
+          </small>
+        </div>
+
+        <p id="profile-error" class="error-msg"></p>
+        <p id="profile-success" class="success-msg" style="text-align: center; font-size: 0.85rem;"></p>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-profile" class="btn-secondary" data-i18n="profile.cancel">Cancel</button>
+          <button type="submit" class="btn-primary" data-i18n="profile.save">Save changes</button>
+        </div>
+      </form>
+
+      <div style="border-top: 1px solid #edf2f7; margin-top: 20px; padding-top: 15px;">
+        <button type="button" id="btn-export-data" class="btn-secondary" style="width: 100%; background: #ebf4ff; color: #2b6cb0;" data-i18n="profile.export_button">
+          Export my data
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Historico (grafico + tabla) -->
+  <div id="modal-chart-history" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 700px;">
+      <h3 data-i18n="dashboard.history_title">Monthly history</h3>
+
+      <div style="padding: 10px 0 15px 0;">
+        <div style="position: relative; width: 100%; height: 260px;">
+          <canvas id="chart-history"></canvas>
+        </div>
+      </div>
+
+      <p style="font-size: 0.75rem; color: #a0aec0; text-align: center; margin-bottom: 15px;" data-i18n="dashboard.history_subtitle">
+        Last 12 months, converted to your preferred currency.
+      </p>
+
+      <div id="history-table">
+        <p class="placeholder-text" data-i18n="dashboard.history_loading">Loading history...</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-close-chart-history" class="btn-secondary" data-i18n="dashboard.close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Simulador "Calcular hoy" -->
+  <div id="modal-calculator" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width: 500px;">
+      <h3 data-i18n="group.calc.modal_title">Today calculator</h3>
+
+      <div id="calculator-body" style="padding: 15px 0;">
+        <p class="placeholder-text" data-i18n="group.calc.loading">Calculating...</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" id="btn-close-calculator" class="btn-secondary" data-i18n="group.calc.modal_close">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/ui.js"></script>
 </body>
 </html>
