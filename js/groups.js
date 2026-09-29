@@ -659,7 +659,11 @@ async function abrirDetalleGrupo(groupId) {
   if (btnAddExpense) {
     btnAddExpense.style.display = estaArchivado ? 'none' : 'inline-block';
   }
-
+// Ocultar boton "+ Anadir miembro" si el grupo esta archivado
+const btnAddMember = document.getElementById('btn-add-member');
+if (btnAddMember) {
+  btnAddMember.style.display = estaArchivado ? 'none' : 'inline-block';
+}
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
