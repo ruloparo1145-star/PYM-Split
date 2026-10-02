@@ -653,7 +653,7 @@ export function initExpenseModal() {
     try {
       await guardarGasto(descripcion, monto, groupId, paidBy);
       modal.classList.add('hidden');
-      alert(t('expense.create.success'));
+      // alert(t('expense.create.success'));
       const groupIdDetail = document.getElementById('modal-group-detail').dataset.groupId;
       if (groupIdDetail && groupIdDetail === groupId) {
         const { cargarGastosDelGrupo } = await import('./expenses.js');
