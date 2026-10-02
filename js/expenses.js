@@ -45,8 +45,13 @@ export async function cargarGruposParaGasto() {
   const selectGrupo = document.getElementById('expense-group');
   selectGrupo.innerHTML = `<option value="">${t('expense.create.group_placeholder')}</option>` +
     (grupos || []).map(g => `<option value="${g.id}">${g.name}</option>`).join('');
-}
 
+  // ðŸ†• AUTO-SELECCION: si solo hay 1 grupo activo, seleccionarlo y cargar sus miembros
+  if (grupos && grupos.length === 1) {
+    selectGrupo.value = grupos[0].id;
+    await cargarMiembrosDelGrupo(grupos[0].id);
+  }
+}
 // ==========================================
 // 2. CARGAR MIEMBROS DEL GRUPO
 // ==========================================
