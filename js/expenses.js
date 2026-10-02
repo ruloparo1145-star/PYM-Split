@@ -46,20 +46,20 @@ export async function cargarGruposParaGasto() {
   selectGrupo.innerHTML = `<option value="">${t('expense.create.group_placeholder')}</option>` +
     (grupos || []).map(g => `<option value="${g.id}">${g.name}</option>`).join('');
 
-  // ðŸ†• AUTO-SELECCION: si solo hay 1 grupo activo, seleccionarlo y cargar sus miembros
+  // AUTO-SELECCION: si solo hay 1 grupo activo, seleccionarlo y cargar sus miembros
   if (grupos && grupos.length === 1) {
     selectGrupo.value = grupos[0].id;
     await cargarMiembrosDelGrupo(grupos[0].id);
   }
 }
+
 // ==========================================
 // 2. CARGAR MIEMBROS DEL GRUPO
 // ==========================================
-
 export async function cargarMiembrosDelGrupo(groupId) {
   const splitList = document.getElementById('expense-split-members');
   const selectPaidBy = document.getElementById('expense-paid-by');
-  
+
   if (!groupId) {
     splitList.innerHTML = `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
     selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
@@ -77,17 +77,17 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
-  // Generar el HTML de opciones
-  const opcionesPaidBy = miembros.map(m => 
+  // Generar opciones del select "Quien pago"
+  const opcionesPaidBy = miembros.map(m =>
     `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`
   ).join('');
 
   selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>` + opcionesPaidBy;
 
-  // ðŸ†• AUTO-SELECCION del pagador:
-  // 1. Si solo hay 1 miembro en el grupo â†’ seleccionarlo
-  // 2. Si el usuario actual esta en el grupo â†’ seleccionarlo
-  // 3. Si no, dejar vacio (placeholder)
+  // AUTO-SELECCION del pagador:
+  // 1. Si el usuario actual esta en el grupo -> seleccionarlo
+  // 2. Si no, y solo hay 1 miembro -> seleccionarlo
+  // 3. Si no, dejar el placeholder
   const { data: { user } } = await supabase.auth.getUser();
   const userEstaEnGrupo = user && miembros.some(m => m.user_id === user.id);
 
@@ -96,9 +96,8 @@ export async function cargarMiembrosDelGrupo(groupId) {
   } else if (miembros.length === 1) {
     selectPaidBy.value = miembros[0].user_id;
   }
-  
-  // ... resto del codigo (carga moneda del grupo, renderiza split, etc.) ...
-}  
+
+  // Cargar moneda del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -126,7 +125,7 @@ export async function cargarMiembrosDelGrupo(groupId) {
       selectMoneda.value = monedaGrupo;
     }
   }
- 
+
   renderizarSplitInputs(miembros);
 }
 
@@ -201,8 +200,8 @@ function actualizarResumenSplit() {
       const montoPct = (monto * pct / 100).toFixed(2);
       lineas.push(`<p>${pct}% -> <strong>${montoPct} ${moneda}</strong></p>`);
     });
-    const aviso = Math.abs(total - 100) > 0.01 
-      ? `<p style="color: #e53e3e; margin-top: 5px;">${t('expense.create.percent_sum', { total: total.toFixed(2) })}</p>` 
+    const aviso = Math.abs(total - 100) > 0.01
+      ? `<p style="color: #e53e3e; margin-top: 5px;">${t('expense.create.percent_sum', { total: total.toFixed(2) })}</p>`
       : `<p style="color: #38a169; margin-top: 5px;">${t('expense.create.percent_ok')}</p>`;
     summary.innerHTML = lineas.join('') + aviso;
     return;
@@ -217,8 +216,8 @@ function actualizarResumenSplit() {
       total += val;
       lineas.push(`<p>${val.toFixed(2)} ${moneda}</p>`);
     });
-    const aviso = Math.abs(total - monto) > 0.01 
-      ? `<p style="color: #e53e3e; margin-top: 5px;">${t('expense.create.exact_sum', { total: total.toFixed(2), moneda, esperado: monto.toFixed(2) })}</p>` 
+    const aviso = Math.abs(total - monto) > 0.01
+      ? `<p style="color: #e53e3e; margin-top: 5px;">${t('expense.create.exact_sum', { total: total.toFixed(2), moneda, esperado: monto.toFixed(2) })}</p>`
       : `<p style="color: #38a169; margin-top: 5px;">${t('expense.create.exact_ok')}</p>`;
     summary.innerHTML = lineas.join('') + aviso;
     return;
@@ -271,7 +270,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       amount_owed: montoPorPersona,
       split_type: 'equal'
     }));
-  } 
+  }
   else if (splitType === 'percentage') {
     let totalPct = 0;
     splits = usuariosSplit.map(userId => {
@@ -287,7 +286,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
     if (Math.abs(totalPct - 100) > 0.01) {
       throw new Error(t('expense.create.percent_error', { total: totalPct.toFixed(2) }));
     }
-  } 
+  }
   else if (splitType === 'exact') {
     let totalExacto = 0;
     splits = usuariosSplit.map(userId => {
@@ -303,7 +302,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
     if (Math.abs(totalExacto - monto) > 0.01) {
       throw new Error(t('expense.create.exact_error', { total: totalExacto.toFixed(2), esperado: monto.toFixed(2) }));
     }
-  } 
+  }
   else if (splitType === 'shares') {
     let totalShares = 0;
     const tempSplits = usuariosSplit.map(userId => {
@@ -379,7 +378,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
 // ==========================================
 export async function cargarGastosDelGrupo(groupId) {
   const listContainer = document.getElementById('group-expenses-list');
-  
+
   const { data: gastos, error } = await supabase
     .from('expenses')
     .select('id, description, amount, currency, date, paid_by, category, exchange_rate')
@@ -605,7 +604,7 @@ export function initExpenseModal() {
     form.reset();
     document.getElementById('split-summary').innerHTML = `<p>${t('expense.create.split_no_group_hint')}</p>`;
     await cargarGruposParaGasto();
-    document.getElementById('expense-split-members').innerHTML = 
+    document.getElementById('expense-split-members').innerHTML =
       `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
     document.getElementById('expense-paid-by').innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
   });
@@ -621,12 +620,12 @@ export function initExpenseModal() {
   splitType.addEventListener('change', () => {
     const groupId = selectGrupo.value;
     if (!groupId) return;
-    
+
     const preserveValues = {};
     document.querySelectorAll('.split-value').forEach(input => {
       preserveValues[input.dataset.user] = input.value;
     });
-    
+
     cargarMiembrosDelGrupo(groupId).then(() => {
       Object.entries(preserveValues).forEach(([userId, val]) => {
         const input = document.querySelector(`.split-value[data-user="${userId}"]`);
@@ -691,7 +690,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
   const modal = document.getElementById('modal-expense-detail');
   const container = document.getElementById('expense-detail-content');
   container.innerHTML = `<p class="placeholder-text">${t('expense.detail.loading')}</p>`;
-  
+
   modal.dataset.expenseId = expenseId;
   modal.dataset.groupId = groupId;
 
@@ -835,9 +834,9 @@ export async function accionGasto() {
 
   const { error } = await supabase
     .from('expenses')
-    .update({ 
-      archived: true, 
-      archived_at: new Date().toISOString() 
+    .update({
+      archived: true,
+      archived_at: new Date().toISOString()
     })
     .eq('id', expenseId);
 
@@ -857,9 +856,9 @@ export async function accionGasto() {
 export async function restaurarGasto(expenseId, groupId) {
   const { error } = await supabase
     .from('expenses')
-    .update({ 
-      archived: false, 
-      archived_at: null 
+    .update({
+      archived: false,
+      archived_at: null
     })
     .eq('id', expenseId);
 
@@ -946,7 +945,7 @@ export async function actualizarBadgeArchivados(groupId) {
   badge.classList.remove('hidden');
   badge.innerHTML = `
     <span class="group-archived-badge-text">
-      &#9888; ${t(claveCount, { count: gastos.length })} 
+      &#9888; ${t(claveCount, { count: gastos.length })}
       ${t('expense.archive.badge_amount', { monto: totalArchivado.toFixed(2), moneda: monedaGrupo })}
     </span>
   `;
@@ -979,7 +978,7 @@ export async function cargarGastoParaEditar() {
     .eq('group_id', gasto.group_id);
 
   const selectPaidBy = document.getElementById('edit-expense-paid-by');
-  selectPaidBy.innerHTML = (miembros || []).map(m => 
+  selectPaidBy.innerHTML = (miembros || []).map(m =>
     `<option value="${m.user_id}" ${m.user_id === gasto.paid_by ? 'selected' : ''}>${m.profiles.full_name || m.profiles.email}</option>`
   ).join('');
 
