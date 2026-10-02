@@ -55,6 +55,7 @@ export async function cargarGruposParaGasto() {
 // ==========================================
 // 2. CARGAR MIEMBROS DEL GRUPO
 // ==========================================
+
 export async function cargarMiembrosDelGrupo(groupId) {
   const splitList = document.getElementById('expense-split-members');
   const selectPaidBy = document.getElementById('expense-paid-by');
@@ -76,9 +77,28 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
-  selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>` +
-    miembros.map(m => `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`).join('');
+  // Generar el HTML de opciones
+  const opcionesPaidBy = miembros.map(m => 
+    `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`
+  ).join('');
+
+  selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>` + opcionesPaidBy;
+
+  // ðŸ†• AUTO-SELECCION del pagador:
+  // 1. Si solo hay 1 miembro en el grupo â†’ seleccionarlo
+  // 2. Si el usuario actual esta en el grupo â†’ seleccionarlo
+  // 3. Si no, dejar vacio (placeholder)
+  const { data: { user } } = await supabase.auth.getUser();
+  const userEstaEnGrupo = user && miembros.some(m => m.user_id === user.id);
+
+  if (userEstaEnGrupo) {
+    selectPaidBy.value = user.id;
+  } else if (miembros.length === 1) {
+    selectPaidBy.value = miembros[0].user_id;
+  }
   
+  // ... resto del codigo (carga moneda del grupo, renderiza split, etc.) ...
+}  
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
