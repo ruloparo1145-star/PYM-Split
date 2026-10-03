@@ -1064,8 +1064,32 @@ async function abrirCalculadora(groupId, groupName) {
 // ==========================================
 // 15. LISTENERS GLOBALES
 // ==========================================
-if (!window.__groupDetailListenersAttached) {
-  window.__groupDetailListenersAttached = true;
+// if (!window.__groupDetailListenersAttached) {
+//  window.__groupDetailListenersAttached = true;
+document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', async () => {
+  const modal = document.getElementById('modal-group-detail');
+
+  // Bloquear si el grupo esta archivado
+  if (modal.dataset.groupArchived === 'true') {
+    alert(t('group.archived.no_add_expense') || 'No se pueden anadir gastos a un grupo archivado.');
+    return;
+  }
+
+  const groupId = modal.dataset.groupId;
+  const groupName = modal.dataset.groupName || '';
+
+  // Cerrar el modal de detalle del grupo
+  modal.classList.add('hidden');
+
+  // Abrir el modal de gasto con el grupo ya preseleccionado
+  const { abrirModalGastoConGrupo } = await import('./expenses.js');
+  await abrirModalGastoConGrupo(groupId, groupName);
+});
+
+
+
+
+
 
   document.getElementById('btn-close-detail')?.addEventListener('click', () => {
     document.getElementById('modal-group-detail').classList.add('hidden');
