@@ -56,7 +56,6 @@ export async function cargarGruposParaGasto() {
 // ==========================================
 // 2. CARGAR MIEMBROS DEL GRUPO
 // ==========================================
-
 export async function cargarMiembrosDelGrupo(groupId) {
   const splitList = document.getElementById('expense-split-members');
   const selectPaidBy = document.getElementById('expense-paid-by');
@@ -68,11 +67,10 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
-  // Asegurar que estamos autenticados (usar getSession es mas fiable)
+  // Usar getSession (mas fiable que getUser)
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || null;
 
-  // Cargar miembros del grupo
   const { data: miembros, error } = await supabase
     .from('group_members')
     .select('user_id, profiles(id, full_name, email)')
@@ -83,7 +81,7 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
-  // Normalizar perfiles (a veces Supabase los devuelve como array)
+  // Normalizar perfiles (Supabase a veces los devuelve como array)
   const miembrosNorm = miembros.map(m => {
     const perfil = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
     return {
@@ -91,9 +89,6 @@ export async function cargarMiembrosDelGrupo(groupId) {
       nombre: perfil?.full_name || perfil?.email || 'Usuario'
     };
   });
-
-  console.log('[gasto] Miembros del grupo:', miembrosNorm);
-  console.log('[gasto] Usuario actual:', user?.id);
 
   // Generar opciones del select "Quien pago"
   const opcionesPaidBy = miembrosNorm.map(m =>
@@ -105,17 +100,12 @@ export async function cargarMiembrosDelGrupo(groupId) {
   // AUTO-SELECCION del pagador:
   // 1. Si el usuario actual esta en el grupo -> seleccionarlo
   // 2. Si no, y solo hay 1 miembro -> seleccionarlo
-  // 3. Si no, dejar el placeholder
   const userEstaEnGrupo = user && miembrosNorm.some(m => m.user_id === user.id);
 
   if (userEstaEnGrupo) {
     selectPaidBy.value = user.id;
-    console.log('[gasto] Auto-seleccionado el usuario actual');
   } else if (miembrosNorm.length === 1) {
     selectPaidBy.value = miembrosNorm[0].user_id;
-    console.log('[gasto] Auto-seleccionado el unico miembro');
-  } else {
-    console.log('[gasto] No se auto-selecciona (usuario no esta en grupo y hay varios miembros)');
   }
 
   // Cargar moneda del grupo
@@ -129,15 +119,18 @@ export async function cargarMiembrosDelGrupo(groupId) {
     const selectMoneda = document.getElementById('expense-currency');
     if (selectMoneda) {
       const monedaGrupo = grupoInfo.currency.toUpperCase();
+
       const existeOpcion = Array.from(selectMoneda.options).some(
         opt => opt.value.toUpperCase() === monedaGrupo
       );
+
       if (!existeOpcion) {
         const nuevaOpcion = document.createElement('option');
         nuevaOpcion.value = monedaGrupo;
         nuevaOpcion.textContent = monedaGrupo + ' - ' + monedaGrupo;
         selectMoneda.appendChild(nuevaOpcion);
       }
+
       selectMoneda.value = monedaGrupo;
     }
   }
@@ -618,11 +611,21 @@ export function initExpenseModal() {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
     form.reset();
+
+    // Restaurar visibilidad del campo "Grupo" (por si se oculto antes)
+    const grupoFormGroup = selectGrupo.closest('.form-group');
+    if (grupoFormGroup) {
+      grupoFormGroup.style.display = '';
+    }
+
+    // Resetear selects ANTES de cargar grupos
     document.getElementById('split-summary').innerHTML = `<p>${t('expense.create.split_no_group_hint')}</p>`;
-    await cargarGruposParaGasto();
     document.getElementById('expense-split-members').innerHTML =
       `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
     document.getElementById('expense-paid-by').innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
+
+    // Cargar grupos (esto puede auto-seleccionar y cargar miembros)
+    await cargarGruposParaGasto();
   });
 
   btnCancel.addEventListener('click', () => {
@@ -669,7 +672,7 @@ export function initExpenseModal() {
     try {
       await guardarGasto(descripcion, monto, groupId, paidBy);
       modal.classList.add('hidden');
-      // alert(t('expense.create.success'));
+
       const groupIdDetail = document.getElementById('modal-group-detail').dataset.groupId;
       if (groupIdDetail && groupIdDetail === groupId) {
         const { cargarGastosDelGrupo } = await import('./expenses.js');
@@ -697,6 +700,51 @@ export function initExpenseModal() {
       btnSubmit.textContent = t('expense.create.submit');
     }
   });
+}
+
+// ==========================================
+// 7b. ABRIR MODAL DE GASTO CON GRUPO YA SELECCIONADO
+// ==========================================
+export async function abrirModalGastoConGrupo(groupId, groupName) {
+  const modal = document.getElementById('modal-expense');
+  const form = document.getElementById('form-expense');
+  const errorMsg = document.getElementById('expense-error');
+  const selectGrupo = document.getElementById('expense-group');
+
+  // Abrir modal y limpiar
+  modal.classList.remove('hidden');
+  errorMsg.textContent = '';
+  form.reset();
+
+  document.getElementById('split-summary').innerHTML = `<p>${t('expense.create.split_no_group_hint')}</p>`;
+  document.getElementById('expense-split-members').innerHTML =
+    `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
+  document.getElementById('expense-paid-by').innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
+
+  // Cargar grupos
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: grupos } = await supabase
+    .from('groups')
+    .select('id, name, currency')
+    .eq('archived', false)
+    .order('name');
+
+  selectGrupo.innerHTML = `<option value="">${t('expense.create.group_placeholder')}</option>` +
+    (grupos || []).map(g => `<option value="${g.id}">${g.name}</option>`).join('');
+
+  // Seleccionar el grupo que venimos
+  selectGrupo.value = groupId;
+
+  // OCULTAR el campo "Grupo" del formulario porque ya viene fijado
+  const grupoFormGroup = selectGrupo.closest('.form-group');
+  if (grupoFormGroup) {
+    grupoFormGroup.style.display = 'none';
+  }
+
+  // Cargar los miembros del grupo
+  await cargarMiembrosDelGrupo(groupId);
 }
 
 // ==========================================
@@ -807,14 +855,9 @@ export async function abrirDetalleGasto(expenseId, groupId) {
   const btnDelete = document.getElementById('btn-delete-expense');
 
   if (gastoArchivado || grupoArchivado || computoCerrado) {
-    // Ocultar ambos botones si:
-    // - el gasto esta archivado, o
-    // - el grupo esta archivado, o
-    // - el computo esta cerrado (no tiene sentido archivar/editar despues de cerrar)
     if (btnEdit) btnEdit.style.display = 'none';
     if (btnDelete) btnDelete.style.display = 'none';
   } else {
-    // Grupo activo y computo NO cerrado: mostrar Editar y Archivar
     if (btnEdit) {
       btnEdit.style.display = '';
       btnEdit.textContent = t('expense.detail.edit');
