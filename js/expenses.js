@@ -56,6 +56,7 @@ export async function cargarGruposParaGasto() {
 // ==========================================
 // 2. CARGAR MIEMBROS DEL GRUPO
 // ==========================================
+
 export async function cargarMiembrosDelGrupo(groupId) {
   const splitList = document.getElementById('expense-split-members');
   const selectPaidBy = document.getElementById('expense-paid-by');
@@ -67,6 +68,11 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
+  // Asegurar que estamos autenticados (usar getSession es mas fiable)
+  const { data: { session } } = await supabase.auth.getSession();
+  const user = session?.user || null;
+
+  // Cargar miembros del grupo
   const { data: miembros, error } = await supabase
     .from('group_members')
     .select('user_id, profiles(id, full_name, email)')
@@ -77,9 +83,21 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
+  // Normalizar perfiles (a veces Supabase los devuelve como array)
+  const miembrosNorm = miembros.map(m => {
+    const perfil = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+    return {
+      user_id: m.user_id,
+      nombre: perfil?.full_name || perfil?.email || 'Usuario'
+    };
+  });
+
+  console.log('[gasto] Miembros del grupo:', miembrosNorm);
+  console.log('[gasto] Usuario actual:', user?.id);
+
   // Generar opciones del select "Quien pago"
-  const opcionesPaidBy = miembros.map(m =>
-    `<option value="${m.user_id}">${m.profiles.full_name || m.profiles.email}</option>`
+  const opcionesPaidBy = miembrosNorm.map(m =>
+    `<option value="${m.user_id}">${m.nombre}</option>`
   ).join('');
 
   selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>` + opcionesPaidBy;
@@ -88,13 +106,16 @@ export async function cargarMiembrosDelGrupo(groupId) {
   // 1. Si el usuario actual esta en el grupo -> seleccionarlo
   // 2. Si no, y solo hay 1 miembro -> seleccionarlo
   // 3. Si no, dejar el placeholder
-  const { data: { user } } = await supabase.auth.getUser();
-  const userEstaEnGrupo = user && miembros.some(m => m.user_id === user.id);
+  const userEstaEnGrupo = user && miembrosNorm.some(m => m.user_id === user.id);
 
   if (userEstaEnGrupo) {
     selectPaidBy.value = user.id;
-  } else if (miembros.length === 1) {
-    selectPaidBy.value = miembros[0].user_id;
+    console.log('[gasto] Auto-seleccionado el usuario actual');
+  } else if (miembrosNorm.length === 1) {
+    selectPaidBy.value = miembrosNorm[0].user_id;
+    console.log('[gasto] Auto-seleccionado el unico miembro');
+  } else {
+    console.log('[gasto] No se auto-selecciona (usuario no esta en grupo y hay varios miembros)');
   }
 
   // Cargar moneda del grupo
@@ -108,20 +129,15 @@ export async function cargarMiembrosDelGrupo(groupId) {
     const selectMoneda = document.getElementById('expense-currency');
     if (selectMoneda) {
       const monedaGrupo = grupoInfo.currency.toUpperCase();
-
-      // Verificar si la moneda del grupo ya existe como opcion
       const existeOpcion = Array.from(selectMoneda.options).some(
         opt => opt.value.toUpperCase() === monedaGrupo
       );
-
-      // Si no existe, agregarla como opcion (ej: JPY custom)
       if (!existeOpcion) {
         const nuevaOpcion = document.createElement('option');
         nuevaOpcion.value = monedaGrupo;
         nuevaOpcion.textContent = monedaGrupo + ' - ' + monedaGrupo;
         selectMoneda.appendChild(nuevaOpcion);
       }
-
       selectMoneda.value = monedaGrupo;
     }
   }
