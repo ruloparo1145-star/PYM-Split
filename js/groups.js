@@ -382,6 +382,18 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   if (groupError) throw groupError;
 
+  // Agregar al creador como miembro del grupo
+  try {
+    await supabase
+      .from('group_members')
+      .insert([{
+        group_id: groupData.id,
+        user_id: user.id
+      }]);
+  } catch (e) {
+    console.warn('No se pudo agregar al creador como miembro:', e);
+  }
+
   return groupData;
 }
 
@@ -400,7 +412,6 @@ export function initGroupModal() {
     errorMsg.textContent = '';
     form.reset();
 
-    // Limpiar mensaje del Test API
     const resultadoAPI = document.getElementById('group-test-api-result');
     if (resultadoAPI) {
       resultadoAPI.style.display = 'none';
@@ -506,7 +517,7 @@ export function initGroupModal() {
   const btnTestAPI = document.getElementById('btn-test-api-group');
   const resultadoAPI = document.getElementById('group-test-api-result');
 
-   btnTestAPI?.addEventListener('click', async (e) => {
+  btnTestAPI?.addEventListener('click', async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -659,11 +670,13 @@ async function abrirDetalleGrupo(groupId) {
   if (btnAddExpense) {
     btnAddExpense.style.display = estaArchivado ? 'none' : 'inline-block';
   }
-// Ocultar boton "+ Anadir miembro" si el grupo esta archivado
-const btnAddMember = document.getElementById('btn-add-member');
-if (btnAddMember) {
-  btnAddMember.style.display = estaArchivado ? 'none' : 'inline-block';
-}
+
+  // Ocultar boton "+ Anadir miembro" si el grupo esta archivado
+  const btnAddMember = document.getElementById('btn-add-member');
+  if (btnAddMember) {
+    btnAddMember.style.display = estaArchivado ? 'none' : 'inline-block';
+  }
+
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
@@ -1064,32 +1077,8 @@ async function abrirCalculadora(groupId, groupName) {
 // ==========================================
 // 15. LISTENERS GLOBALES
 // ==========================================
-// if (!window.__groupDetailListenersAttached) {
-//  window.__groupDetailListenersAttached = true;
-document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', async () => {
-  const modal = document.getElementById('modal-group-detail');
-
-  // Bloquear si el grupo esta archivado
-  if (modal.dataset.groupArchived === 'true') {
-    alert(t('group.archived.no_add_expense') || 'No se pueden anadir gastos a un grupo archivado.');
-    return;
-  }
-
-  const groupId = modal.dataset.groupId;
-  const groupName = modal.dataset.groupName || '';
-
-  // Cerrar el modal de detalle del grupo
-  modal.classList.add('hidden');
-
-  // Abrir el modal de gasto con el grupo ya preseleccionado
-  const { abrirModalGastoConGrupo } = await import('./expenses.js');
-  await abrirModalGastoConGrupo(groupId, groupName);
-});
-
-
-
-
-
+if (!window.__groupDetailListenersAttached) {
+  window.__groupDetailListenersAttached = true;
 
   document.getElementById('btn-close-detail')?.addEventListener('click', () => {
     document.getElementById('modal-group-detail').classList.add('hidden');
@@ -1099,25 +1088,23 @@ document.getElementById('btn-add-expense-from-detail')?.addEventListener('click'
     if (e.target.id === 'modal-group-detail') e.target.classList.add('hidden');
   });
 
-  document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', () => {
+  document.getElementById('btn-add-expense-from-detail')?.addEventListener('click', async () => {
     const modal = document.getElementById('modal-group-detail');
 
-    // Bloquear si el grupo esta archivado
     if (modal.dataset.groupArchived === 'true') {
       alert(t('group.archived.no_add_expense') || 'No se pueden anadir gastos a un grupo archivado.');
       return;
     }
 
     const groupId = modal.dataset.groupId;
+    const groupName = modal.dataset.groupName || 'Group';
+
+    // Cerrar el modal de detalle del grupo
     modal.classList.add('hidden');
-    document.getElementById('fab-add').click();
-    setTimeout(() => {
-      const select = document.getElementById('expense-group');
-      if (select) {
-        select.value = groupId;
-        select.dispatchEvent(new Event('change'));
-      }
-    }, 300);
+
+    // Abrir el modal de gasto con el grupo ya preseleccionado
+    const { abrirModalGastoConGrupo } = await import('./expenses.js');
+    await abrirModalGastoConGrupo(groupId, groupName);
   });
 
   document.getElementById('btn-close-expense-detail')?.addEventListener('click', () => {
