@@ -382,7 +382,6 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   if (groupError) throw groupError;
 
-  // Agregar al creador como miembro del grupo
   try {
     await supabase
       .from('group_members')
@@ -529,10 +528,7 @@ export function initGroupModal() {
     if (valorSelect === '__other__') {
       codMon = (customInput?.value || '').trim().toUpperCase();
       if (!/^[A-Z]{3}$/.test(codMon)) {
-        mostrarResultadoAPI(
-          t('group.test_api.invalid_code'),
-          'warn'
-        );
+        mostrarResultadoAPI(t('group.test_api.invalid_code'), 'warn');
         return;
       }
     } else {
@@ -665,24 +661,21 @@ async function abrirDetalleGrupo(groupId) {
     btnCalc.textContent = t('group.btn.calc_today');
   }
 
-  // Ocultar boton "+ Anadir" si el grupo esta archivado
   const btnAddExpense = document.getElementById('btn-add-expense-from-detail');
   if (btnAddExpense) {
     btnAddExpense.style.display = estaArchivado ? 'none' : 'inline-block';
   }
 
-  // Ocultar boton "+ Anadir miembro" si el grupo esta archivado
   const btnAddMember = document.getElementById('btn-add-member');
   if (btnAddMember) {
     btnAddMember.style.display = estaArchivado ? 'none' : 'inline-block';
   }
 
-  // Mostrar boton "Exportar CSV" siempre (grupo activo o archivado)
   const btnExport = document.getElementById('btn-export-group');
   if (btnExport) {
     btnExport.style.display = 'inline-block';
   }
-  // Mostrar boton "Exportar RTF" tambien
+
   const btnExportRTF = document.getElementById('btn-export-rtf');
   if (btnExportRTF) {
     btnExportRTF.style.display = 'inline-block';
@@ -1366,8 +1359,31 @@ if (!window.__groupDetailListenersAttached) {
     try {
       await exportarGrupoCSV(groupId);
     } catch (e) {
-      console.error('Error exportando:', e);
-      alert('Error al exportar: ' + e.message);
+      console.error('Error exportando CSV:', e);
+      alert('Error al exportar CSV: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = textoOriginal;
+    }
+  });
+
+  // ==========================================
+  // BOTON EXPORTAR RTF
+  // ==========================================
+  document.getElementById('btn-export-rtf')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (!groupId) return;
+
+    const btn = document.getElementById('btn-export-rtf');
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '&#8987; Exporting...';
+
+    try {
+      await exportarGrupoRTF(groupId);
+    } catch (e) {
+      console.error('Error exportando RTF:', e);
+      alert('Error al exportar RTF: ' + e.message);
     } finally {
       btn.disabled = false;
       btn.innerHTML = textoOriginal;
@@ -1410,7 +1426,7 @@ async function exportarGrupoCSV(groupId) {
     splits = splitsData || [];
   }
 
-  // 4. Nombres de los usuarios (pagadores + participantes)
+  // 4. Nombres de los usuarios
   const userIds = new Set();
   (gastos || []).forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
   splits.forEach(s => { if (s.user_id) userIds.add(s.user_id); });
@@ -1425,8 +1441,132 @@ async function exportarGrupoCSV(groupId) {
     nombres[p.id] = p.full_name || p.email || 'Usuario';
   });
 
+  // 5. Totales
+  let totalGrupo = 0;
+  const totalesPorUsuario = {};
+  const participantes = new Set();
+
+  gastos.forEach(g => {
+    if (g.archived) return;
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+    totalGrupo += montoEnGrupo;
+  });
+
+  splits.forEach(s => {
+    const gasto = gastos.find(g => g.id === s.expense_id);
+    if (!gasto || gasto.archived) return;
+    const monto = parseFloat(s.amount_owed) || 0;
+    const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(gasto.exchange_rate) || 1;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+    totalesPorUsuario[s.user_id] = (totalesPorUsuario[s.user_id] || 0) + montoEnGrupo;
+    participantes.add(s.user_id);
+  });
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const miParte = user ? (totalesPorUsuario[user.id] || 0) : 0;
+  const miNombre = user ? (nombres[user.id] || 'Yo') : 'Yo';
+
+  // 6. Construir CSV
+  const lineas = [];
+
+  lineas.push(['REPORTE DE GRUPO']);
+  lineas.push(['Nombre', grupo.name]);
+  lineas.push(['Moneda del grupo', monedaGrupo]);
+  lineas.push(['Desde', grupo.date_start || '-']);
+  lineas.push(['Hasta', grupo.date_end || '-']);
+  lineas.push(['Cerrado', grupo.date_closed ? 'SI (' + grupo.date_closed + ')' : 'NO']);
+  lineas.push(['Total del grupo', totalGrupo.toFixed(2) + ' ' + monedaGrupo]);
+  if (grupo.date_closed && grupo.closed_total) {
+    lineas.push(['Total congelado', parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo]);
+  }
+  lineas.push(['Mi parte (' + miNombre + ')', miParte.toFixed(2) + ' ' + monedaGrupo]);
+  lineas.push([]);
+
+  lineas.push(['TOTALES POR PERSONA']);
+  lineas.push(['Persona', 'Total', 'Moneda']);
+  Array.from(participantes).forEach(uid => {
+    lineas.push([
+      nombres[uid] || 'Usuario',
+      (totalesPorUsuario[uid] || 0).toFixed(2),
+      monedaGrupo
+    ]);
+  });
+  lineas.push([]);
+
+  lineas.push(['GASTOS']);
+  lineas.push([
+    'Fecha',
+    'Descripcion',
+    'Categoria',
+    'Quien pago',
+    'Monto original',
+    'Moneda original',
+    'Monto en ' + monedaGrupo,
+    'Archivado',
+    'Split (persona: monto ' + monedaGrupo + ')'
+  ]);
+
+  gastos.forEach(g => {
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+    const monto = parseFloat(g.amount) || 0;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+
+    const gastoSplits = splits.filter(s => s.expense_id === g.id);
+    const splitStr = gastoSplits.map(s => {
+      const nombre = nombres[s.user_id] || 'Usuario';
+      const montoS = parseFloat(s.amount_owed) || 0;
+      const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
+      return `${nombre}: ${montoSEnGrupo.toFixed(2)}`;
+    }).join(' | ');
+
+    lineas.push([
+      g.date || '',
+      g.description || '',
+      g.category || 'otros',
+      nombres[g.paid_by] || 'Usuario',
+      monto.toFixed(2),
+      monedaGasto,
+      montoEnGrupo.toFixed(2),
+      g.archived ? 'SI' : 'NO',
+      splitStr
+    ]);
+  });
+
+  // 7. Convertir a CSV
+  const csv = lineas.map(fila =>
+    fila.map(celda => {
+      const s = String(celda ?? '');
+      if (s.includes(';') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }).join(';')
+  ).join('\n');
+
+  // 8. Descargar
+  const nombreArchivo = 'grupo-' +
+    (grupo.name || 'sin-nombre').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() +
+    '-' + new Date().toISOString().split('T')[0] + '.csv';
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 // ==========================================
-// 17. EXPORTAR GRUPO A RTF (compatible con Word)
+// 17. EXPORTAR GRUPO A RTF
 // ==========================================
 async function exportarGrupoRTF(groupId) {
   // 1. Datos del grupo
@@ -1518,7 +1658,7 @@ async function exportarGrupoRTF(groupId) {
     miNombre
   });
 
-  // 7. Descargar como .rtf
+  // 7. Descargar
   const nombreArchivo = 'grupo-' +
     (grupo.name || 'sin-nombre').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() +
     '-' + new Date().toISOString().split('T')[0] + '.rtf';
@@ -1536,7 +1676,7 @@ async function exportarGrupoRTF(groupId) {
 }
 
 // ==========================================
-// 17b. GENERAR RTF
+// 18. GENERAR RTF
 // ==========================================
 function generarRTFReporte(datos) {
   const {
@@ -1548,38 +1688,35 @@ function generarRTFReporte(datos) {
   const nl = '\r\n';
   let r = '';
 
-  // Escapar caracteres especiales RTF
   function esc(s) {
     s = String(s ?? '');
     let res = '';
     for (let i = 0; i < s.length; i++) {
       const c = s.charCodeAt(i);
-      if (c === 92)      res += '\\\\';       // backslash
-      else if (c === 123) res += '\\{';        // {
-      else if (c === 125) res += '\\}';        // }
+      if (c === 92)      res += '\\\\';
+      else if (c === 123) res += '\\{';
+      else if (c === 125) res += '\\}';
       else if (c === 10)  res += '\\line ';
       else if (c === 13)  res += '';
-      else if (c > 127)   res += '\\u' + c + '?';  // acentos como Unicode
+      else if (c > 127)   res += '\\u' + c + '?';
       else                res += s[i];
     }
     return res;
   }
 
-  // Cabecera RTF
   r += '{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang3082' + nl;
   r += '{\\fonttbl{\\f0 Calibri;}{\\f1 Consolas;}}' + nl;
   r += '{\\colortbl ;' + nl;
-  r += '\\red46\\green125\\blue50;' + nl;      // cf1 verde titulo
-  r += '\\red100\\green100\\blue100;' + nl;    // cf2 gris subtitulo
-  r += '\\red255\\green255\\blue255;' + nl;    // cf3 blanco header
-  r += '\\red46\\green125\\blue50;' + nl;      // cf4 fondo header
-  r += '\\red230\\green245\\blue230;' + nl;    // cf5 zebra
-  r += '\\red180\\green180\\blue180;' + nl;    // cf6 borde
+  r += '\\red46\\green125\\blue50;' + nl;
+  r += '\\red100\\green100\\blue100;' + nl;
+  r += '\\red255\\green255\\blue255;' + nl;
+  r += '\\red46\\green125\\blue50;' + nl;
+  r += '\\red230\\green245\\blue230;' + nl;
+  r += '\\red180\\green180\\blue180;' + nl;
   r += '}' + nl;
   r += '\\paperw12240\\paperh15840\\margl720\\margr720\\margt720\\margb720' + nl;
   r += '\\f0\\fs22' + nl;
 
-  // Portada
   const fecha = new Date().toLocaleString();
   r += '\\pard\\qc\\b\\fs40\\cf1 PYM - Reporte\\b0\\fs22\\cf0\\par' + nl;
   r += '\\pard\\qc\\cf2 Grupo: ' + esc(grupo.name || '') + '\\cf0\\par' + nl;
@@ -1591,7 +1728,6 @@ function generarRTFReporte(datos) {
   }
   r += '\\pard\\par' + nl;
 
-  // Totales generales
   r += '\\pard\\b\\fs28\\cf1 Totales\\b0\\fs22\\cf0\\par' + nl;
   r += '\\pard Total del grupo: \\b ' + esc(totalGrupo.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
   if (grupo.date_closed && grupo.closed_total) {
@@ -1600,13 +1736,11 @@ function generarRTFReporte(datos) {
   r += '\\pard Mi parte (' + esc(miNombre) + '): \\b ' + esc(miParte.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
   r += '\\pard\\par' + nl;
 
-  // Totales por persona (tabla de 2 columnas)
   r += '\\pard\\b\\fs28\\cf1 Totales por persona\\b0\\fs22\\cf0\\par' + nl;
 
   const anchoCol1 = 5000;
   const anchoCol2 = 4000;
 
-  // Header
   r += '\\trowd\\trgaph70\\trleft0';
   r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + anchoCol1;
   r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (anchoCol1 + anchoCol2) + nl;
@@ -1614,7 +1748,6 @@ function generarRTFReporte(datos) {
   r += '\\pard\\intbl\\b\\cf3 Total\\b0\\cf0\\cell ';
   r += '\\row' + nl;
 
-  // Filas de personas
   let cont = 0;
   Array.from(participantes).forEach(uid => {
     const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
@@ -1628,18 +1761,15 @@ function generarRTFReporte(datos) {
   });
   r += '\\pard\\par' + nl;
 
-  // Gastos (tabla de 6 columnas)
   r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
 
-  // Anchos de la tabla de gastos (en twips)
-  const cols = [1400, 3200, 1600, 1900, 1500, 1900];  // fecha, desc, cat, pagador, monto, split
+  const cols = [1400, 3200, 1600, 1900, 1500, 1900];
   let cellX = 0;
   const anchosAcum = [];
   cols.forEach(w => { cellX += w; anchosAcum.push(cellX); });
 
   const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
 
-  // Header de gastos
   r += '\\trowd\\trgaph70\\trleft0\\trhdr';
   anchosAcum.forEach((x, i) => {
     r += borde + '\\clcbpat4\\cellx' + x;
@@ -1651,7 +1781,6 @@ function generarRTFReporte(datos) {
   });
   r += '\\row' + nl;
 
-  // Filas de gastos
   cont = 0;
   gastos.forEach(g => {
     const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
@@ -1675,18 +1804,12 @@ function generarRTFReporte(datos) {
     });
     r += nl;
 
-    // Fecha
     r += '\\pard\\intbl ' + esc(g.date || '') + '\\cell ';
-    // Descripcion
     r += '\\pard\\intbl ' + esc(g.description || '') + '\\cell ';
-    // Categoria
     r += '\\pard\\intbl ' + esc(g.category || 'otros') + '\\cell ';
-    // Quien pago
     r += '\\pard\\intbl ' + esc(nombres[g.paid_by] || 'Usuario') + '\\cell ';
-    // Monto
     r += '\\pard\\intbl\\qr ' + esc(montoEnGrupo.toFixed(2)) +
          (g.archived ? ' (arch)' : '') + '\\cell ';
-    // Split
     r += '\\pard\\intbl ' + esc(splitStr) + '\\cell ';
     r += '\\row' + nl;
     cont++;
@@ -1696,134 +1819,4 @@ function generarRTFReporte(datos) {
   r += '}' + nl;
 
   return r;
-}
-  
-
-  // 5. Calcular totales (grupo y por usuario)
-  let totalGrupo = 0;
-  const totalesPorUsuario = {};
-  const participantes = new Set();
-
-  gastos.forEach(g => {
-    if (g.archived) return;
-
-    const monto = parseFloat(g.amount) || 0;
-    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
-    const tasa = parseFloat(g.exchange_rate) || 1;
-
-    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
-    totalGrupo += montoEnGrupo;
-  });
-
-  splits.forEach(s => {
-    const gasto = gastos.find(g => g.id === s.expense_id);
-    if (!gasto || gasto.archived) return;
-
-    const monto = parseFloat(s.amount_owed) || 0;
-    const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
-    const tasa = parseFloat(gasto.exchange_rate) || 1;
-    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
-
-    totalesPorUsuario[s.user_id] = (totalesPorUsuario[s.user_id] || 0) + montoEnGrupo;
-    participantes.add(s.user_id);
-  });
-
-  // 6. Obtener mi parte (usuario actual)
-  const { data: { user } } = await supabase.auth.getUser();
-  const miParte = user ? (totalesPorUsuario[user.id] || 0) : 0;
-  const miNombre = user ? (nombres[user.id] || 'Yo') : 'Yo';
-
-  // 7. Construir CSV
-  const lineas = [];
-
-  lineas.push(['REPORTE DE GRUPO']);
-  lineas.push(['Nombre', grupo.name]);
-  lineas.push(['Moneda del grupo', monedaGrupo]);
-  lineas.push(['Desde', grupo.date_start || '-']);
-  lineas.push(['Hasta', grupo.date_end || '-']);
-  lineas.push(['Cerrado', grupo.date_closed ? 'SI (' + grupo.date_closed + ')' : 'NO']);
-  lineas.push(['Total del grupo', totalGrupo.toFixed(2) + ' ' + monedaGrupo]);
-  if (grupo.date_closed && grupo.closed_total) {
-    lineas.push(['Total congelado', parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo]);
-  }
-  lineas.push(['Mi parte (' + miNombre + ')', miParte.toFixed(2) + ' ' + monedaGrupo]);
-  lineas.push([]);
-
-  lineas.push(['TOTALES POR PERSONA']);
-  lineas.push(['Persona', 'Total', 'Moneda']);
-  Array.from(participantes).forEach(uid => {
-    lineas.push([
-      nombres[uid] || 'Usuario',
-      (totalesPorUsuario[uid] || 0).toFixed(2),
-      monedaGrupo
-    ]);
-  });
-  lineas.push([]);
-
-  lineas.push(['GASTOS']);
-  lineas.push([
-    'Fecha',
-    'Descripcion',
-    'Categoria',
-    'Quien pago',
-    'Monto original',
-    'Moneda original',
-    'Monto en ' + monedaGrupo,
-    'Archivado',
-    'Split (persona: monto ' + monedaGrupo + ')'
-  ]);
-
-  gastos.forEach(g => {
-    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
-    const tasa = parseFloat(g.exchange_rate) || 1;
-    const monto = parseFloat(g.amount) || 0;
-    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
-
-    const gastoSplits = splits.filter(s => s.expense_id === g.id);
-    const splitStr = gastoSplits.map(s => {
-      const nombre = nombres[s.user_id] || 'Usuario';
-      const montoS = parseFloat(s.amount_owed) || 0;
-      const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
-      return `${nombre}: ${montoSEnGrupo.toFixed(2)}`;
-    }).join(' | ');
-
-    lineas.push([
-      g.date || '',
-      g.description || '',
-      g.category || 'otros',
-      nombres[g.paid_by] || 'Usuario',
-      monto.toFixed(2),
-      monedaGasto,
-      montoEnGrupo.toFixed(2),
-      g.archived ? 'SI' : 'NO',
-      splitStr
-    ]);
-  });
-
-  // 8. Convertir a CSV con escape correcto
-  const csv = lineas.map(fila =>
-    fila.map(celda => {
-      const s = String(celda ?? '');
-      if (s.includes(';') || s.includes('"') || s.includes('\n')) {
-        return '"' + s.replace(/"/g, '""') + '"';
-      }
-      return s;
-    }).join(';')
-  ).join('\n');
-
-  // 9. Descargar
-  const nombreArchivo = 'grupo-' +
-    (grupo.name || 'sin-nombre').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() +
-    '-' + new Date().toISOString().split('T')[0] + '.csv';
-
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = nombreArchivo;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
