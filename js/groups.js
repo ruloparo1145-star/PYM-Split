@@ -1105,10 +1105,8 @@ if (!window.__groupDetailListenersAttached) {
     const groupId = modal.dataset.groupId;
     const groupName = modal.dataset.groupName || 'Group';
 
-    // Cerrar el modal de detalle del grupo
     modal.classList.add('hidden');
 
-    // Abrir el modal de gasto con el grupo ya preseleccionado
     const { abrirModalGastoConGrupo } = await import('./expenses.js');
     await abrirModalGastoConGrupo(groupId, groupName);
   });
@@ -1347,4 +1345,206 @@ if (!window.__groupDetailListenersAttached) {
       errorMsg.textContent = t('group.rate.save_error', { mensaje: error.message });
     }
   });
+
+  // ==========================================
+  // BOTON EXPORTAR CSV
+  // ==========================================
+  document.getElementById('btn-export-group')?.addEventListener('click', async () => {
+    const groupId = document.getElementById('modal-group-detail').dataset.groupId;
+    if (!groupId) return;
+
+    const btn = document.getElementById('btn-export-group');
+    const textoOriginal = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '&#8987; Exporting...';
+
+    try {
+      await exportarGrupoCSV(groupId);
+    } catch (e) {
+      console.error('Error exportando:', e);
+      alert('Error al exportar: ' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = textoOriginal;
+    }
+  });
+}
+
+// ==========================================
+// 16. EXPORTAR GRUPO A CSV
+// ==========================================
+async function exportarGrupoCSV(groupId) {
+  // 1. Datos del grupo
+  const { data: grupo, error: errGrupo } = await supabase
+    .from('groups')
+    .select('name, currency, date_start, date_end, date_closed, closed_total, manual_exchange_rate')
+    .eq('id', groupId)
+    .single();
+
+  if (errGrupo || !grupo) throw new Error('No se pudo cargar el grupo');
+
+  const monedaGrupo = (grupo.currency || 'EUR').toUpperCase();
+
+  // 2. Gastos (activos + archivados)
+  const { data: gastos, error: errGastos } = await supabase
+    .from('expenses')
+    .select('id, description, amount, currency, exchange_rate, date, category, paid_by, archived')
+    .eq('group_id', groupId)
+    .order('date', { ascending: true });
+
+  if (errGastos) throw new Error('No se pudieron cargar los gastos');
+
+  // 3. Splits de todos los gastos
+  const expIds = (gastos || []).map(g => g.id);
+  let splits = [];
+  if (expIds.length > 0) {
+    const { data: splitsData } = await supabase
+      .from('expense_splits')
+      .select('expense_id, user_id, amount_owed')
+      .in('expense_id', expIds);
+    splits = splitsData || [];
+  }
+
+  // 4. Nombres de los usuarios (pagadores + participantes)
+  const userIds = new Set();
+  (gastos || []).forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
+  splits.forEach(s => { if (s.user_id) userIds.add(s.user_id); });
+
+  const { data: perfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', Array.from(userIds));
+
+  const nombres = {};
+  (perfiles || []).forEach(p => {
+    nombres[p.id] = p.full_name || p.email || 'Usuario';
+  });
+
+  // 5. Calcular totales (grupo y por usuario)
+  let totalGrupo = 0;
+  const totalesPorUsuario = {};
+  const participantes = new Set();
+
+  gastos.forEach(g => {
+    if (g.archived) return;
+
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+    totalGrupo += montoEnGrupo;
+  });
+
+  splits.forEach(s => {
+    const gasto = gastos.find(g => g.id === s.expense_id);
+    if (!gasto || gasto.archived) return;
+
+    const monto = parseFloat(s.amount_owed) || 0;
+    const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(gasto.exchange_rate) || 1;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+
+    totalesPorUsuario[s.user_id] = (totalesPorUsuario[s.user_id] || 0) + montoEnGrupo;
+    participantes.add(s.user_id);
+  });
+
+  // 6. Obtener mi parte (usuario actual)
+  const { data: { user } } = await supabase.auth.getUser();
+  const miParte = user ? (totalesPorUsuario[user.id] || 0) : 0;
+  const miNombre = user ? (nombres[user.id] || 'Yo') : 'Yo';
+
+  // 7. Construir CSV
+  const lineas = [];
+
+  lineas.push(['REPORTE DE GRUPO']);
+  lineas.push(['Nombre', grupo.name]);
+  lineas.push(['Moneda del grupo', monedaGrupo]);
+  lineas.push(['Desde', grupo.date_start || '-']);
+  lineas.push(['Hasta', grupo.date_end || '-']);
+  lineas.push(['Cerrado', grupo.date_closed ? 'SI (' + grupo.date_closed + ')' : 'NO']);
+  lineas.push(['Total del grupo', totalGrupo.toFixed(2) + ' ' + monedaGrupo]);
+  if (grupo.date_closed && grupo.closed_total) {
+    lineas.push(['Total congelado', parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo]);
+  }
+  lineas.push(['Mi parte (' + miNombre + ')', miParte.toFixed(2) + ' ' + monedaGrupo]);
+  lineas.push([]);
+
+  lineas.push(['TOTALES POR PERSONA']);
+  lineas.push(['Persona', 'Total', 'Moneda']);
+  Array.from(participantes).forEach(uid => {
+    lineas.push([
+      nombres[uid] || 'Usuario',
+      (totalesPorUsuario[uid] || 0).toFixed(2),
+      monedaGrupo
+    ]);
+  });
+  lineas.push([]);
+
+  lineas.push(['GASTOS']);
+  lineas.push([
+    'Fecha',
+    'Descripcion',
+    'Categoria',
+    'Quien pago',
+    'Monto original',
+    'Moneda original',
+    'Monto en ' + monedaGrupo,
+    'Archivado',
+    'Split (persona: monto ' + monedaGrupo + ')'
+  ]);
+
+  gastos.forEach(g => {
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+    const monto = parseFloat(g.amount) || 0;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+
+    const gastoSplits = splits.filter(s => s.expense_id === g.id);
+    const splitStr = gastoSplits.map(s => {
+      const nombre = nombres[s.user_id] || 'Usuario';
+      const montoS = parseFloat(s.amount_owed) || 0;
+      const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
+      return `${nombre}: ${montoSEnGrupo.toFixed(2)}`;
+    }).join(' | ');
+
+    lineas.push([
+      g.date || '',
+      g.description || '',
+      g.category || 'otros',
+      nombres[g.paid_by] || 'Usuario',
+      monto.toFixed(2),
+      monedaGasto,
+      montoEnGrupo.toFixed(2),
+      g.archived ? 'SI' : 'NO',
+      splitStr
+    ]);
+  });
+
+  // 8. Convertir a CSV con escape correcto
+  const csv = lineas.map(fila =>
+    fila.map(celda => {
+      const s = String(celda ?? '');
+      if (s.includes(';') || s.includes('"') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }).join(';')
+  ).join('\n');
+
+  // 9. Descargar
+  const nombreArchivo = 'grupo-' +
+    (grupo.name || 'sin-nombre').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() +
+    '-' + new Date().toISOString().split('T')[0] + '.csv';
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
