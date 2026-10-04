@@ -682,6 +682,11 @@ async function abrirDetalleGrupo(groupId) {
   if (btnExport) {
     btnExport.style.display = 'inline-block';
   }
+  // Mostrar boton "Exportar RTF" tambien
+  const btnExportRTF = document.getElementById('btn-export-rtf');
+  if (btnExportRTF) {
+    btnExportRTF.style.display = 'inline-block';
+  }
 
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
