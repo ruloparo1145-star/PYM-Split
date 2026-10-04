@@ -677,6 +677,12 @@ async function abrirDetalleGrupo(groupId) {
     btnAddMember.style.display = estaArchivado ? 'none' : 'inline-block';
   }
 
+  // Mostrar boton "Exportar CSV" siempre (grupo activo o archivado)
+  const btnExport = document.getElementById('btn-export-group');
+  if (btnExport) {
+    btnExport.style.display = 'inline-block';
+  }
+
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
