@@ -1425,6 +1425,280 @@ async function exportarGrupoCSV(groupId) {
     nombres[p.id] = p.full_name || p.email || 'Usuario';
   });
 
+// ==========================================
+// 17. EXPORTAR GRUPO A RTF (compatible con Word)
+// ==========================================
+async function exportarGrupoRTF(groupId) {
+  // 1. Datos del grupo
+  const { data: grupo, error: errGrupo } = await supabase
+    .from('groups')
+    .select('name, currency, date_start, date_end, date_closed, closed_total, manual_exchange_rate')
+    .eq('id', groupId)
+    .single();
+
+  if (errGrupo || !grupo) throw new Error('No se pudo cargar el grupo');
+
+  const monedaGrupo = (grupo.currency || 'EUR').toUpperCase();
+
+  // 2. Gastos
+  const { data: gastos, error: errGastos } = await supabase
+    .from('expenses')
+    .select('id, description, amount, currency, exchange_rate, date, category, paid_by, archived')
+    .eq('group_id', groupId)
+    .order('date', { ascending: true });
+
+  if (errGastos) throw new Error('No se pudieron cargar los gastos');
+
+  // 3. Splits
+  const expIds = (gastos || []).map(g => g.id);
+  let splits = [];
+  if (expIds.length > 0) {
+    const { data: splitsData } = await supabase
+      .from('expense_splits')
+      .select('expense_id, user_id, amount_owed')
+      .in('expense_id', expIds);
+    splits = splitsData || [];
+  }
+
+  // 4. Nombres
+  const userIds = new Set();
+  (gastos || []).forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
+  splits.forEach(s => { if (s.user_id) userIds.add(s.user_id); });
+
+  const { data: perfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', Array.from(userIds));
+
+  const nombres = {};
+  (perfiles || []).forEach(p => {
+    nombres[p.id] = p.full_name || p.email || 'Usuario';
+  });
+
+  // 5. Totales
+  let totalGrupo = 0;
+  const totalesPorUsuario = {};
+  const participantes = new Set();
+
+  gastos.forEach(g => {
+    if (g.archived) return;
+    const monto = parseFloat(g.amount) || 0;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+    totalGrupo += montoEnGrupo;
+  });
+
+  splits.forEach(s => {
+    const gasto = gastos.find(g => g.id === s.expense_id);
+    if (!gasto || gasto.archived) return;
+    const monto = parseFloat(s.amount_owed) || 0;
+    const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(gasto.exchange_rate) || 1;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+    totalesPorUsuario[s.user_id] = (totalesPorUsuario[s.user_id] || 0) + montoEnGrupo;
+    participantes.add(s.user_id);
+  });
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const miParte = user ? (totalesPorUsuario[user.id] || 0) : 0;
+  const miNombre = user ? (nombres[user.id] || 'Yo') : 'Yo';
+
+  // 6. Generar RTF
+  const rtf = generarRTFReporte({
+    grupo,
+    monedaGrupo,
+    gastos,
+    splits,
+    nombres,
+    totalGrupo,
+    totalesPorUsuario,
+    participantes,
+    miParte,
+    miNombre
+  });
+
+  // 7. Descargar como .rtf
+  const nombreArchivo = 'grupo-' +
+    (grupo.name || 'sin-nombre').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() +
+    '-' + new Date().toISOString().split('T')[0] + '.rtf';
+
+  const blob = new Blob([rtf], { type: 'application/rtf' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nombreArchivo;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ==========================================
+// 17b. GENERAR RTF
+// ==========================================
+function generarRTFReporte(datos) {
+  const {
+    grupo, monedaGrupo, gastos, splits, nombres,
+    totalGrupo, totalesPorUsuario, participantes,
+    miParte, miNombre
+  } = datos;
+
+  const nl = '\r\n';
+  let r = '';
+
+  // Escapar caracteres especiales RTF
+  function esc(s) {
+    s = String(s ?? '');
+    let res = '';
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      if (c === 92)      res += '\\\\';       // backslash
+      else if (c === 123) res += '\\{';        // {
+      else if (c === 125) res += '\\}';        // }
+      else if (c === 10)  res += '\\line ';
+      else if (c === 13)  res += '';
+      else if (c > 127)   res += '\\u' + c + '?';  // acentos como Unicode
+      else                res += s[i];
+    }
+    return res;
+  }
+
+  // Cabecera RTF
+  r += '{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang3082' + nl;
+  r += '{\\fonttbl{\\f0 Calibri;}{\\f1 Consolas;}}' + nl;
+  r += '{\\colortbl ;' + nl;
+  r += '\\red46\\green125\\blue50;' + nl;      // cf1 verde titulo
+  r += '\\red100\\green100\\blue100;' + nl;    // cf2 gris subtitulo
+  r += '\\red255\\green255\\blue255;' + nl;    // cf3 blanco header
+  r += '\\red46\\green125\\blue50;' + nl;      // cf4 fondo header
+  r += '\\red230\\green245\\blue230;' + nl;    // cf5 zebra
+  r += '\\red180\\green180\\blue180;' + nl;    // cf6 borde
+  r += '}' + nl;
+  r += '\\paperw12240\\paperh15840\\margl720\\margr720\\margt720\\margb720' + nl;
+  r += '\\f0\\fs22' + nl;
+
+  // Portada
+  const fecha = new Date().toLocaleString();
+  r += '\\pard\\qc\\b\\fs40\\cf1 PYM - Reporte\\b0\\fs22\\cf0\\par' + nl;
+  r += '\\pard\\qc\\cf2 Grupo: ' + esc(grupo.name || '') + '\\cf0\\par' + nl;
+  r += '\\pard\\qc\\cf2 Moneda: ' + esc(monedaGrupo) +
+       '   |   Generado: ' + esc(fecha) + '\\cf0\\par' + nl;
+  if (grupo.date_start || grupo.date_end) {
+    r += '\\pard\\qc\\cf2 Fechas: ' + esc(grupo.date_start || '-') +
+         ' a ' + esc(grupo.date_end || '-') + '\\cf0\\par' + nl;
+  }
+  r += '\\pard\\par' + nl;
+
+  // Totales generales
+  r += '\\pard\\b\\fs28\\cf1 Totales\\b0\\fs22\\cf0\\par' + nl;
+  r += '\\pard Total del grupo: \\b ' + esc(totalGrupo.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+  if (grupo.date_closed && grupo.closed_total) {
+    r += '\\pard Total congelado: \\b ' + esc(parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+  }
+  r += '\\pard Mi parte (' + esc(miNombre) + '): \\b ' + esc(miParte.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+  r += '\\pard\\par' + nl;
+
+  // Totales por persona (tabla de 2 columnas)
+  r += '\\pard\\b\\fs28\\cf1 Totales por persona\\b0\\fs22\\cf0\\par' + nl;
+
+  const anchoCol1 = 5000;
+  const anchoCol2 = 4000;
+
+  // Header
+  r += '\\trowd\\trgaph70\\trleft0';
+  r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + anchoCol1;
+  r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (anchoCol1 + anchoCol2) + nl;
+  r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
+  r += '\\pard\\intbl\\b\\cf3 Total\\b0\\cf0\\cell ';
+  r += '\\row' + nl;
+
+  // Filas de personas
+  let cont = 0;
+  Array.from(participantes).forEach(uid => {
+    const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
+    r += '\\trowd\\trgaph70\\trleft0';
+    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + anchoCol1;
+    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (anchoCol1 + anchoCol2) + nl;
+    r += '\\pard\\intbl ' + esc(nombres[uid] || 'Usuario') + '\\cell ';
+    r += '\\pard\\intbl\\qr ' + esc((totalesPorUsuario[uid] || 0).toFixed(2) + ' ' + monedaGrupo) + '\\cell ';
+    r += '\\row' + nl;
+    cont++;
+  });
+  r += '\\pard\\par' + nl;
+
+  // Gastos (tabla de 6 columnas)
+  r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
+
+  // Anchos de la tabla de gastos (en twips)
+  const cols = [1400, 3200, 1600, 1900, 1500, 1900];  // fecha, desc, cat, pagador, monto, split
+  let cellX = 0;
+  const anchosAcum = [];
+  cols.forEach(w => { cellX += w; anchosAcum.push(cellX); });
+
+  const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
+
+  // Header de gastos
+  r += '\\trowd\\trgaph70\\trleft0\\trhdr';
+  anchosAcum.forEach((x, i) => {
+    r += borde + '\\clcbpat4\\cellx' + x;
+  });
+  r += nl;
+  const headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Split'];
+  headersGastos.forEach(h => {
+    r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
+  });
+  r += '\\row' + nl;
+
+  // Filas de gastos
+  cont = 0;
+  gastos.forEach(g => {
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+    const monto = parseFloat(g.amount) || 0;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+
+    const gastoSplits = splits.filter(s => s.expense_id === g.id);
+    const splitStr = gastoSplits.map(s => {
+      const nombre = nombres[s.user_id] || 'Usuario';
+      const montoS = parseFloat(s.amount_owed) || 0;
+      const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
+      return nombre + ': ' + montoSEnGrupo.toFixed(2);
+    }).join(' | ');
+
+    const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
+
+    r += '\\trowd\\trgaph70\\trleft0';
+    anchosAcum.forEach(x => {
+      r += borde + fondo + '\\cellx' + x;
+    });
+    r += nl;
+
+    // Fecha
+    r += '\\pard\\intbl ' + esc(g.date || '') + '\\cell ';
+    // Descripcion
+    r += '\\pard\\intbl ' + esc(g.description || '') + '\\cell ';
+    // Categoria
+    r += '\\pard\\intbl ' + esc(g.category || 'otros') + '\\cell ';
+    // Quien pago
+    r += '\\pard\\intbl ' + esc(nombres[g.paid_by] || 'Usuario') + '\\cell ';
+    // Monto
+    r += '\\pard\\intbl\\qr ' + esc(montoEnGrupo.toFixed(2)) +
+         (g.archived ? ' (arch)' : '') + '\\cell ';
+    // Split
+    r += '\\pard\\intbl ' + esc(splitStr) + '\\cell ';
+    r += '\\row' + nl;
+    cont++;
+  });
+
+  r += '\\pard' + nl;
+  r += '}' + nl;
+
+  return r;
+}
+  
+
   // 5. Calcular totales (grupo y por usuario)
   let totalGrupo = 0;
   const totalesPorUsuario = {};
