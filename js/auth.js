@@ -92,7 +92,6 @@ formRegister.addEventListener('submit', async (e) => {
 
   window.location.href = 'app.html';
 });
-
 // ==========================================
 // TRADUCCION DE ERRORES
 // ==========================================
