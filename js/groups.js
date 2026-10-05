@@ -1764,7 +1764,7 @@ function generarRTFReporte(datos) {
   r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
 
   // const cols = [1400, 3200, 1600, 1900, 1500, 1900];
-  const cols = [800, 2800, 1300, 1500, 800, 2500];
+  const cols = [1000, 2800, 1300, 1500, 800, 2400];
   
   let cellX = 0;
   const anchosAcum = [];
