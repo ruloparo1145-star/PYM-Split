@@ -1763,7 +1763,9 @@ function generarRTFReporte(datos) {
 
   r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
 
-  const cols = [1400, 3200, 1600, 1900, 1500, 1900];
+  // const cols = [1400, 3200, 1600, 1900, 1500, 1900];
+  const cols = [1200, 2800, 1300, 1500, 1000, 4600];
+  
   let cellX = 0;
   const anchosAcum = [];
   cols.forEach(w => { cellX += w; anchosAcum.push(cellX); });
@@ -1789,13 +1791,20 @@ function generarRTFReporte(datos) {
     const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
 
     const gastoSplits = splits.filter(s => s.expense_id === g.id);
-    const splitStr = gastoSplits.map(s => {
-      const nombre = nombres[s.user_id] || 'Usuario';
-      const montoS = parseFloat(s.amount_owed) || 0;
-      const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
-      return nombre + ': ' + montoSEnGrupo.toFixed(2);
-    }).join(' | ');
+    
+    //const splitStr = gastoSplits.map(s => {
+     // const nombre = nombres[s.user_id] || 'Usuario';
+     // const montoS = parseFloat(s.amount_owed) || 0;
+     // const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
+     // return nombre + ': ' + montoSEnGrupo.toFixed(2);
+   // }).join(' | ');
 
+    const splitStr = gastoSplits.map(s => {
+  const nombre = nombres[s.user_id] || 'Usuario';
+  const montoS = parseFloat(s.amount_owed) || 0;
+  const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
+  return nombre + ': ' + montoSEnGrupo.toFixed(2);
+}).join('\\line ');  // ← salto de línea en vez de " | "
     const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
 
     r += '\\trowd\\trgaph70\\trleft0';
