@@ -42,20 +42,25 @@
         <button type="submit" class="btn-primary" id="btn-login" data-i18n="index.login_button">Sign in</button>
         <p id="login-error" class="error-msg"></p>
       </form>
-
+ 
       <form id="form-register" class="auth-form hidden">
         <div class="form-group">
           <label for="register-name" data-i18n="index.register_name">Nombre completo</label>
           <input type="text" id="register-name" placeholder="Juan PÃ©rez" required autocomplete="name">
         </div>
-        <div class="form-group">
-          <label for="register-email" data-i18n="index.email">Email</label>
-          <input type="email" id="register-email" placeholder="tu@email.com" required autocomplete="email">
-        </div>
-        <div class="form-group">
-          <label for="register-password" data-i18n="index.password">Password</label>
-          <input type="password" id="register-password" placeholder="MÃ­nimo 6 caracteres" required minlength="6" autocomplete="new-password">
-        </div>
+        <div class="form-group">     
+    <label for="register-email" data-i18n="index.email">Email</label>
+    <input type="email" id="register-email" data-i18n-placeholder="index.email_placeholder" placeholder="you@email.com" required autocomplete="email">
+  </div>
+  <div class="form-group">
+    <label for="register-password" data-i18n="index.password">Password</label>
+    <input type="password" id="register-password" data-i18n-placeholder="index.password_placeholder" placeholder="At least 6 characters" required minlength="6" autocomplete="new-password">
+  </div>
+  <div class="form-group">
+    <label for="register-invite-code">Clave de invitación</label>
+    <input type="password" id="register-invite-code" placeholder="Clave que te dio el administrador" required autocomplete="off">
+  </div>
+        
         <button type="submit" class="btn-primary" id="btn-register" data-i18n="index.register_button">Crear cuenta</button>
         <p id="register-error" class="error-msg"></p>
       </form>
