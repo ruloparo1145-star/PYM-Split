@@ -2,8 +2,17 @@
 import { supabase } from './supabase.js';
 import { initI18n, t } from './i18n.js';
 
-// Inicializar idioma antes que nada
+// ==========================================
+// FORZAR INGLES EN EL LOGIN
+// ==========================================
+localStorage.setItem('pym_idioma', 'en');
 initI18n();
+
+// ==========================================
+// CLAVE DE INVITACION
+// Cambia esto por la clave que quieras
+// ==========================================
+const CLAVE_INVITACION = '24121957';
 
 // ==========================================
 // ELEMENTOS DEL DOM
@@ -68,6 +77,16 @@ formRegister.addEventListener('submit', async (e) => {
   e.preventDefault();
   registerError.textContent = '';
   const btn = formRegister.querySelector('button[type="submit"]');
+
+  // 1. Comprobar la clave de invitacion
+  const clave = document.getElementById('register-invite-code').value.trim();
+
+  if (clave !== CLAVE_INVITACION) {
+    registerError.textContent = 'Clave de invitacion incorrecta. Contacta al administrador.';
+    return;
+  }
+
+  // 2. Crear la cuenta
   btn.disabled = true;
   btn.textContent = t('auth.loading.register');
 
@@ -92,6 +111,7 @@ formRegister.addEventListener('submit', async (e) => {
 
   window.location.href = 'app.html';
 });
+
 // ==========================================
 // TRADUCCION DE ERRORES
 // ==========================================
