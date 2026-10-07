@@ -1687,3 +1687,374 @@ body {
     padding: 12px 20px 16px 20px !important;
   }
 }
+
+/* ==========================================
+   39. RESPONSIVE MEJORADO PARA MOVIL PEQUENO
+   ========================================== */
+
+/* --- Tablets y mÃ³viles grandes (hasta 500px) --- */
+@media (max-width: 500px) {
+  /* Header */
+  .app-header {
+    padding: 10px 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .app-header h1 {
+    font-size: 1rem;
+  }
+
+  .header-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  .header-right {
+    gap: 4px;
+  }
+
+  .app-header .btn-small {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+
+  .btn-logout {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+
+  /* Main */
+  .app-main {
+    padding: 12px;
+  }
+
+  .welcome-section h2 {
+    font-size: 1.2rem;
+  }
+
+  /* Section card */
+  .section-card {
+    padding: 15px;
+    border-radius: 12px;
+  }
+
+  .section-header h3 {
+    font-size: 1rem;
+  }
+
+  /* Stats */
+  .stat-value {
+    font-size: 1.5rem;
+  }
+
+  .stat-card {
+    padding: 14px 16px;
+  }
+
+  /* Group total box */
+  .group-total-box {
+    min-width: 0;
+    width: 100%;
+    padding: 12px 16px;
+  }
+
+  .group-total-value {
+    font-size: 1.3rem;
+  }
+
+  .group-total-row {
+    gap: 12px;
+  }
+
+  /* Group action buttons */
+  #group-action-buttons {
+    gap: 6px !important;
+  }
+
+  #group-action-buttons button {
+    font-size: 0.75rem !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    padding: 10px;
+  }
+
+  .modal-content {
+    padding: 20px 15px;
+    border-radius: 15px;
+    max-width: 100%;
+  }
+
+  .modal-content.modal-detail-content .modal-scrollable {
+    padding: 20px 15px 0 15px !important;
+  }
+
+  .modal-content.modal-detail-content .modal-actions-sticky {
+    padding: 12px 15px 16px 15px !important;
+  }
+
+  /* Expense cards */
+  .expense-card {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .expense-category-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 1.1rem;
+  }
+
+  .expense-info h5 {
+    font-size: 0.85rem;
+  }
+
+  .expense-amount {
+    font-size: 0.9rem;
+  }
+
+  /* Debt card */
+  .debt-card {
+    font-size: 0.8rem;
+    padding: 8px 10px;
+  }
+
+  .debt-amount {
+    font-size: 0.85rem;
+  }
+
+  /* Group cards */
+  .group-card {
+    padding: 12px;
+  }
+
+  .group-info h4 {
+    font-size: 0.9rem;
+  }
+
+  /* Split members */
+  .split-members-list {
+    padding: 8px;
+    max-height: 180px;
+  }
+
+  .split-member {
+    gap: 6px;
+    font-size: 0.85rem;
+  }
+
+  .split-member input[type="number"] {
+    width: 70px !important;
+  }
+
+  /* Manual */
+  .manual-content {
+    max-width: 100%;
+  }
+
+  .manual-body {
+    max-height: 65vh;
+    padding-right: 4px;
+  }
+
+  .manual-section h4 {
+    font-size: 0.95rem;
+  }
+
+  .manual-section p,
+  .manual-section ul {
+    font-size: 0.85rem;
+  }
+
+  /* Dashboard tabs */
+  .dash-tab {
+    font-size: 0.7rem;
+    padding: 8px 4px;
+  }
+
+  /* FAB */
+  .fab {
+    bottom: 20px;
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    font-size: 1.7rem;
+  }
+
+  /* Chart */
+  .chart-container {
+    height: 250px;
+    max-width: 100%;
+  }
+
+  /* Auth (login/registro) */
+  .auth-card {
+    padding: 25px 20px;
+    border-radius: 16px;
+  }
+
+  .auth-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .auth-logo {
+    width: 55px;
+    height: 55px;
+  }
+}
+
+/* --- MÃ³viles muy pequeÃ±os (hasta 380px) --- */
+@media (max-width: 380px) {
+  /* Header: fuentes mÃ¡s pequeÃ±as */
+  .app-header h1 {
+    font-size: 0.9rem;
+  }
+
+  .app-header .btn-small {
+    padding: 4px 6px;
+    font-size: 0.65rem;
+  }
+
+  .btn-logout {
+    padding: 5px 8px;
+    font-size: 0.7rem;
+  }
+
+  /* Main */
+  .app-main {
+    padding: 10px;
+  }
+
+  .section-card {
+    padding: 12px;
+  }
+
+  /* Stats */
+  .stat-value {
+    font-size: 1.3rem;
+  }
+
+  .stat-label {
+    font-size: 0.7rem;
+  }
+
+  .stat-card {
+    padding: 12px 14px;
+  }
+
+  /* Group total */
+  .group-total-box {
+    padding: 10px 12px;
+  }
+
+  .group-total-value {
+    font-size: 1.1rem;
+  }
+
+  .group-total-label {
+    font-size: 0.65rem;
+  }
+
+  .group-total-row {
+    gap: 8px;
+  }
+
+  /* Group action buttons: en 2 filas si hace falta */
+  #group-action-buttons {
+    gap: 4px !important;
+  }
+
+  #group-action-buttons button {
+    font-size: 0.7rem !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Expense cards */
+  .expense-card {
+    padding: 8px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .expense-category-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 1rem;
+  }
+
+  .expense-info h5 {
+    font-size: 0.8rem;
+  }
+
+  .expense-amount {
+    font-size: 0.85rem;
+  }
+
+  /* Split member: apilado vertical */
+  .split-member {
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+  }
+
+  .split-member input[type="number"] {
+    width: 60px !important;
+    font-size: 0.75rem;
+  }
+
+  /* Debt cards */
+  .debt-card {
+    font-size: 0.75rem;
+    padding: 6px 8px;
+  }
+
+  .btn-settle {
+    padding: 4px 8px;
+    font-size: 0.7rem;
+  }
+
+  /* Modales */
+  .modal-content {
+    padding: 15px 12px;
+  }
+
+  .modal-content h3 {
+    font-size: 1rem;
+  }
+
+  .modal-actions {
+    gap: 6px;
+  }
+
+  .modal-actions button {
+    padding: 10px 8px;
+    font-size: 0.8rem;
+  }
+
+  /* Manual: textos mÃ¡s chicos */
+  .manual-section h4 {
+    font-size: 0.9rem;
+  }
+
+  .manual-section p,
+  .manual-section ul {
+    font-size: 0.8rem;
+    line-height: 1.45;
+  }
+
+  /* Auth */
+  .auth-card {
+    padding: 20px 15px;
+  }
+
+  .auth-header h1 {
+    font-size: 1.2rem;
+  }
+
+  .auth-logo {
+    width: 48px;
+    height: 48px;
+  }
+}
