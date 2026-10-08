@@ -63,6 +63,7 @@ import { initGuestbook } from './guestbook.js';
   initArchivedToggle();
   initProfileModal();
   initManualModal();
+  initManualPDFButton();    // â† ðŸ†• BOTON MANUAL PDF
   initGuestbook();
   initDashboardTabs();
 
@@ -75,7 +76,7 @@ import { initGuestbook } from './guestbook.js';
 })();
 
 // ==========================================
-// 2. MANUAL DE USO
+// 2. MANUAL DE USO (modal interno HTML)
 // ==========================================
 function initManualModal() {
   const btnManual = document.getElementById('btn-manual');
@@ -94,6 +95,16 @@ function initManualModal() {
     if (e.target.id === 'modal-manual') {
       modal.classList.add('hidden');
     }
+  });
+}
+
+// ==========================================
+// 2b. MANUAL EN PDF (abre PYM-Manual.pdf)
+// ==========================================
+function initManualPDFButton() {
+  const btn = document.getElementById('btn-manual-pdf');
+  btn?.addEventListener('click', () => {
+    window.open('PYM-Manual.pdf', '_blank');
   });
 }
 
@@ -145,14 +156,3 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     alert('Error: ' + error.message);
   }
 });
-// ==========================================
-// BOTON MANUAL PDF
-// ==========================================
-function initManualPDFButton() {
-  const btn = document.getElementById('btn-manual-pdf');
-  btn?.addEventListener('click', () => {
-    window.open('PYM-Manual.pdf', '_blank');
-  });
-
-}
-
