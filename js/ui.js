@@ -145,3 +145,14 @@ document.getElementById('btn-logout').addEventListener('click', async () => {
     alert('Error: ' + error.message);
   }
 });
+// ==========================================
+// BOTON MANUAL PDF
+// ==========================================
+function initManualPDFButton() {
+  const btn = document.getElementById('btn-manual-pdf');
+  btn?.addEventListener('click', () => {
+    window.open('PYM-Manual.pdf', '_blank');
+  });
+
+}
+
