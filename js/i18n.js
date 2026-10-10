@@ -374,6 +374,9 @@ export const TRADUCCIONES = {
     'friends.accept_error': 'Error al aceptar: {mensaje}',
     'friends.reject_error': 'Error al rechazar: {mensaje}',
     'friends.close': 'Cerrar',
+    'friends.remove_button': 'Eliminar amigo',
+    'friends.remove_confirm': 'Eliminar a {nombre} de tus amigos?',
+    'friends.remove_error': 'Error al eliminar: {mensaje}',
 
     // ---------- LIBRO DE VISITAS ----------
     'guestbook.loading': 'Cargando comentarios...',
