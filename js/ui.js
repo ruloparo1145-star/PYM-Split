@@ -101,12 +101,29 @@ function initManualModal() {
 // ==========================================
 // 2b. MANUAL EN PDF (abre PYM-Manual.pdf)
 // ==========================================
+// function initManualPDFButton() {
+//  const btn = document.getElementById('btn-manual-pdf');
+//  btn?.addEventListener('click', () => {
+//    window.open('PYM-Manual.pdf', '_blank');
+//  });
+// }
+
 function initManualPDFButton() {
   const btn = document.getElementById('btn-manual-pdf');
   btn?.addEventListener('click', () => {
-    window.open('PYM-Manual.pdf', '_blank');
+    // Detectar idioma activo
+    const idioma = getIdioma();  // 'es' o 'en' (ya lo importaste arriba)
+
+    // Elegir el PDF según idioma
+    const archivo = (idioma === 'en')
+      ? 'PYM-Manual-EN.pdf'
+      : 'PYM-Manual-ES.pdf';      // español por defecto
+
+    // Abrir en nueva pestaña
+    window.open(archivo, '_blank');
   });
 }
+
 
 // ==========================================
 // 3. MODAL: GRAFICO HISTORICO
