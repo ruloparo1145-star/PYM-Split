@@ -74,13 +74,14 @@ export async function cargarAmigos() {
   const pendientes = amistades.filter(a => a.status === 'pending');
   const aceptadas = amistades.filter(a => a.status === 'accepted');
 
+  // --- SOLICITUDES PENDIENTES ---
   if (pendientes.length === 0) {
     requestsList.innerHTML = `<p class="placeholder-text">${t('friends.requests_empty')}</p>`;
   } else {
     requestsList.innerHTML = pendientes.map(solicitud => {
       const esEntrante = solicitud.friend_id === user.id;
       const otroUsuario = esEntrante ? solicitud.user : solicitud.friend;
-      
+
       return `
         <div class="friend-card">
           <div class="friend-info">
@@ -96,7 +97,7 @@ export async function cargarAmigos() {
         </div>
       `;
     }).join('');
-    
+
     document.querySelectorAll('.btn-accept').forEach(btn => {
       btn.addEventListener('click', () => aceptarSolicitud(btn.dataset.id));
     });
@@ -105,6 +106,7 @@ export async function cargarAmigos() {
     });
   }
 
+  // --- AMIGOS ACEPTADOS ---
   if (aceptadas.length === 0) {
     friendsList.innerHTML = `<p class="placeholder-text">${t('friends.list_empty')}</p>`;
   } else {
@@ -116,9 +118,26 @@ export async function cargarAmigos() {
             <h4>${otroUsuario.full_name || otroUsuario.email}</h4>
             <span>${otroUsuario.email}</span>
           </div>
+          <div class="friend-actions">
+            <button class="btn-small btn-remove-friend"
+                    data-friendship-id="${amistad.id}"
+                    data-name="${otroUsuario.full_name || otroUsuario.email}"
+                    title="${t('friends.remove_button')}">
+              &#128465;
+            </button>
+          </div>
         </div>
       `;
     }).join('');
+
+    // Listener para boton eliminar
+    document.querySelectorAll('.btn-remove-friend').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const friendshipId = btn.dataset.friendshipId;
+        const nombre = btn.dataset.name;
+        confirmarEliminarAmigo(friendshipId, nombre);
+      });
+    });
   }
 }
 
@@ -130,7 +149,7 @@ async function aceptarSolicitud(id) {
     .from('friendships')
     .update({ status: 'accepted' })
     .eq('id', id);
-  
+
   if (error) alert(t('friends.accept_error', { mensaje: error.message }));
   else cargarAmigos();
 }
@@ -143,6 +162,26 @@ async function rechazarSolicitud(id) {
 
   if (error) alert(t('friends.reject_error', { mensaje: error.message }));
   else cargarAmigos();
+}
+
+// ==========================================
+// 3b. CONFIRMAR Y ELIMINAR AMIGO
+// ==========================================
+async function confirmarEliminarAmigo(friendshipId, nombre) {
+  const mensaje = t('friends.remove_confirm', { nombre });
+  if (!confirm(mensaje)) return;
+
+  const { error } = await supabase
+    .from('friendships')
+    .delete()
+    .eq('id', friendshipId);
+
+  if (error) {
+    alert(t('friends.remove_error', { mensaje: error.message }));
+    return;
+  }
+
+  await cargarAmigos();
 }
 
 // ==========================================
