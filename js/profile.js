@@ -90,6 +90,7 @@ export async function cargarPerfil() {
 
 // ==========================================
 // GUARDAR PERFIL
+// Devuelve { idiomaCambiado, monedaCambiada }
 // ==========================================
 export async function guardarPerfil() {
   const { data: { user } } = await supabase.auth.getUser();
@@ -99,6 +100,16 @@ export async function guardarPerfil() {
   const phone = document.getElementById('profile-phone').value.trim();
   const currency = document.getElementById('profile-currency').value;
   const language = document.getElementById('profile-language')?.value || getIdioma();
+
+  // Leer moneda anterior para saber si hay que invalidar cache
+  const { data: perfilAnterior } = await supabase
+    .from('profiles')
+    .select('preferred_currency, language')
+    .eq('id', user.id)
+    .single();
+
+  const currencyAnterior = (perfilAnterior?.preferred_currency || 'EUR').toUpperCase();
+  const languageAnterior = perfilAnterior?.language || getIdioma();
 
   const { error } = await supabase
     .from('profiles')
@@ -112,25 +123,43 @@ export async function guardarPerfil() {
 
   if (error) throw error;
 
-  if (language !== getIdioma()) {
-    setIdioma(language);
-    aplicarTraducciones();
+  const monedaCambiada = (currency || 'EUR').toUpperCase() !== currencyAnterior;
+  const idiomaCambiado = language !== languageAnterior;
 
-    const welcomeMessage = document.getElementById('welcome-message');
-    if (welcomeMessage && fullName) {
-      welcomeMessage.textContent = t('dashboard.welcome', { nombre: fullName });
+  // Invalidar cache de moneda preferida en groups.js
+  if (monedaCambiada) {
+    try {
+      const mod = await import('./groups.js');
+      if (typeof mod.invalidarCacheMoneda === 'function') {
+        mod.invalidarCacheMoneda();
+      }
+    } catch (e) {
+      console.warn('No se pudo invalidar cache de moneda:', e);
     }
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 800);
-    return;
   }
 
+  // Actualizar mensaje de bienvenida
   const welcomeMessage = document.getElementById('welcome-message');
   if (welcomeMessage && fullName) {
     welcomeMessage.textContent = t('dashboard.welcome', { nombre: fullName });
   }
+
+  // Si cambiÃ³ el idioma, aplicamos las traducciones y recargamos
+  if (idiomaCambiado) {
+    setIdioma(language);
+    aplicarTraducciones();
+
+    // Guardar mensaje de Ã©xito para mostrarlo tras el reload
+    try {
+      sessionStorage.setItem('pym_profile_success', '1');
+    } catch (e) {}
+
+    // Reload inmediato (sin setTimeout que pueda cortarse)
+    window.location.reload();
+    return { idiomaCambiado: true, monedaCambiada };
+  }
+
+  return { idiomaCambiado: false, monedaCambiada };
 }
 
 // ==========================================
@@ -146,9 +175,25 @@ export function initProfileModal() {
   const successMsg = document.getElementById('profile-success');
   const btnExport = document.getElementById('btn-export-data');
 
+  // Mostrar mensaje de Ã©xito si venimos de un reload por cambio de idioma
+  try {
+    if (sessionStorage.getItem('pym_profile_success') === '1') {
+      sessionStorage.removeItem('pym_profile_success');
+      // El modal estÃ¡ cerrado, pero mostramos por un instante al abrir
+      modal.dataset.pendingSuccess = '1';
+    }
+  } catch (e) {}
+
   btnOpen?.addEventListener('click', async () => {
     modal.classList.remove('hidden');
     await cargarPerfil();
+
+    if (modal.dataset.pendingSuccess === '1') {
+      delete modal.dataset.pendingSuccess;
+      successMsg.style.color = '#38a169';
+      successMsg.textContent = t('profile.success');
+      setTimeout(() => { successMsg.textContent = ''; }, 3000);
+    }
   });
 
   btnClose?.addEventListener('click', () => modal.classList.add('hidden'));
@@ -168,9 +213,25 @@ export function initProfileModal() {
     btnSubmit.textContent = t('profile.saving');
 
     try {
-      await guardarPerfil();
+      const resultado = await guardarPerfil();
+
+      // Si cambiÃ³ idioma, guardarPerfil ya hizo reload
+      if (resultado.idiomaCambiado) return;
+
       successMsg.style.color = '#38a169';
       successMsg.textContent = t('profile.success');
+
+      // Si cambiÃ³ la moneda, recargar dashboard y grupos para reflejar
+      if (resultado.monedaCambiada) {
+        try {
+          const { cargarGrupos } = await import('./groups.js');
+          const { cargarDashboard } = await import('./dashboard.js');
+          await cargarGrupos();
+          await cargarDashboard();
+        } catch (e) {
+          console.warn('No se pudieron recargar datos tras cambio de moneda:', e);
+        }
+      }
 
       setTimeout(() => {
         modal.classList.add('hidden');
