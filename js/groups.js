@@ -27,7 +27,10 @@ async function getMonedaPreferida() {
 // ==========================================
 function formatearFecha(fechaStr) {
   if (!fechaStr) return '';
-  const [y, m, d] = fechaStr.split('-');
+  // Acepta "YYYY-MM-DD" o ISO con hora ("YYYY-MM-DDTHH:mm:ssZ")
+  const soloFecha = String(fechaStr).split('T')[0];
+  const [y, m, d] = soloFecha.split('-');
+  if (!y || !m || !d) return soloFecha;
   return `${d}/${m}/${y}`;
 }
 
@@ -537,7 +540,6 @@ export function initGroupModal() {
     mostrarResultadoAPI(t('group.test_api.checking'), 'info');
 
     try {
-      const { obtenerTasa } = await import('./currency.js');
       const tasa = await obtenerTasa(codMon, 'USD');
 
       if (tasa && tasa > 0) {
@@ -598,7 +600,7 @@ async function abrirDetalleGrupo(groupId) {
 
   const { data: grupo } = await supabase
     .from('groups')
-    .select('name, archived, currency, date_start, date_end, date_closed, closed_total, manual_exchange_rate')
+    .select('name, archived, currency, date_start, date_end, date_closed, closed_total, closed_summary_text, manual_exchange_rate')
     .eq('id', groupId)
     .single();
 
@@ -703,35 +705,29 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   }
 
   container.classList.remove('hidden');
-  
-  const { calcularBalance, simplificarDeudas } = await import('./debtSolver.js');
-  const balance = await calcularBalance(groupId);
-  const transacciones = simplificarDeudas(balance);
 
-  const userIds = Object.keys(balance);
-  const { data: perfiles } = await supabase
-    .from('profiles')
-    .select('id, full_name, email')
-    .in('id', userIds);
-  const nombres = {};
-  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Usuario');
-
+  // Leemos el texto histÃ³rico guardado en la base de datos.
+  // Si no existe (porque se cerrÃ³ antes de esta actualizaciÃ³n), mostramos que estÃ¡ saldado.
   let html = `
     <div style="background: #fff5f5; border: 2px solid #feb2b2; border-radius: 10px; padding: 12px; margin-bottom: 15px;">
       <h4 style="color: #c53030; font-size: 1rem; margin-bottom: 8px;">Resumen de Cierre (${formatearFecha(grupo.date_closed)})</h4>
       <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 4px;">Total congelado: <strong>${parseFloat(grupo.closed_total || 0).toFixed(2)} ${monedaGrupo}</strong></p>
   `;
 
-  if (transacciones.length === 0) {
-    html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600;">Todo saldado al momento del cierre.</p>`;
+  if (grupo.closed_summary_text) {
+    if (grupo.closed_summary_text === 'Todo saldado al momento del cierre.') {
+      html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600;">${grupo.closed_summary_text}</p>`;
+    } else {
+      html += `<p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;"><strong>Deudas al momento del cierre:</strong></p>`;
+      html += `<div style="font-size: 0.85rem; color: #4a5568; padding-left: 15px;">`;
+      grupo.closed_summary_text.split(';').forEach(linea => {
+        if (linea.trim()) html += `<p style="margin: 2px 0;">- ${linea.trim()}</p>`;
+      });
+      html += `</div>`;
+    }
   } else {
-    html += `<ul style="font-size: 0.85rem; color: #4a5568; padding-left: 20px; margin-top: 5px;">`;
-    transacciones.forEach(tr => {
-      const from = nombres[tr.from] || 'Usuario';
-      const to = nombres[tr.to] || 'Usuario';
-      html += `<li>${from} le debe a <strong>${to}</strong>: ${tr.amount.toFixed(2)} ${monedaGrupo}</li>`;
-    });
-    html += `</ul>`;
+    // Fallback por si el grupo se cerrÃ³ antes de aÃ±adir esta funciÃ³n
+    html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600;">Todo saldado al momento del cierre.</p>`;
   }
 
   html += `</div>`;
@@ -858,7 +854,7 @@ function actualizarBotonCotizacion(grupo) {
 }
 
 // ==========================================
-// 12. CERRAR COMPUTO
+// 12. CERRAR COMPUTO (CON CONGELADO DE TEXTO)
 // ==========================================
 async function cerrarComputo(groupId) {
   const { data: grupoInfo } = await supabase
@@ -900,12 +896,37 @@ async function cerrarComputo(groupId) {
 
   const hoy = new Date().toISOString().split('T')[0];
 
+  // --- Calcular deudas en este instante y guardarlas como texto ---
+  const { calcularBalance, simplificarDeudas } = await import('./debtSolver.js');
+  const balance = await calcularBalance(groupId);
+  const transacciones = simplificarDeudas(balance);
+
+  const userIds = Object.keys(balance);
+  const { data: perfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', userIds);
+  const nombres = {};
+  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Usuario');
+
+  let textoDeudas = '';
+  if (transacciones.length > 0) {
+    transacciones.forEach(tr => {
+      const from = nombres[tr.from] || 'Usuario';
+      const to = nombres[tr.to] || 'Usuario';
+      textoDeudas += `${from} le debe a ${to}: ${tr.amount.toFixed(2)} ${monedaGrupo}; `;
+    });
+  } else {
+    textoDeudas = 'Todo saldado al momento del cierre.';
+  }
+
   const { error } = await supabase
     .from('groups')
     .update({
       date_closed: hoy,
       closed_total: parseFloat(total.toFixed(2)),
-      closed_rate_usd: closedRateUSD
+      closed_rate_usd: closedRateUSD,
+      closed_summary_text: textoDeudas.trim()
     })
     .eq('id', groupId);
 
@@ -923,7 +944,8 @@ async function reabrirComputo(groupId) {
     .from('groups')
     .update({
       date_closed: null,
-      closed_total: null
+      closed_total: null,
+      closed_summary_text: null
     })
     .eq('id', groupId);
 
@@ -1271,9 +1293,9 @@ if (!window.__groupDetailListenersAttached) {
   document.getElementById('btn-close-computo')?.addEventListener('click', async () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     if (!groupId) return;
-    
+
     if (!confirm(t('group.computo.close_confirm'))) return;
-    
+
     await cerrarComputo(groupId);
     await abrirDetalleGrupo(groupId);
     await cargarGrupos();
@@ -1452,7 +1474,7 @@ if (!window.__groupDetailListenersAttached) {
 async function exportarGrupoCSV(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
     .from('groups')
-    .select('name, currency, date_start, date_end, date_closed, closed_total, manual_exchange_rate')
+    .select('name, currency, date_start, date_end, date_closed, closed_total, closed_summary_text, manual_exchange_rate')
     .eq('id', groupId)
     .single();
 
@@ -1467,8 +1489,9 @@ async function exportarGrupoCSV(groupId) {
     .order('date', { ascending: true });
 
   if (errGastos) throw new Error('No se pudieron cargar los gastos');
+  const gastosArr = gastos || [];
 
-  const expIds = (gastos || []).map(g => g.id);
+  const expIds = gastosArr.map(g => g.id);
   let splits = [];
   if (expIds.length > 0) {
     const { data: splitsData } = await supabase
@@ -1484,7 +1507,7 @@ async function exportarGrupoCSV(groupId) {
     .eq('group_id', groupId);
 
   const userIds = new Set();
-  (gastos || []).forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
+  gastosArr.forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
   splits.forEach(s => { if (s.user_id) userIds.add(s.user_id); });
   (settlementsData || []).forEach(s => {
     if (s.from_user) userIds.add(s.from_user);
@@ -1505,7 +1528,7 @@ async function exportarGrupoCSV(groupId) {
   const totalesPorUsuario = {};
   const participantes = new Set();
 
-  gastos.forEach(g => {
+  gastosArr.forEach(g => {
     if (g.archived) return;
     const monto = parseFloat(g.amount) || 0;
     const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
@@ -1515,7 +1538,7 @@ async function exportarGrupoCSV(groupId) {
   });
 
   splits.forEach(s => {
-    const gasto = gastos.find(g => g.id === s.expense_id);
+    const gasto = gastosArr.find(g => g.id === s.expense_id);
     if (!gasto || gasto.archived) return;
     const monto = parseFloat(s.amount_owed) || 0;
     const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
@@ -1540,6 +1563,9 @@ async function exportarGrupoCSV(groupId) {
   lineas.push(['Total del grupo', totalGrupo.toFixed(2) + ' ' + monedaGrupo]);
   if (grupo.date_closed && grupo.closed_total) {
     lineas.push(['Total congelado', parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo]);
+  }
+  if (grupo.closed_summary_text) {
+    lineas.push(['Resumen de Cierre', grupo.closed_summary_text]);
   }
   lineas.push(['Mi parte (' + miNombre + ')', miParte.toFixed(2) + ' ' + monedaGrupo]);
   lineas.push([]);
@@ -1568,7 +1594,7 @@ async function exportarGrupoCSV(groupId) {
     'Split (persona: monto ' + monedaGrupo + ')'
   ]);
 
-  gastos.forEach(g => {
+  gastosArr.forEach(g => {
     const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
     const tasa = parseFloat(g.exchange_rate) || 1;
     const monto = parseFloat(g.amount) || 0;
@@ -1627,7 +1653,7 @@ async function exportarGrupoCSV(groupId) {
 async function exportarGrupoRTF(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
     .from('groups')
-    .select('name, currency, date_start, date_end, date_closed, closed_total, manual_exchange_rate')
+    .select('name, currency, date_start, date_end, date_closed, closed_total, closed_summary_text, manual_exchange_rate')
     .eq('id', groupId)
     .single();
 
@@ -1642,8 +1668,9 @@ async function exportarGrupoRTF(groupId) {
     .order('date', { ascending: true });
 
   if (errGastos) throw new Error('No se pudieron cargar los gastos');
+  const gastosArr = gastos || [];
 
-  const expIds = (gastos || []).map(g => g.id);
+  const expIds = gastosArr.map(g => g.id);
   let splits = [];
   if (expIds.length > 0) {
     const { data: splitsData } = await supabase
@@ -1659,7 +1686,7 @@ async function exportarGrupoRTF(groupId) {
     .eq('group_id', groupId);
 
   const userIds = new Set();
-  (gastos || []).forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
+  gastosArr.forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
   splits.forEach(s => { if (s.user_id) userIds.add(s.user_id); });
   (settlementsData || []).forEach(s => {
     if (s.from_user) userIds.add(s.from_user);
@@ -1685,7 +1712,7 @@ async function exportarGrupoRTF(groupId) {
   const totalesPorUsuario = {};
   const participantes = new Set();
 
-  gastos.forEach(g => {
+  gastosArr.forEach(g => {
     if (g.archived) return;
     const monto = parseFloat(g.amount) || 0;
     const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
@@ -1695,7 +1722,7 @@ async function exportarGrupoRTF(groupId) {
   });
 
   splits.forEach(s => {
-    const gasto = gastos.find(g => g.id === s.expense_id);
+    const gasto = gastosArr.find(g => g.id === s.expense_id);
     if (!gasto || gasto.archived) return;
     const monto = parseFloat(s.amount_owed) || 0;
     const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
@@ -1712,7 +1739,7 @@ async function exportarGrupoRTF(groupId) {
   const rtf = generarRTFReporte({
     grupo,
     monedaGrupo,
-    gastos,
+    gastos: gastosArr,
     splits,
     nombres,
     totalGrupo,
@@ -1797,18 +1824,31 @@ function generarRTFReporte(datos) {
   // === RESUMEN DE CIERRE ===
   if (grupo.date_closed) {
     r += '\\pard\\b\\fs28\\cf1 RESUMEN DE CIERRE (' + esc(grupo.date_closed) + ')\\b0\\fs22\\cf0\\par' + nl;
-    
+
     if (grupo.closed_total) {
       r += '\\pard Total final congelado: \\b ' + esc(parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
     }
 
-    if (transacciones && transacciones.length === 0) {
+    if (grupo.closed_summary_text) {
+      if (grupo.closed_summary_text === 'Todo saldado al momento del cierre.') {
+        r += '\\pard \\cf1\\b ' + esc(grupo.closed_summary_text) + '\\b0\\cf0\\par' + nl;
+      } else {
+        r += '\\pard Deudas al momento del cierre:\\par' + nl;
+        grupo.closed_summary_text.split(';').forEach(linea => {
+          if (linea.trim()) r += '\\pard - ' + esc(linea.trim()) + '\\par' + nl;
+        });
+      }
+    } else if (transacciones && transacciones.length === 0) {
+      // Fallback: grupo cerrado antes de la migraciÃ³n, sin deudas
       r += '\\pard \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
     } else if (transacciones && transacciones.length > 0) {
+      // Fallback: grupo cerrado antes de la migraciÃ³n, pero hay deudas calculadas
       r += '\\pard Deudas a saldar al momento del cierre:\\par' + nl;
       transacciones.forEach(tr => {
         r += '\\pard - ' + esc(nombres[tr.from] || 'Usuario') + ' le debe a ' + esc(nombres[tr.to] || 'Usuario') + ': \\b ' + tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
       });
+    } else {
+      r += '\\pard \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
     }
     r += '\\pard\\par' + nl;
   }
@@ -1845,7 +1885,7 @@ function generarRTFReporte(datos) {
   });
   r += '\\pard\\par' + nl;
 
-  // === BALANCE (solo si hay deudas pendientes y el grupo NO estÃ¡ cerrado) ===
+  // === BALANCE (solo si el grupo NO estÃ¡ cerrado) ===
   if (!grupo.date_closed && balance && Object.keys(balance).length > 0 && transacciones.length > 0) {
     r += '\\pard\\b\\fs28\\cf1 Balance actual\\b0\\fs22\\cf0\\par' + nl;
 
@@ -1903,7 +1943,7 @@ function generarRTFReporte(datos) {
   const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
 
   r += '\\trowd\\trgaph70\\trleft0\\trhdr';
-  anchosAcum.forEach((x, i) => {
+  anchosAcum.forEach((x) => {
     r += borde + '\\clcbpat4\\cellx' + x;
   });
   r += nl;
