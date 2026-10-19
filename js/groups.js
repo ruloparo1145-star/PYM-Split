@@ -703,7 +703,6 @@ async function abrirDetalleGrupo(groupId) {
 // ==========================================
 
 
-
 async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   const container = document.getElementById('group-closed-summary');
   if (!container) return;
@@ -786,10 +785,21 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
         const pagado = Math.abs(p.saldo) < 0.01;
         
         let estadoHTML = '';
+        
         if (pagado) {
+          // Si el saldo es 0, calculamos si pagÃ³ o cobrÃ³ segÃºn la diferencia original
+          const diferenciaOriginal = p.pago - p.consumio;
+          
+          let accion = 'Saldado';
+          if (diferenciaOriginal < -0.01) {
+            accion = `Pag&oacute;: ${Math.abs(diferenciaOriginal).toFixed(2)}`; 
+          } else if (diferenciaOriginal > 0.01) {
+            accion = `Cobr&oacute;: ${diferenciaOriginal.toFixed(2)}`; 
+          }
+
           estadoHTML = `
             <span style="display:inline-block;padding:6px 10px;border-radius:6px;background:#c6f6d5;color:#276749;font-size:0.75rem;font-weight:600; text-align:center; width: 100%;">
-               &#9989; Pagado<br><span style="font-weight:400;font-size:0.65rem;">${fmtFecha(p.fecha_pago)}</span>
+               &#9989; ${accion}<br><span style="font-weight:400;font-size:0.65rem;">${fmtFecha(p.fecha_pago)}</span>
             </span>
           `;
         } else if (p.saldo < 0) {
@@ -912,7 +922,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           const { data: perfiles } = await supabase.from('profiles').select('id, full_name').eq('full_name', deudas.find(d => d.de === personas.find(p=>p.id===fromId).nombre)?.a || '');
           const toIdReal = perfiles && perfiles.length > 0 ? perfiles[0].id : null;
           
-          const targetToId = toIdReal || toId; // Si no lo encuentra, usa el que vino
+          const targetToId = toIdReal || toId;
 
           if (!targetToId) throw new Error("No se pudo identificar a quiÃ©n pagarle");
 
@@ -928,12 +938,10 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
 
           if (error) throw error;
 
-          // Actualizar la UI
+          // Actualizar la UI (recargando el detalle del grupo y forzando el recÃ¡lculo)
           const { mostrarBalance } = await import('./debtSolver.js');
           await mostrarBalance(gId);
           
-          // Recargar el resumen de cierre forzando un mini-reload del grupo
-          // Para que no quede "Pagado" en la tabla si no volvemos a cerrar, forzamos re-cierre automÃ¡tico
           await cerrarComputo(gId);
           await abrirDetalleGrupo(gId);
           await cargarGrupos();
