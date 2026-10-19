@@ -2226,6 +2226,12 @@ function generarRTFReporte(datos) {
 
   return r;
 }
+
+// ==========================================
+// 19. INVALIDAR CACHE DE MONEDA PREFERIDA
+// ==========================================
 export function invalidarCacheMoneda() {
   monedaPreferidaCache = null;
+
 }
+
