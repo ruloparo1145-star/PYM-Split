@@ -200,6 +200,8 @@ export const TRADUCCIONES = {
     'group.detail.add_member_add': 'Anadir',
     'group.detail.add_member_already': 'Ese amigo ya esta en el grupo.',
     'group.detail.add_member_error': 'Error al anadir: {mensaje}',
+    'group.detail.balance_individual': 'Balance por persona',
+    'group.detail.balance_pending': 'Deudas pendientes',
 
     // ---------- GRUPOS: BOTONES DETALLE ----------
     'group.btn.calc_today': 'Calcular en moneda de hoy',
@@ -298,6 +300,7 @@ export const TRADUCCIONES = {
     'expense.create.percent_error': 'Los porcentajes suman {total}%, deben sumar 100%.',
     'expense.create.exact_error': 'Los montos suman {total}, deben sumar {esperado}.',
     'expense.create.shares_error': 'Debes asignar al menos una parte.',
+    
 
     // ---------- GASTOS: LISTA ----------
     'expense.list.empty': 'No hay gastos aun. Anade el primero!',
@@ -756,6 +759,8 @@ export const TRADUCCIONES = {
     'group.detail.add_member_add': 'Add',
     'group.detail.add_member_already': 'That friend is already in the group.',
     'group.detail.add_member_error': 'Error adding: {mensaje}',
+    'group.detail.balance_individual': 'Balance per person',
+    'group.detail.balance_pending': 'Pending debts',
 
     // ---------- GROUPS: DETAIL BUTTONS ----------
     'group.btn.calc_today': 'Calculate in today rate',
