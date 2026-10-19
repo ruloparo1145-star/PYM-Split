@@ -1072,6 +1072,9 @@ function actualizarBotonCotizacion(grupo) {
   }
 }
 
+
+
+
 // ==========================================
 // 12. CERRAR COMPUTO (CON SNAPSHOT COMPLETO)
 // ==========================================
@@ -1181,7 +1184,6 @@ async function cerrarComputo(groupId) {
     const consumioR = parseFloat((consumoPorUsuario[uid] || 0).toFixed(2));
     const saldoR = parseFloat((pagoR - consumioR).toFixed(2));
     
-    // Si el saldo es mayor a 1 centavo, NO estÃ¡ pagado
     const pagado = Math.abs(saldoR) < 0.01;
 
     return {
@@ -1191,7 +1193,7 @@ async function cerrarComputo(groupId) {
       consumio: consumioR,
       saldo: saldoR,
       pagado: pagado,
-      fecha_pago: pagado ? hoy : null,
+      fecha_pago: pagado ? hoy : null, // Si estÃ¡ pagado, por ahora le ponemos hoy, luego se ajusta
       pagos_detalle: pagosDetallePorUsuario[uid] || []
     };
   });
@@ -1205,9 +1207,25 @@ async function cerrarComputo(groupId) {
         Math.abs(p.saldo) > Math.abs(max.saldo) ? p : max
       , personasSnap[0]);
       candidato.saldo = parseFloat((candidato.saldo + ajuste).toFixed(2));
-      candidato.pagado = Math.abs(candidato.saldo) < 0.01; // Re-evaluar
+      candidato.pagado = Math.abs(candidato.saldo) < 0.01; 
     }
   }
+
+  // === NUEVO: Buscar settlements para poner la fecha real del pago ===
+  const { data: settlements } = await supabase
+    .from('settlements')
+    .select('from_user, to_user, date, created_at')
+    .eq('group_id', groupId);
+
+  personasSnap.forEach(p => {
+    if (p.pagado) {
+      // Si estÃ¡ pagado, buscar si hizo algÃºn settlement en este grupo
+      const miPago = (settlements || []).find(s => s.from_user === p.id || s.to_user === p.id);
+      if (miPago) {
+        p.fecha_pago = miPago.date || miPago.created_at;
+      }
+    }
+  });
 
   const snapshot = {
     moneda: monedaGrupo,
@@ -1245,6 +1263,9 @@ async function cerrarComputo(groupId) {
     throw error;
   }
 }
+
+
+
 
 // ==========================================
 // 13. REABRIR COMPUTO
