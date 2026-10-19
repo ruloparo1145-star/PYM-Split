@@ -1422,9 +1422,19 @@ async function exportarGrupoCSV(groupId) {
     splits = splitsData || [];
   }
 
+  // Incluir usuarios de settlements para los nombres
+  const { data: settlementsData } = await supabase
+    .from('settlements')
+    .select('from_user, to_user')
+    .eq('group_id', groupId);
+
   const userIds = new Set();
   (gastos || []).forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
   splits.forEach(s => { if (s.user_id) userIds.add(s.user_id); });
+  (settlementsData || []).forEach(s => {
+    if (s.from_user) userIds.add(s.from_user);
+    if (s.to_user) userIds.add(s.to_user);
+  });
 
   const { data: perfiles } = await supabase
     .from('profiles')
@@ -1588,9 +1598,19 @@ async function exportarGrupoRTF(groupId) {
     splits = splitsData || [];
   }
 
+  // Incluir usuarios de settlements para los nombres
+  const { data: settlementsData } = await supabase
+    .from('settlements')
+    .select('from_user, to_user')
+    .eq('group_id', groupId);
+
   const userIds = new Set();
   (gastos || []).forEach(g => { if (g.paid_by) userIds.add(g.paid_by); });
   splits.forEach(s => { if (s.user_id) userIds.add(s.user_id); });
+  (settlementsData || []).forEach(s => {
+    if (s.from_user) userIds.add(s.from_user);
+    if (s.to_user) userIds.add(s.to_user);
+  });
 
   const { data: perfiles } = await supabase
     .from('profiles')
@@ -1667,7 +1687,7 @@ async function exportarGrupoRTF(groupId) {
 }
 
 // ==========================================
-// 18. GENERAR RTF (CON BALANCE Y DEUDAS)
+// 18. GENERAR RTF (CON BALANCE)
 // ==========================================
 function generarRTFReporte(datos) {
   const {
@@ -1698,12 +1718,13 @@ function generarRTFReporte(datos) {
   r += '{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang3082' + nl;
   r += '{\\fonttbl{\\f0 Calibri;}{\\f1 Consolas;}}' + nl;
   r += '{\\colortbl ;' + nl;
-  r += '\\red46\\green125\\blue50;' + nl;
-  r += '\\red100\\green100\\blue100;' + nl;
-  r += '\\red255\\green255\\blue255;' + nl;
-  r += '\\red46\\green125\\blue50;' + nl;
-  r += '\\red230\\green245\\blue230;' + nl;
-  r += '\\red180\\green180\\blue180;' + nl;
+  r += '\\red46\\green125\\blue50;' + nl; // cf1 - Green
+  r += '\\red100\\green100\\blue100;' + nl; // cf2 - Grey
+  r += '\\red255\\green255\\blue255;' + nl; // cf3 - White
+  r += '\\red46\\green125\\blue50;' + nl; // cf4 - Green
+  r += '\\red230\\green245\\blue230;' + nl; // cf5 - Light green
+  r += '\\red180\\green180\\blue180;' + nl; // cf6 - Border
+  r += '\\red229\\green62\\blue62;' + nl; // cf7 - RED
   r += '}' + nl;
   r += '\\paperw12240\\paperh15840\\margl720\\margr720\\margt720\\margb720' + nl;
   r += '\\f0\\fs22' + nl;
@@ -1729,7 +1750,7 @@ function generarRTFReporte(datos) {
   r += '\\pard\\par' + nl;
 
   // === Totales por persona ===
-  r += '\\pard\\b\\fs28\\cf1 Totales por persona\\b0\\fs22\\cf0\\par' + nl;
+  r += '\\pard\\b\\fs28\\cf1 Participacion por persona\\b0\\fs22\\cf0\\par' + nl;
 
   const anchoCol1 = 5000;
   const anchoCol2 = 4000;
@@ -1738,7 +1759,7 @@ function generarRTFReporte(datos) {
   r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + anchoCol1;
   r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (anchoCol1 + anchoCol2) + nl;
   r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
-  r += '\\pard\\intbl\\b\\cf3 Total\\b0\\cf0\\cell ';
+  r += '\\pard\\intbl\\b\\cf3 Consumo\\b0\\cf0\\cell ';
   r += '\\row' + nl;
 
   let cont = 0;
@@ -1754,45 +1775,45 @@ function generarRTFReporte(datos) {
   });
   r += '\\pard\\par' + nl;
 
-  // === BALANCE (signos + / -) ===
+  // === BALANCE (solo si hay deudas pendientes) ===
   if (balance && Object.keys(balance).length > 0) {
-    r += '\\pard\\b\\fs28\\cf1 Balance por persona\\b0\\fs22\\cf0\\par' + nl;
+    if (transacciones && transacciones.length > 0) {
+      r += '\\pard\\b\\fs28\\cf1 Balance por persona\\b0\\fs22\\cf0\\par' + nl;
 
-    const filasOrdenadas = Object.entries(balance)
-      .filter(([_, monto]) => Math.abs(monto) >= 0.01)
-      .sort((a, b) => b[1] - a[1]);
+      const filasOrdenadas = Object.entries(balance)
+        .filter(([_, monto]) => Math.abs(monto) >= 0.01)
+        .sort((a, b) => b[1] - a[1]);
 
-    const balAncho1 = 5000;
-    const balAncho2 = 4000;
-
-    r += '\\trowd\\trgaph70\\trleft0';
-    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + balAncho1;
-    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (balAncho1 + balAncho2) + nl;
-    r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
-    r += '\\pard\\intbl\\b\\cf3 Saldo (' + monedaGrupo + ')\\b0\\cf0\\cell ';
-    r += '\\row' + nl;
-
-    let contBal = 0;
-    filasOrdenadas.forEach(([uid, monto]) => {
-      const nombre = nombres[uid] || 'Usuario';
-      const esPositivo = monto > 0;
-      const signo = esPositivo ? '+' : '-';
-      const color = esPositivo ? '\\cf1' : '\\cf2';
-      const fondo = (contBal % 2 === 1) ? '\\clcbpat5' : '';
+      const balAncho1 = 5000;
+      const balAncho2 = 4000;
 
       r += '\\trowd\\trgaph70\\trleft0';
-      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + balAncho1;
-      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (balAncho1 + balAncho2) + nl;
-      r += '\\pard\\intbl ' + esc(nombre) + '\\cell ';
-      r += '\\pard\\intbl\\qr ' + color + '\\b ' + signo + Math.abs(monto).toFixed(2) + '\\b0\\cf0\\cell ';
+      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + balAncho1;
+      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (balAncho1 + balAncho2) + nl;
+      r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
+      r += '\\pard\\intbl\\b\\cf3 Saldo (' + monedaGrupo + ')\\b0\\cf0\\cell ';
       r += '\\row' + nl;
-      contBal++;
-    });
 
-    r += '\\pard\\par' + nl;
+      let contBal = 0;
+      filasOrdenadas.forEach(([uid, monto]) => {
+        const nombre = nombres[uid] || 'Usuario';
+        const esPositivo = monto > 0;
+        const signo = esPositivo ? '+' : '-';
+        const color = esPositivo ? '\\cf1' : '\\cf7'; // cf1 (Green) / cf7 (Red)
+        const fondo = (contBal % 2 === 1) ? '\\clcbpat5' : '';
 
-    // Deudas pendientes
-    if (transacciones && transacciones.length > 0) {
+        r += '\\trowd\\trgaph70\\trleft0';
+        r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + balAncho1;
+        r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (balAncho1 + balAncho2) + nl;
+        r += '\\pard\\intbl ' + esc(nombre) + '\\cell ';
+        r += '\\pard\\intbl\\qr ' + color + '\\b ' + signo + Math.abs(monto).toFixed(2) + '\\b0\\cf0\\cell ';
+        r += '\\row' + nl;
+        contBal++;
+      });
+
+      r += '\\pard\\par' + nl;
+
+      // Deudas pendientes
       r += '\\pard\\b\\fs28\\cf1 Deudas pendientes\\b0\\fs22\\cf0\\par' + nl;
       transacciones.forEach(tr => {
         const fromName = nombres[tr.from] || 'Usuario';
@@ -1800,6 +1821,11 @@ function generarRTFReporte(datos) {
         r += '\\pard ' + esc(fromName) + ' debe a ' + esc(toName) + ': \\b ' +
              tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
       });
+      r += '\\pard\\par' + nl;
+
+    } else {
+      r += '\\pard\\b\\fs28\\cf1 Balance\\b0\\fs22\\cf0\\par' + nl;
+      r += '\\pard\\cf1\\b Todo saldado!\\b0\\cf0\\par' + nl;
       r += '\\pard\\par' + nl;
     }
   }
