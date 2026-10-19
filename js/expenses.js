@@ -27,6 +27,25 @@ function getCategoria(cat) {
   };
 }
 
+// ==========================================
+// HELPER: ajustar residuo de splits
+// Asegura que la suma de amount_owed sea exactamente el monto total.
+// ==========================================
+function ajustarResiduoSplits(splits, montoTotal) {
+  if (!splits || splits.length === 0) return splits;
+
+  const suma = splits.reduce((sum, s) => sum + (parseFloat(s.amount_owed) || 0), 0);
+  const diff = parseFloat((montoTotal - suma).toFixed(2));
+
+  if (Math.abs(diff) >= 0.01) {
+    const ultimo = splits[splits.length - 1];
+    ultimo.amount_owed = parseFloat(
+      ((parseFloat(ultimo.amount_owed) || 0) + diff).toFixed(2)
+    );
+  }
+  return splits;
+}
+
 let filtroCategoriaActual = '';
 
 // ==========================================
@@ -46,7 +65,6 @@ export async function cargarGruposParaGasto() {
   selectGrupo.innerHTML = `<option value="">${t('expense.create.group_placeholder')}</option>` +
     (grupos || []).map(g => `<option value="${g.id}">${g.name}</option>`).join('');
 
-  // AUTO-SELECCION: si solo hay 1 grupo activo, seleccionarlo y cargar sus miembros
   if (grupos && grupos.length === 1) {
     selectGrupo.value = grupos[0].id;
     await cargarMiembrosDelGrupo(grupos[0].id);
@@ -67,7 +85,6 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
-  // Usar getSession (mas fiable que getUser)
   const { data: { session } } = await supabase.auth.getSession();
   const user = session?.user || null;
 
@@ -81,7 +98,6 @@ export async function cargarMiembrosDelGrupo(groupId) {
     return;
   }
 
-  // Normalizar perfiles (Supabase a veces los devuelve como array)
   const miembrosNorm = miembros.map(m => {
     const perfil = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
     return {
@@ -90,25 +106,19 @@ export async function cargarMiembrosDelGrupo(groupId) {
     };
   });
 
-  // Generar opciones del select "Quien pago"
   const opcionesPaidBy = miembrosNorm.map(m =>
     `<option value="${m.user_id}">${m.nombre}</option>`
   ).join('');
 
   selectPaidBy.innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>` + opcionesPaidBy;
 
-  // AUTO-SELECCION del pagador:
-  // 1. Si el usuario actual esta en el grupo -> seleccionarlo
-  // 2. Si no, y solo hay 1 miembro -> seleccionarlo
   const userEstaEnGrupo = user && miembrosNorm.some(m => m.user_id === user.id);
-
   if (userEstaEnGrupo) {
     selectPaidBy.value = user.id;
   } else if (miembrosNorm.length === 1) {
     selectPaidBy.value = miembrosNorm[0].user_id;
   }
 
-  // Cargar moneda del grupo
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -119,18 +129,15 @@ export async function cargarMiembrosDelGrupo(groupId) {
     const selectMoneda = document.getElementById('expense-currency');
     if (selectMoneda) {
       const monedaGrupo = grupoInfo.currency.toUpperCase();
-
       const existeOpcion = Array.from(selectMoneda.options).some(
         opt => opt.value.toUpperCase() === monedaGrupo
       );
-
       if (!existeOpcion) {
         const nuevaOpcion = document.createElement('option');
         nuevaOpcion.value = monedaGrupo;
         nuevaOpcion.textContent = monedaGrupo + ' - ' + monedaGrupo;
         selectMoneda.appendChild(nuevaOpcion);
       }
-
       selectMoneda.value = monedaGrupo;
     }
   }
@@ -256,7 +263,7 @@ function actualizarResumenSplit() {
 }
 
 // ==========================================
-// 5. GUARDAR GASTO
+// 5. GUARDAR GASTO (con fixes)
 // ==========================================
 export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   const { data: { user } } = await supabase.auth.getUser();
@@ -273,12 +280,20 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   let splits = [];
 
   if (splitType === 'equal') {
-    const montoPorPersona = parseFloat((monto / usuariosSplit.length).toFixed(2));
-    splits = usuariosSplit.map(userId => ({
-      user_id: userId,
-      amount_owed: montoPorPersona,
-      split_type: 'equal'
-    }));
+    // FIX #3: repartir centavos para que la suma sea exacta
+    const montoCent = Math.round(monto * 100);
+    const baseCent = Math.floor(montoCent / usuariosSplit.length);
+    let sobrante = montoCent - baseCent * usuariosSplit.length;
+
+    splits = usuariosSplit.map(userId => {
+      const cent = baseCent + (sobrante > 0 ? 1 : 0);
+      if (sobrante > 0) sobrante--;
+      return {
+        user_id: userId,
+        amount_owed: cent / 100,
+        split_type: 'equal'
+      };
+    });
   }
   else if (splitType === 'percentage') {
     let totalPct = 0;
@@ -295,6 +310,8 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
     if (Math.abs(totalPct - 100) > 0.01) {
       throw new Error(t('expense.create.percent_error', { total: totalPct.toFixed(2) }));
     }
+    // Ajuste de residuo por redondeo
+    splits = ajustarResiduoSplits(splits, monto);
   }
   else if (splitType === 'exact') {
     let totalExacto = 0;
@@ -326,6 +343,8 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
       amount_owed: parseFloat((monto * s.shares / totalShares).toFixed(2)),
       split_type: 'shares'
     }));
+    // Ajuste de residuo por redondeo
+    splits = ajustarResiduoSplits(splits, monto);
   }
 
   const categoria = document.getElementById('expense-category')?.value || 'otros';
@@ -340,11 +359,17 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
   const manualRateUSD = grupoInfo?.manual_exchange_rate;
 
+  // FIX #2: si la conversiÃ³n falla, NO guardar con tasa 1
   let exchangeRate = 1;
   if (monedaGasto !== monedaGrupo) {
     const resultado = await convertirMontoConGrupo(1, monedaGasto, monedaGrupo, manualRateUSD);
-    if (resultado.convertido) {
+    if (resultado.convertido && resultado.monto > 0) {
       exchangeRate = resultado.monto;
+    } else {
+      throw new Error(
+        `No se pudo obtener la tasa ${monedaGasto} â†’ ${monedaGrupo}. ` +
+        `CargÃ¡ una cotizaciÃ³n manual en el grupo o cambiÃ¡ la moneda del gasto.`
+      );
     }
   }
 
@@ -383,7 +408,7 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
 }
 
 // ==========================================
-// 6. CARGAR GASTOS DE UN GRUPO (solo activos)
+// 6. CARGAR GASTOS DE UN GRUPO
 // ==========================================
 export async function cargarGastosDelGrupo(groupId) {
   const listContainer = document.getElementById('group-expenses-list');
@@ -472,7 +497,7 @@ export async function cargarGastosDelGrupo(groupId) {
 }
 
 // ==========================================
-// 6b. CARGAR GASTOS ARCHIVADOS DE UN GRUPO
+// 6b. CARGAR GASTOS ARCHIVADOS
 // ==========================================
 export async function cargarGastosArchivados(groupId) {
   const listContainer = document.getElementById('group-archived-expenses');
@@ -612,19 +637,16 @@ export function initExpenseModal() {
     errorMsg.textContent = '';
     form.reset();
 
-    // Restaurar visibilidad del campo "Grupo" (por si se oculto antes)
     const grupoFormGroup = selectGrupo.closest('.form-group');
     if (grupoFormGroup) {
       grupoFormGroup.style.display = '';
     }
 
-    // Resetear selects ANTES de cargar grupos
     document.getElementById('split-summary').innerHTML = `<p>${t('expense.create.split_no_group_hint')}</p>`;
     document.getElementById('expense-split-members').innerHTML =
       `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
     document.getElementById('expense-paid-by').innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
 
-    // Cargar grupos (esto puede auto-seleccionar y cargar miembros)
     await cargarGruposParaGasto();
   });
 
@@ -711,7 +733,6 @@ export async function abrirModalGastoConGrupo(groupId, groupName) {
   const errorMsg = document.getElementById('expense-error');
   const selectGrupo = document.getElementById('expense-group');
 
-  // Abrir modal y limpiar
   modal.classList.remove('hidden');
   errorMsg.textContent = '';
   form.reset();
@@ -721,7 +742,6 @@ export async function abrirModalGastoConGrupo(groupId, groupName) {
     `<p class="placeholder-text" style="padding: 10px 0;">${t('expense.create.split_no_group')}</p>`;
   document.getElementById('expense-paid-by').innerHTML = `<option value="">${t('expense.create.paid_by_placeholder')}</option>`;
 
-  // Cargar grupos
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
 
@@ -734,16 +754,13 @@ export async function abrirModalGastoConGrupo(groupId, groupName) {
   selectGrupo.innerHTML = `<option value="">${t('expense.create.group_placeholder')}</option>` +
     (grupos || []).map(g => `<option value="${g.id}">${g.name}</option>`).join('');
 
-  // Seleccionar el grupo que venimos
   selectGrupo.value = groupId;
 
-  // OCULTAR el campo "Grupo" del formulario porque ya viene fijado
   const grupoFormGroup = selectGrupo.closest('.form-group');
   if (grupoFormGroup) {
     grupoFormGroup.style.display = 'none';
   }
 
-  // Cargar los miembros del grupo
   await cargarMiembrosDelGrupo(groupId);
 }
 
@@ -875,7 +892,7 @@ export async function abrirDetalleGasto(expenseId, groupId) {
 }
 
 // ==========================================
-// 9. ARCHIVAR GASTO (boton principal)
+// 9. ARCHIVAR GASTO
 // ==========================================
 export async function accionGasto() {
   const modal = document.getElementById('modal-expense-detail');
@@ -885,9 +902,7 @@ export async function accionGasto() {
 
   const accion = btnDelete?.dataset.action;
 
-  if (accion !== 'archivar') {
-    return;
-  }
+  if (accion !== 'archivar') return;
 
   if (!confirm(t('expense.archive.confirm'))) return;
 
@@ -1062,7 +1077,7 @@ export async function cargarGastoParaEditar() {
 }
 
 // ==========================================
-// 11. GUARDAR EDICION
+// 11. GUARDAR EDICION (con fixes)
 // ==========================================
 export async function guardarEdicionGasto() {
   const form = document.getElementById('form-expense-edit');
@@ -1100,8 +1115,14 @@ export async function guardarEdicionGasto() {
 
       if (monedaGasto !== monedaGrupo) {
         const resultado = await convertirMontoConGrupo(1, monedaGasto, monedaGrupo, manualRateUSD);
-        if (resultado.convertido) {
+        if (resultado.convertido && resultado.monto > 0) {
           exchangeRate = resultado.monto;
+        } else {
+          // FIX #2
+          throw new Error(
+            `No se pudo obtener la tasa ${monedaGasto} â†’ ${monedaGrupo}. ` +
+            `CargÃ¡ una cotizaciÃ³n manual en el grupo o cambiÃ¡ la moneda.`
+          );
         }
       }
     }
@@ -1129,11 +1150,25 @@ export async function guardarEdicionGasto() {
       const totalAnterior = splitsActuales.reduce((sum, s) => sum + parseFloat(s.amount_owed), 0);
       const factor = totalAnterior > 0 ? monto / totalAnterior : 1;
 
-      for (const s of splitsActuales) {
-        const nuevoMonto = parseFloat((parseFloat(s.amount_owed) * factor).toFixed(2));
+      // Calcular todos los nuevos montos
+      const nuevosMontos = splitsActuales.map(s => ({
+        id: s.id,
+        amount_owed: parseFloat((parseFloat(s.amount_owed) * factor).toFixed(2))
+      }));
+
+      // FIX #3: ajustar residuo al Ãºltimo split para que la suma sea exacta
+      const sumaNuevos = nuevosMontos.reduce((sum, s) => sum + s.amount_owed, 0);
+      const diff = parseFloat((monto - sumaNuevos).toFixed(2));
+      if (Math.abs(diff) >= 0.01 && nuevosMontos.length > 0) {
+        nuevosMontos[nuevosMontos.length - 1].amount_owed = parseFloat(
+          (nuevosMontos[nuevosMontos.length - 1].amount_owed + diff).toFixed(2)
+        );
+      }
+
+      for (const s of nuevosMontos) {
         await supabase
           .from('expense_splits')
-          .update({ amount_owed: nuevoMonto })
+          .update({ amount_owed: s.amount_owed })
           .eq('id', s.id);
       }
     }
