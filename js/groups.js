@@ -690,9 +690,19 @@ async function abrirDetalleGrupo(groupId) {
   await actualizarBadgeArchivados(groupId);
 }
 
+
+
+
+
+
+
+
+
 // ==========================================
 // 8b. MOSTRAR RESUMEN DE CIERRE
 // ==========================================
+
+
 async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   const container = document.getElementById('group-closed-summary');
   if (!container) return;
@@ -707,7 +717,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
 
   const fmt = (n) => (parseFloat(n) || 0).toFixed(2);
   const fmtFecha = (f) => {
-    if (!f) return 'â€”';
+    if (!f) return '-';
     const s = String(f).split('T')[0];
     const [y, m, d] = s.split('-');
     return (y && m && d) ? `${d}/${m}/${y}` : s;
@@ -722,7 +732,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
     // Ordenar: primero los que deben (saldo negativo)
     const personasOrdenadas = [...personas].sort((a, b) => a.saldo - b.saldo);
 
-    // Calcular el "TeÃ³rico 50/50" (Total / cantidad de personas)
+    // Calcular el "TeÃ³rico 50/50"
     const totalGrupo = parseFloat(snap.total) || 0;
     const cantPersonas = personas.length;
     const teoricoPorPersona = cantPersonas > 0 ? totalGrupo / cantPersonas : 0;
@@ -730,10 +740,10 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
     // Cartel superior
     const tituloHTML = hayDeudas 
       ? `<div style="background: #fffaf0; border: 2px solid #fbd38d; color: #c05621; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 700;">
-           âš ï¸ Cuentas pendientes al cierre
+           &#9888;&#65039; Cuentas pendientes al cierre
          </div>`
       : `<div style="background: #f0fff4; border: 2px solid #9ae6b4; color: #2f855a; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 700;">
-           âœ… Todo saldado!
+           &#9989; Todo saldado!
          </div>`;
 
     let html = `
@@ -751,7 +761,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
             </p>
           </div>
           <div style="background: #edf2f7; padding: 6px 10px; border-radius: 8px;">
-            <p style="font-size: 0.7rem; color: #4a5568; margin: 0; font-weight: 600;">Consumo TeÃ³rico (Partes Iguales)</p>
+            <p style="font-size: 0.7rem; color: #4a5568; margin: 0; font-weight: 600;">Consumo Te&oacute;rico (Partes Iguales)</p>
             <p style="font-size: 0.95rem; font-weight: 700; color: #2b6cb0; margin: 2px 0 0 0;">
               ${fmt(teoricoPorPersona)} ${snap.moneda} / persona
             </p>
@@ -759,7 +769,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
         </div>
 
         <p style="font-size: 0.75rem; color: #718096; margin-bottom: 6px;">
-          (El <strong>Consumo Real</strong> puede diferir del teÃ³rico si alguna factura se dividiÃ³ en porcentajes distintos a 50/50).
+          (El <strong>Consumo Real</strong> puede diferir del te&oacute;rico si alguna factura se dividi&oacute; en porcentajes distintos a 50/50).
         </p>
     `;
 
@@ -771,7 +781,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
               <thead>
                 <tr style="background: #fed7d7;">
                   <th style="padding: 6px 8px; text-align: left; border: 1px solid #feb2b2;">Persona</th>
-                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">PagÃ³</th>
+                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Pag&oacute;</th>
                   <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Consumo Real</th>
                   <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Diferencia</th>
                   <th style="padding: 6px 8px; text-align: center; border: 1px solid #feb2b2;">Saldo Provisorio</th>
@@ -787,13 +797,28 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
         const detalleId = `pago-detalle-${idx}`;
 
         const pagado = Math.abs(p.saldo) < 0.01;
-        const estadoHTML = pagado
-          ? `<span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#c6f6d5;color:#276749;font-size:0.75rem;font-weight:600; text-align:center;">
-               âœ… Pagado<br><span style="font-weight:400;font-size:0.65rem;">${fmtFecha(p.fecha_pago)}</span>
-             </span>`
-          : `<span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#feebc8;color:#b7791f;font-size:0.75rem;font-weight:600; text-align:center;">
-               â³ Pendiente<br><span style="font-weight:400;font-size:0.65rem;">Debe ${saldoSigno === '+' ? 'cobrar' : 'pagar'} ${Math.abs(p.saldo).toFixed(2)}</span>
-             </span>`;
+        
+        // Etiqueta de estado mas clara
+        let estadoHTML = '';
+        if (pagado) {
+          estadoHTML = `
+            <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#c6f6d5;color:#276749;font-size:0.75rem;font-weight:600; text-align:center;">
+               &#9989; Pagado<br><span style="font-weight:400;font-size:0.65rem;">${fmtFecha(p.fecha_pago)}</span>
+            </span>
+          `;
+        } else if (p.saldo < 0) {
+          estadoHTML = `
+            <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;font-size:0.75rem;font-weight:600; text-align:center;">
+               Debe pagar<br><span style="font-weight:400;font-size:0.65rem;">${Math.abs(p.saldo).toFixed(2)}</span>
+            </span>
+          `;
+        } else {
+          estadoHTML = `
+            <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#f0fff4;color:#2f855a;border:1px solid #9ae6b4;font-size:0.75rem;font-weight:600; text-align:center;">
+               Debe cobrar<br><span style="font-weight:400;font-size:0.65rem;">${Math.abs(p.saldo).toFixed(2)}</span>
+            </span>
+          `;
+        }
 
         html += `
           <tr>
@@ -837,11 +862,11 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           p.pagos_detalle.forEach(d => {
             const montoOrig = (d.moneda_original && d.moneda_original !== snap.moneda)
               ? `${fmt(d.monto_original)} ${d.moneda_original}`
-              : 'â€”';
+              : '-';
             html += `
               <tr>
                 <td style="padding:4px 6px;border:1px solid #fef3c7;white-space:nowrap;">${fmtFecha(d.fecha)}</td>
-                <td style="padding:4px 6px;border:1px solid #fef3c7;">${d.descripcion || 'â€”'}</td>
+                <td style="padding:4px 6px;border:1px solid #fef3c7;">${d.descripcion || '-'}</td>
                 <td style="padding:4px 6px;text-align:right;border:1px solid #fef3c7;font-weight:600;">${fmt(d.monto)}</td>
                 <td style="padding:4px 6px;text-align:right;border:1px solid #fef3c7;color:#718096;">${montoOrig}</td>
               </tr>
@@ -860,12 +885,12 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
       html += `</tbody></table></div></div>`;
     }
 
-    // Bloque de deudas
+    // Bloque de deudas o mensaje de saldado
     if (hayDeudas) {
       html += `
         <div style="margin-top: 15px; background: #fffaf0; border: 1px solid #fbd38d; padding: 10px; border-radius: 8px;">
           <p style="font-size: 0.85rem; font-weight: 700; color: #c05621; margin-bottom: 6px;">
-            Â¿CÃ³mo saldar?
+            Â¿CÃ³mo saldar las cuentas?
           </p>
           <ul style="font-size: 0.85rem; color: #744210; padding-left: 20px; margin: 0;">
       `;
@@ -877,8 +902,9 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
       });
       html += `</ul></div>`;
     } else {
+      // Esto solo se muestra si REALMENTE no hay deudas
       html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600; margin-top: 12px;">
-        âœ… Todo saldado al momento del cierre.
+        &#9989; Todo saldado al momento del cierre.
       </p>`;
     }
 
@@ -922,6 +948,8 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   html += `</div>`;
   container.innerHTML = html;
 }
+
+
 
 // ==========================================
 // 9. ACTUALIZAR INFO DEL GRUPO
