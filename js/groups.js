@@ -703,6 +703,7 @@ async function abrirDetalleGrupo(groupId) {
 // ==========================================
 
 
+
 async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   const container = document.getElementById('group-closed-summary');
   if (!container) return;
@@ -732,22 +733,11 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
     // Ordenar: primero los que deben (saldo negativo)
     const personasOrdenadas = [...personas].sort((a, b) => a.saldo - b.saldo);
 
-    // Calcular el "TeÃ³rico 50/50"
     const totalGrupo = parseFloat(snap.total) || 0;
     const cantPersonas = personas.length;
     const teoricoPorPersona = cantPersonas > 0 ? totalGrupo / cantPersonas : 0;
 
-    // Cartel superior
-    const tituloHTML = hayDeudas 
-      ? `<div style="background: #fffaf0; border: 2px solid #fbd38d; color: #c05621; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 700;">
-           &#9888;&#65039; Cuentas pendientes al cierre
-         </div>`
-      : `<div style="background: #f0fff4; border: 2px solid #9ae6b4; color: #2f855a; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 700;">
-           &#9989; Todo saldado!
-         </div>`;
-
     let html = `
-      ${tituloHTML}
       <div style="background: #fff5f5; border: 2px solid #feb2b2; border-radius: 10px; padding: 14px; margin-bottom: 15px;">
         <h4 style="color: #c53030; font-size: 1rem; margin-bottom: 10px;">
           &#128204; Resumen de Cierre (${formatearFecha(grupo.date_closed)})
@@ -783,39 +773,49 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
                   <th style="padding: 6px 8px; text-align: left; border: 1px solid #feb2b2;">Persona</th>
                   <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Pag&oacute;</th>
                   <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Consumo Real</th>
-                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Diferencia</th>
-                  <th style="padding: 6px 8px; text-align: center; border: 1px solid #feb2b2;">Saldo Provisorio</th>
+                  <th style="padding: 6px 8px; text-align: center; border: 1px solid #feb2b2; width: 40%;">Estado Final</th>
                 </tr>
               </thead>
               <tbody>
       `;
 
       personasOrdenadas.forEach((p, idx) => {
-        const saldoColor = p.saldo > 0.01 ? '#38a169' : p.saldo < -0.01 ? '#e53e3e' : '#718096';
-        const saldoSigno = p.saldo > 0 ? '+' : '';
         const tieneDetalle = Array.isArray(p.pagos_detalle) && p.pagos_detalle.length > 0;
         const detalleId = `pago-detalle-${idx}`;
 
         const pagado = Math.abs(p.saldo) < 0.01;
         
-        // Etiqueta de estado mas clara
         let estadoHTML = '';
         if (pagado) {
           estadoHTML = `
-            <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#c6f6d5;color:#276749;font-size:0.75rem;font-weight:600; text-align:center;">
+            <span style="display:inline-block;padding:6px 10px;border-radius:6px;background:#c6f6d5;color:#276749;font-size:0.75rem;font-weight:600; text-align:center; width: 100%;">
                &#9989; Pagado<br><span style="font-weight:400;font-size:0.65rem;">${fmtFecha(p.fecha_pago)}</span>
             </span>
           `;
         } else if (p.saldo < 0) {
+          // Buscar a quiÃ©n le debe
+          const deuda = deudas.find(d => d.de === p.nombre);
+          const aQuien = deuda ? deuda.a : 'Alguien';
+          
           estadoHTML = `
-            <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;font-size:0.75rem;font-weight:600; text-align:center;">
-               Debe pagar<br><span style="font-weight:400;font-size:0.65rem;">${Math.abs(p.saldo).toFixed(2)}</span>
-            </span>
+            <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
+              <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;font-size:0.75rem;font-weight:600; text-align:center;">
+                 Debe pagar a ${aQuien}: ${Math.abs(p.saldo).toFixed(2)}
+              </span>
+              <button class="btn-settle-summary" 
+                      data-group="${groupId}" 
+                      data-from="${p.id}" 
+                      data-to="${deuda ? deuda.a_id || '' : ''}"
+                      data-amount="${Math.abs(p.saldo)}"
+                      style="background:#e53e3e; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:0.7rem; cursor:pointer;">
+                Saldar deuda
+              </button>
+            </div>
           `;
         } else {
           estadoHTML = `
             <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#f0fff4;color:#2f855a;border:1px solid #9ae6b4;font-size:0.75rem;font-weight:600; text-align:center;">
-               Debe cobrar<br><span style="font-weight:400;font-size:0.65rem;">${Math.abs(p.saldo).toFixed(2)}</span>
+               Debe cobrar: ${Math.abs(p.saldo).toFixed(2)}
             </span>
           `;
         }
@@ -833,9 +833,6 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
             </td>
             <td style="padding: 6px 8px; text-align: right; border: 1px solid #fed7d7;">${fmt(p.pago)}</td>
             <td style="padding: 6px 8px; text-align: right; border: 1px solid #fed7d7;">${fmt(p.consumio)}</td>
-            <td style="padding: 6px 8px; text-align: right; border: 1px solid #fed7d7; font-weight: 700; color: ${saldoColor};">
-              ${saldoSigno}${fmt(p.saldo)}
-            </td>
             <td style="padding: 6px 8px; text-align: center; border: 1px solid #fed7d7;">
               ${estadoHTML}
             </td>
@@ -845,7 +842,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
         if (tieneDetalle) {
           html += `
             <tr id="${detalleId}" class="fila-detalle-pagos" style="display:none;">
-              <td colspan="5" style="padding: 8px 12px; border: 1px solid #fed7d7; background: #fffafa;">
+              <td colspan="4" style="padding: 8px 12px; border: 1px solid #fed7d7; background: #fffafa;">
                 <div style="font-size: 0.75rem; color: #4a5568;">
                   <strong style="display:block;margin-bottom:6px;">Facturas pagadas por ${p.nombre}:</strong>
                   <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
@@ -885,32 +882,10 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
       html += `</tbody></table></div></div>`;
     }
 
-    // Bloque de deudas o mensaje de saldado
-    if (hayDeudas) {
-      html += `
-        <div style="margin-top: 15px; background: #fffaf0; border: 1px solid #fbd38d; padding: 10px; border-radius: 8px;">
-          <p style="font-size: 0.85rem; font-weight: 700; color: #c05621; margin-bottom: 6px;">
-            Â¿CÃ³mo saldar las cuentas?
-          </p>
-          <ul style="font-size: 0.85rem; color: #744210; padding-left: 20px; margin: 0;">
-      `;
-      deudas.forEach(d => {
-        html += `<li style="margin: 4px 0;">
-          <strong>${d.de}</strong> le debe transferir a <strong>${d.a}</strong>:
-          ${fmt(d.monto)} ${snap.moneda}
-        </li>`;
-      });
-      html += `</ul></div>`;
-    } else {
-      // Esto solo se muestra si REALMENTE no hay deudas
-      html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600; margin-top: 12px;">
-        &#9989; Todo saldado al momento del cierre.
-      </p>`;
-    }
-
     html += `</div>`;
     container.innerHTML = html;
 
+    // Toggle para ver facturas
     container.querySelectorAll('.btn-toggle-pagos').forEach(btn => {
       btn.addEventListener('click', () => {
         const target = document.getElementById(btn.dataset.target);
@@ -922,31 +897,58 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
       });
     });
 
+    // Listener para saldar deuda desde el resumen
+    container.querySelectorAll('.btn-settle-summary').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const gId = btn.dataset.group;
+        const fromId = btn.dataset.from;
+        const toId = btn.dataset.to; // Viene vacÃ­o desde el JSON, lo buscamos abajo
+        const amount = parseFloat(btn.dataset.amount);
+
+        if (!confirm(`Â¿Confirmas que se pagaron ${amount.toFixed(2)} ${snap.moneda}?`)) return;
+
+        try {
+          // Buscar el ID real del acreedor basÃ¡ndonos en el nombre
+          const { data: perfiles } = await supabase.from('profiles').select('id, full_name').eq('full_name', deudas.find(d => d.de === personas.find(p=>p.id===fromId).nombre)?.a || '');
+          const toIdReal = perfiles && perfiles.length > 0 ? perfiles[0].id : null;
+          
+          const targetToId = toIdReal || toId; // Si no lo encuentra, usa el que vino
+
+          if (!targetToId) throw new Error("No se pudo identificar a quiÃ©n pagarle");
+
+          // Insertar el settlement
+          const { error } = await supabase.from('settlements').insert([{
+            group_id: gId,
+            from_user: fromId,
+            to_user: targetToId,
+            amount: amount,
+            currency: snap.moneda,
+            date: new Date().toISOString().split('T')[0]
+          }]);
+
+          if (error) throw error;
+
+          // Actualizar la UI
+          const { mostrarBalance } = await import('./debtSolver.js');
+          await mostrarBalance(gId);
+          
+          // Recargar el resumen de cierre forzando un mini-reload del grupo
+          // Para que no quede "Pagado" en la tabla si no volvemos a cerrar, forzamos re-cierre automÃ¡tico
+          await cerrarComputo(gId);
+          await abrirDetalleGrupo(gId);
+          await cargarGrupos();
+          
+          const { cargarDashboard } = await import('./dashboard.js');
+          await cargarDashboard();
+
+        } catch (err) {
+          alert("Error al saldar: " + err.message);
+        }
+      });
+    });
+
     return;
   }
-
-  // ==========================================
-  // Fallback: texto plano (grupos viejos)
-  // ==========================================
-  let html = `
-    <div style="background: #fff5f5; border: 2px solid #feb2b2; border-radius: 10px; padding: 12px; margin-bottom: 15px;">
-      <h4 style="color: #c53030; font-size: 1rem; margin-bottom: 8px;">Resumen de Cierre (${formatearFecha(grupo.date_closed)})</h4>
-      <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 4px;">Total congelado: <strong>${fmt(grupo.closed_total || 0)} ${monedaGrupo}</strong></p>
-  `;
-
-  if (grupo.closed_summary_text && grupo.closed_summary_text !== 'Todo saldado al momento del cierre.') {
-    html += `<p style="font-size: 0.85rem; color: #4a5568; margin-top: 8px;"><strong>Deudas al momento del cierre:</strong></p>`;
-    html += `<div style="font-size: 0.85rem; color: #4a5568; padding-left: 15px;">`;
-    grupo.closed_summary_text.split(';').forEach(linea => {
-      if (linea.trim()) html += `<p style="margin: 2px 0;">- ${linea.trim()}</p>`;
-    });
-    html += `</div>`;
-  } else {
-    html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600; margin-top: 8px;">Todo saldado al momento del cierre.</p>`;
-  }
-
-  html += `</div>`;
-  container.innerHTML = html;
 }
 
 
