@@ -691,7 +691,7 @@ async function abrirDetalleGrupo(groupId) {
 }
 
 // ==========================================
-// 8b. MOSTRAR RESUMEN DE CIERRE (CON DETALLE DE PAGOS)
+// 8b. MOSTRAR RESUMEN DE CIERRE
 // ==========================================
 async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   const container = document.getElementById('group-closed-summary');
@@ -717,59 +717,83 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   if (snap && typeof snap === 'object') {
     const personas = snap.personas || [];
     const deudas = snap.deudas || [];
+    const hayDeudas = deudas.length > 0;
+
+    // Ordenar: primero los que deben (saldo negativo)
+    const personasOrdenadas = [...personas].sort((a, b) => a.saldo - b.saldo);
+
+    // Calcular el "TeÃ³rico 50/50" (Total / cantidad de personas)
+    const totalGrupo = parseFloat(snap.total) || 0;
+    const cantPersonas = personas.length;
+    const teoricoPorPersona = cantPersonas > 0 ? totalGrupo / cantPersonas : 0;
+
+    // Cartel superior
+    const tituloHTML = hayDeudas 
+      ? `<div style="background: #fffaf0; border: 2px solid #fbd38d; color: #c05621; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 700;">
+           âš ï¸ Cuentas pendientes al cierre
+         </div>`
+      : `<div style="background: #f0fff4; border: 2px solid #9ae6b4; color: #2f855a; text-align: center; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-weight: 700;">
+           âœ… Todo saldado!
+         </div>`;
 
     let html = `
+      ${tituloHTML}
       <div style="background: #fff5f5; border: 2px solid #feb2b2; border-radius: 10px; padding: 14px; margin-bottom: 15px;">
         <h4 style="color: #c53030; font-size: 1rem; margin-bottom: 10px;">
           &#128204; Resumen de Cierre (${formatearFecha(grupo.date_closed)})
         </h4>
 
-        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px;">
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 12px; align-items: flex-end;">
           <div>
-            <p style="font-size: 0.75rem; color: #718096; margin: 0;">Total congelado</p>
-            <p style="font-size: 1.1rem; font-weight: 700; color: #2d3748; margin: 2px 0 0 0;">
-              ${fmt(snap.total)} ${snap.moneda}
+            <p style="font-size: 0.75rem; color: #718096; margin: 0;">Gasto Total del Grupo</p>
+            <p style="font-size: 1.4rem; font-weight: 800; color: #2d3748; margin: 2px 0 0 0;">
+              ${fmt(totalGrupo)} ${snap.moneda}
             </p>
           </div>
-          <div>
-            <p style="font-size: 0.75rem; color: #718096; margin: 0;">Gastos</p>
-            <p style="font-size: 1.1rem; font-weight: 700; color: #2d3748; margin: 2px 0 0 0;">
-              ${snap.cantidad_gastos || 0}
-            </p>
-          </div>
-          <div>
-            <p style="font-size: 0.75rem; color: #718096; margin: 0;">Personas</p>
-            <p style="font-size: 1.1rem; font-weight: 700; color: #2d3748; margin: 2px 0 0 0;">
-              ${personas.length}
+          <div style="background: #edf2f7; padding: 6px 10px; border-radius: 8px;">
+            <p style="font-size: 0.7rem; color: #4a5568; margin: 0; font-weight: 600;">Consumo TeÃ³rico (Partes Iguales)</p>
+            <p style="font-size: 0.95rem; font-weight: 700; color: #2b6cb0; margin: 2px 0 0 0;">
+              ${fmt(teoricoPorPersona)} ${snap.moneda} / persona
             </p>
           </div>
         </div>
+
+        <p style="font-size: 0.75rem; color: #718096; margin-bottom: 6px;">
+          (El <strong>Consumo Real</strong> puede diferir del teÃ³rico si alguna factura se dividiÃ³ en porcentajes distintos a 50/50).
+        </p>
     `;
 
-    if (personas.length > 0) {
+    if (personasOrdenadas.length > 0) {
       html += `
         <div style="margin-top: 10px;">
-          <p style="font-size: 0.8rem; font-weight: 600; color: #4a5568; margin-bottom: 6px;">
-            Detalle por persona (toca un nombre para ver sus pagos)
-          </p>
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; font-size: 0.8rem;">
               <thead>
                 <tr style="background: #fed7d7;">
                   <th style="padding: 6px 8px; text-align: left; border: 1px solid #feb2b2;">Persona</th>
-                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Pago</th>
-                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Consumio</th>
-                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Saldo</th>
+                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">PagÃ³</th>
+                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Consumo Real</th>
+                  <th style="padding: 6px 8px; text-align: right; border: 1px solid #feb2b2;">Diferencia</th>
+                  <th style="padding: 6px 8px; text-align: center; border: 1px solid #feb2b2;">Saldo Provisorio</th>
                 </tr>
               </thead>
               <tbody>
       `;
 
-      personas.forEach((p, idx) => {
+      personasOrdenadas.forEach((p, idx) => {
         const saldoColor = p.saldo > 0.01 ? '#38a169' : p.saldo < -0.01 ? '#e53e3e' : '#718096';
         const saldoSigno = p.saldo > 0 ? '+' : '';
         const tieneDetalle = Array.isArray(p.pagos_detalle) && p.pagos_detalle.length > 0;
         const detalleId = `pago-detalle-${idx}`;
+
+        const pagado = Math.abs(p.saldo) < 0.01;
+        const estadoHTML = pagado
+          ? `<span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#c6f6d5;color:#276749;font-size:0.75rem;font-weight:600; text-align:center;">
+               âœ… Pagado<br><span style="font-weight:400;font-size:0.65rem;">${fmtFecha(p.fecha_pago)}</span>
+             </span>`
+          : `<span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#feebc8;color:#b7791f;font-size:0.75rem;font-weight:600; text-align:center;">
+               â³ Pendiente<br><span style="font-weight:400;font-size:0.65rem;">Debe ${saldoSigno === '+' ? 'cobrar' : 'pagar'} ${Math.abs(p.saldo).toFixed(2)}</span>
+             </span>`;
 
         html += `
           <tr>
@@ -787,15 +811,18 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
             <td style="padding: 6px 8px; text-align: right; border: 1px solid #fed7d7; font-weight: 700; color: ${saldoColor};">
               ${saldoSigno}${fmt(p.saldo)}
             </td>
+            <td style="padding: 6px 8px; text-align: center; border: 1px solid #fed7d7;">
+              ${estadoHTML}
+            </td>
           </tr>
         `;
 
         if (tieneDetalle) {
           html += `
             <tr id="${detalleId}" class="fila-detalle-pagos" style="display:none;">
-              <td colspan="4" style="padding: 8px 12px; border: 1px solid #fed7d7; background: #fffafa;">
+              <td colspan="5" style="padding: 8px 12px; border: 1px solid #fed7d7; background: #fffafa;">
                 <div style="font-size: 0.75rem; color: #4a5568;">
-                  <strong style="display:block;margin-bottom:6px;">Pagos de ${p.nombre}:</strong>
+                  <strong style="display:block;margin-bottom:6px;">Facturas pagadas por ${p.nombre}:</strong>
                   <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
                     <thead>
                       <tr style="background:#fefcbf;">
@@ -833,31 +860,31 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
       html += `</tbody></table></div></div>`;
     }
 
-    if (deudas.length === 0) {
-      html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600; margin-top: 12px;">
-        &#9989; Todo saldado al momento del cierre.
-      </p>`;
-    } else {
+    // Bloque de deudas
+    if (hayDeudas) {
       html += `
-        <div style="margin-top: 12px;">
-          <p style="font-size: 0.8rem; font-weight: 600; color: #4a5568; margin-bottom: 6px;">
-            Deudas al momento del cierre
+        <div style="margin-top: 15px; background: #fffaf0; border: 1px solid #fbd38d; padding: 10px; border-radius: 8px;">
+          <p style="font-size: 0.85rem; font-weight: 700; color: #c05621; margin-bottom: 6px;">
+            Â¿CÃ³mo saldar?
           </p>
-          <ul style="font-size: 0.85rem; color: #4a5568; padding-left: 20px; margin: 0;">
+          <ul style="font-size: 0.85rem; color: #744210; padding-left: 20px; margin: 0;">
       `;
       deudas.forEach(d => {
-        html += `<li style="margin: 3px 0;">
-          <strong>${d.de}</strong> le debe a <strong>${d.a}</strong>:
+        html += `<li style="margin: 4px 0;">
+          <strong>${d.de}</strong> le debe transferir a <strong>${d.a}</strong>:
           ${fmt(d.monto)} ${snap.moneda}
         </li>`;
       });
       html += `</ul></div>`;
+    } else {
+      html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600; margin-top: 12px;">
+        âœ… Todo saldado al momento del cierre.
+      </p>`;
     }
 
     html += `</div>`;
     container.innerHTML = html;
 
-    // Listeners para expandir/colapsar detalle
     container.querySelectorAll('.btn-toggle-pagos').forEach(btn => {
       btn.addEventListener('click', () => {
         const target = document.getElementById(btn.dataset.target);
@@ -1016,16 +1043,7 @@ function actualizarBotonCotizacion(grupo) {
 }
 
 // ==========================================
-// 12. CERRAR COMPUTO (CON SNAPSHOT COMPLETO + DETALLE DE PAGOS)
-// ==========================================
-
-
-
-
-
-
-// ==========================================
-// 12. CERRAR COMPUTO (CON SNAPSHOT + SALDOS CONSISTENTES)
+// 12. CERRAR COMPUTO (CON SNAPSHOT COMPLETO)
 // ==========================================
 async function cerrarComputo(groupId) {
   const { data: grupoInfo } = await supabase
@@ -1044,33 +1062,18 @@ async function cerrarComputo(groupId) {
 
   const gastosArr = gastos || [];
 
-  // Helper local: monto en moneda del grupo con tasa HISTORICA + log defensivo
   const montoEnGrupo = (g) => {
     const monto = parseFloat(g.amount) || 0;
     const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
     if (monedaGasto === monedaGrupo) return monto;
-
     const tasaRaw = parseFloat(g.exchange_rate);
-    if (!isFinite(tasaRaw) || tasaRaw <= 0) {
-      console.warn('[cerrarComputo] exchange_rate invalido, usando 1:', {
-        id: g.id, exchange_rate: g.exchange_rate
-      });
-      return monto;
-    }
-    return monto * tasaRaw;
+    return (isFinite(tasaRaw) && tasaRaw > 0) ? monto * tasaRaw : monto;
   };
 
   let total = 0;
   gastosArr.forEach(g => { total += montoEnGrupo(g); });
 
-  let closedRateUSD = null;
-  if (monedaGrupo === 'USD') {
-    closedRateUSD = 1;
-  } else {
-    const tasaUSD = await obtenerTasa(monedaGrupo, 'USD');
-    if (tasaUSD !== null) closedRateUSD = tasaUSD;
-  }
-
+  let closedRateUSD = monedaGrupo === 'USD' ? 1 : (await obtenerTasa(monedaGrupo, 'USD') || null);
   const hoy = new Date().toISOString().split('T')[0];
 
   // --- Balance + deudas ---
@@ -1101,25 +1104,24 @@ async function cerrarComputo(groupId) {
   const nombres = {};
   (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Usuario');
 
-  // Consumo por persona (con tasa HISTORICA)
+  // Consumo por persona
   const consumoPorUsuario = {};
   splits.forEach(s => {
     const gasto = gastosArr.find(g => g.id === s.expense_id);
     if (!gasto) return;
     const montoS = parseFloat(s.amount_owed) || 0;
     const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
-
+    
     let montoEnGrupoSplit = montoS;
     if (monedaGasto !== monedaGrupo) {
       const tasaRaw = parseFloat(gasto.exchange_rate);
       const tasa = (isFinite(tasaRaw) && tasaRaw > 0) ? tasaRaw : 1;
       montoEnGrupoSplit = montoS * tasa;
     }
-
     consumoPorUsuario[s.user_id] = (consumoPorUsuario[s.user_id] || 0) + montoEnGrupoSplit;
   });
 
-  // Pagado por persona + detalle de gastos que pago
+  // Pagado por persona + detalle
   const pagadoPorUsuario = {};
   const pagosDetallePorUsuario = {};
 
@@ -1128,17 +1130,14 @@ async function cerrarComputo(groupId) {
     const enGrupo = montoEnGrupo(g);
     pagadoPorUsuario[g.paid_by] = (pagadoPorUsuario[g.paid_by] || 0) + enGrupo;
 
-    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
-    const montoOriginal = parseFloat(g.amount) || 0;
-
     if (!pagosDetallePorUsuario[g.paid_by]) pagosDetallePorUsuario[g.paid_by] = [];
     pagosDetallePorUsuario[g.paid_by].push({
       fecha: g.date || null,
       descripcion: g.description || '',
       categoria: g.category || 'otros',
       monto: parseFloat(enGrupo.toFixed(2)),
-      monto_original: parseFloat(montoOriginal.toFixed(2)),
-      moneda_original: monedaGasto
+      monto_original: parseFloat((parseFloat(g.amount) || 0).toFixed(2)),
+      moneda_original: (g.currency || monedaGrupo).toUpperCase()
     });
   });
 
@@ -1146,13 +1145,14 @@ async function cerrarComputo(groupId) {
     arr.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
   });
 
-  // ==========================================
-  // FIX #4: saldo = pago - consumio (redondeado y consistente)
-  // ==========================================
+  // Armar personas
   const personasSnap = Array.from(userIds).map(uid => {
     const pagoR = parseFloat((pagadoPorUsuario[uid] || 0).toFixed(2));
     const consumioR = parseFloat((consumoPorUsuario[uid] || 0).toFixed(2));
     const saldoR = parseFloat((pagoR - consumioR).toFixed(2));
+    
+    // Si el saldo es mayor a 1 centavo, NO estÃ¡ pagado
+    const pagado = Math.abs(saldoR) < 0.01;
 
     return {
       id: uid,
@@ -1160,20 +1160,22 @@ async function cerrarComputo(groupId) {
       pago: pagoR,
       consumio: consumioR,
       saldo: saldoR,
+      pagado: pagado,
+      fecha_pago: pagado ? hoy : null,
       pagos_detalle: pagosDetallePorUsuario[uid] || []
     };
   });
 
-  // Correccion: la suma de saldos debe ser 0 (o lo mas cercano)
+  // Ajuste de centavos
   if (personasSnap.length > 0) {
     const sumaSaldos = personasSnap.reduce((s, p) => s + p.saldo, 0);
     const ajuste = parseFloat((-sumaSaldos).toFixed(2));
     if (Math.abs(ajuste) >= 0.01) {
-      // Ajustamos al que tenga mayor |saldo|
       const candidato = personasSnap.reduce((max, p) =>
         Math.abs(p.saldo) > Math.abs(max.saldo) ? p : max
       , personasSnap[0]);
       candidato.saldo = parseFloat((candidato.saldo + ajuste).toFixed(2));
+      candidato.pagado = Math.abs(candidato.saldo) < 0.01; // Re-evaluar
     }
   }
 
@@ -1213,11 +1215,6 @@ async function cerrarComputo(groupId) {
     throw error;
   }
 }
-
-
-
-
-
 
 // ==========================================
 // 13. REABRIR COMPUTO
@@ -1753,7 +1750,7 @@ if (!window.__groupDetailListenersAttached) {
 }
 
 // ==========================================
-// 16. EXPORTAR GRUPO A CSV (CON DETALLE DE PAGOS POR PERSONA)
+// 16. EXPORTAR GRUPO A CSV
 // ==========================================
 async function exportarGrupoCSV(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
@@ -1860,7 +1857,7 @@ async function exportarGrupoCSV(groupId) {
     const deudasSnap = snap.deudas || [];
 
     lineas.push(['DETALLE DE CIERRE']);
-    lineas.push(['Persona', 'Pago', 'Consumio', 'Saldo', 'Moneda']);
+    lineas.push(['Persona', 'Pago', 'Consumo Real', 'Saldo', 'Moneda']);
     personasSnap.forEach(p => {
       lineas.push([
         p.nombre,
@@ -1998,7 +1995,7 @@ async function exportarGrupoCSV(groupId) {
 }
 
 // ==========================================
-// 17. EXPORTAR GRUPO A RTF (CON DETALLE DE PAGOS POR PERSONA)
+// 17. EXPORTAR GRUPO A RTF
 // ==========================================
 async function exportarGrupoRTF(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
@@ -2117,7 +2114,7 @@ async function exportarGrupoRTF(groupId) {
 }
 
 // ==========================================
-// 18. GENERAR RTF (CON SNAPSHOT COMPLETO + DETALLE DE PAGOS)
+// 18. GENERAR RTF
 // ==========================================
 function generarRTFReporte(datos) {
   const {
@@ -2186,14 +2183,14 @@ function generarRTFReporte(datos) {
       if (personasSnap.length > 0) {
         r += '\\pard\\b Detalle por persona\\b0\\par' + nl;
 
-        const p1 = 3500, p2 = 1800, p3 = 1800, p4 = 1800;
-        const acum = [p1, p1+p2, p1+p2+p3, p1+p2+p3+p4];
+        const p1 = 3000, p2 = 1600, p3 = 1800, p4 = 1600, p5 = 1800;
+        const acum = [p1, p1+p2, p1+p2+p3, p1+p2+p3+p4, p1+p2+p3+p4+p5];
         const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
 
         r += '\\trowd\\trgaph70\\trleft0\\trhdr';
         acum.forEach(x => { r += borde + '\\clcbpat4\\cellx' + x; });
         r += nl;
-        ['Persona', 'Pago', 'Consumio', 'Saldo'].forEach(h => {
+        ['Persona', 'PagÃ³', 'Consumo Real', 'Diferencia', 'Saldo Provisorio'].forEach(h => {
           r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
         });
         r += '\\row' + nl;
@@ -2204,6 +2201,7 @@ function generarRTFReporte(datos) {
           const saldo = parseFloat(p.saldo) || 0;
           const colorSaldo = saldo > 0.01 ? '\\cf1' : saldo < -0.01 ? '\\cf7' : '\\cf0';
           const signo = saldo > 0 ? '+' : '';
+          const estado = Math.abs(saldo) < 0.01 ? 'Pagado' : 'Pendiente';
 
           r += '\\trowd\\trgaph70\\trleft0';
           acum.forEach(x => { r += borde + fondo + '\\cellx' + x; });
@@ -2212,6 +2210,7 @@ function generarRTFReporte(datos) {
           r += '\\pard\\intbl\\qr ' + esc((parseFloat(p.pago) || 0).toFixed(2)) + '\\cell ';
           r += '\\pard\\intbl\\qr ' + esc((parseFloat(p.consumio) || 0).toFixed(2)) + '\\cell ';
           r += '\\pard\\intbl\\qr ' + colorSaldo + '\\b ' + signo + Math.abs(saldo).toFixed(2) + '\\b0\\cf0\\cell ';
+          r += '\\pard\\intbl\\qc ' + esc(estado) + '\\cell ';
           r += '\\row' + nl;
           contP++;
         });
@@ -2266,7 +2265,7 @@ function generarRTFReporte(datos) {
       } else {
         r += '\\pard\\b Deudas al momento del cierre\\b0\\par' + nl;
         deudasSnap.forEach(d => {
-          r += '\\pard - ' + esc(d.de) + ' le debe a ' + esc(d.a) + ': \\b ' +
+          r += '\\pard - ' + esc(d.de) + ' le debe transferir a ' + esc(d.a) + ': \\b ' +
                (parseFloat(d.monto) || 0).toFixed(2) + ' ' + esc(snap.moneda || monedaGrupo) + '\\b0\\par' + nl;
         });
       }
@@ -2315,7 +2314,7 @@ function generarRTFReporte(datos) {
     const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
     r += '\\trowd\\trgaph70\\trleft0';
     r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + anchoCol1;
-    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (anchoCol1 + anchoCol2) + nl;
+    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brds\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (anchoCol1 + anchoCol2) + nl;
     r += '\\pard\\intbl ' + esc(nombres[uid] || 'Usuario') + '\\cell ';
     r += '\\pard\\intbl\\qr ' + esc((totalesPorUsuario[uid] || 0).toFixed(2) + ' ' + monedaGrupo) + '\\cell ';
     r += '\\row' + nl;
