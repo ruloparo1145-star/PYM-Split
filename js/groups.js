@@ -2226,3 +2226,6 @@ function generarRTFReporte(datos) {
 
   return r;
 }
+export function invalidarCacheMoneda() {
+  monedaPreferidaCache = null;
+}
