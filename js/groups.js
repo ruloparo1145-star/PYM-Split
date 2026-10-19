@@ -703,6 +703,7 @@ async function abrirDetalleGrupo(groupId) {
 // ==========================================
 
 
+
 async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   const container = document.getElementById('group-closed-summary');
   if (!container) return;
@@ -727,7 +728,6 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   if (snap && typeof snap === 'object') {
     const personas = snap.personas || [];
     const deudas = snap.deudas || [];
-    const hayDeudas = deudas.length > 0;
 
     // Ordenar: primero los que deben (saldo negativo)
     const personasOrdenadas = [...personas].sort((a, b) => a.saldo - b.saldo);
@@ -804,18 +804,31 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           `;
         } else if (p.saldo < 0) {
           // Buscar a quiÃ©n le debe
-          const deuda = deudas.find(d => d.de === p.nombre);
-          const aQuien = deuda ? deuda.a : 'Alguien';
+          const deuda = deudas.find(d => d.de === p.nombre || d.de_id === p.id);
+          let aQuienNombre = deuda ? deuda.a : null;
+          let aQuienId = deuda ? deuda.a_id : null;
+
+          // Si por algÃºn motivo no estÃ¡ en el array de deudas, deducimos la contraparte por el saldo
+          if (!aQuienNombre) {
+            const contraparte = personas.find(other => Math.abs(other.saldo - Math.abs(p.saldo)) < 0.01 && other.saldo > 0);
+            if (contraparte) {
+              aQuienNombre = contraparte.nombre;
+              aQuienId = contraparte.id;
+            } else {
+              aQuienNombre = 'Alguien';
+            }
+          }
           
           estadoHTML = `
             <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
               <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;font-size:0.75rem;font-weight:600; text-align:center;">
-                 Debe pagar a ${aQuien}: ${Math.abs(p.saldo).toFixed(2)}
+                 Debe pagar a ${aQuienNombre}: ${Math.abs(p.saldo).toFixed(2)}
               </span>
               <button class="btn-settle-summary" 
                       data-group="${groupId}" 
                       data-from="${p.id}" 
-                      data-to="${deuda ? deuda.a_id || '' : ''}"
+                      data-to-id="${aQuienId || ''}"
+                      data-to-name="${aQuienNombre}"
                       data-amount="${Math.abs(p.saldo)}"
                       style="background:#e53e3e; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:0.7rem; cursor:pointer;">
                 Saldar deuda
@@ -834,7 +847,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           <tr>
             <td style="padding: 6px 8px; border: 1px solid #fed7d7;">
               ${tieneDetalle
-                ? `<button type="button" class="btn-toggle-pagos" data-target="${detalleId}"
+                ? `<button type="button" class="btn-toggle-pagos" data-target="${detalleId}" data-name="${p.nombre}"
                      style="background:none;border:none;padding:0;color:#3182ce;cursor:pointer;font-size:0.8rem;text-decoration:underline;">
                      &#9654; ${p.nombre}
                    </button>`
@@ -895,15 +908,14 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
     html += `</div>`;
     container.innerHTML = html;
 
-    // Toggle para ver facturas
+    // Toggle para ver facturas (arreglado para que no se dupliquen las flechas)
     container.querySelectorAll('.btn-toggle-pagos').forEach(btn => {
       btn.addEventListener('click', () => {
         const target = document.getElementById(btn.dataset.target);
         if (!target) return;
         const visible = target.style.display !== 'none';
         target.style.display = visible ? 'none' : '';
-        const nombre = btn.textContent.replace(/^[â–¶â–¼]\s*/, '').trim();
-        btn.innerHTML = `${visible ? '&#9654;' : '&#9660;'} ${nombre}`;
+        btn.innerHTML = `${visible ? '&#9654;' : '&#9660;'} ${btn.dataset.name}`;
       });
     });
 
@@ -912,19 +924,40 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
       btn.addEventListener('click', async () => {
         const gId = btn.dataset.group;
         const fromId = btn.dataset.from;
-        const toId = btn.dataset.to; // Viene vacÃ­o desde el JSON, lo buscamos abajo
+        const toId = btn.dataset.toId;
+        const toName = btn.dataset.toName;
         const amount = parseFloat(btn.dataset.amount);
 
         if (!confirm(`Â¿Confirmas que se pagaron ${amount.toFixed(2)} ${snap.moneda}?`)) return;
 
         try {
-          // Buscar el ID real del acreedor basÃ¡ndonos en el nombre
-          const { data: perfiles } = await supabase.from('profiles').select('id, full_name').eq('full_name', deudas.find(d => d.de === personas.find(p=>p.id===fromId).nombre)?.a || '');
-          const toIdReal = perfiles && perfiles.length > 0 ? perfiles[0].id : null;
-          
-          const targetToId = toIdReal || toId;
+          let targetToId = toId;
 
-          if (!targetToId) throw new Error("No se pudo identificar a quiÃ©n pagarle");
+          // Si no vino el ID en el JSON viejo, lo buscamos por el nombre en los perfiles
+          if (!targetToId && toName && toName !== 'Alguien') {
+            const { data: perfiles } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('full_name', toName);
+            
+            if (perfiles && perfiles.length > 0) {
+              targetToId = perfiles[0].id;
+            } else {
+              // Buscar en los miembros del grupo
+              const { data: miembros } = await supabase
+                .from('group_members')
+                .select('user_id, profiles(full_name)')
+                .eq('group_id', gId);
+              
+              const match = (miembros || []).find(m => {
+                const p = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+                return p?.full_name === toName;
+              });
+              if (match) targetToId = match.user_id;
+            }
+          }
+
+          if (!targetToId) throw new Error(`No se pudo identificar a quiÃ©n pagarle (${toName})`);
 
           // Insertar el settlement
           const { error } = await supabase.from('settlements').insert([{
@@ -938,7 +971,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
 
           if (error) throw error;
 
-          // Actualizar la UI (recargando el detalle del grupo y forzando el recÃ¡lculo)
+          // Actualizar la UI
           const { mostrarBalance } = await import('./debtSolver.js');
           await mostrarBalance(gId);
           
@@ -958,6 +991,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
     return;
   }
 }
+
 
 
 
