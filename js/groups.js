@@ -680,11 +680,62 @@ async function abrirDetalleGrupo(groupId) {
     btnExportRTF.style.display = 'inline-block';
   }
 
+  await mostrarResumenCierre(grupo, groupId, monedaGrupo);
+
   modal.classList.remove('hidden');
   await cargarGastosDelGrupo(groupId);
   await mostrarBalance(groupId);
   await cargarMiembrosDelGrupo(groupId);
   await actualizarBadgeArchivados(groupId);
+}
+
+// ==========================================
+// 8b. MOSTRAR RESUMEN DE CIERRE
+// ==========================================
+async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
+  const container = document.getElementById('group-closed-summary');
+  if (!container) return;
+
+  if (!grupo || !grupo.date_closed) {
+    container.innerHTML = '';
+    container.classList.add('hidden');
+    return;
+  }
+
+  container.classList.remove('hidden');
+  
+  const { calcularBalance, simplificarDeudas } = await import('./debtSolver.js');
+  const balance = await calcularBalance(groupId);
+  const transacciones = simplificarDeudas(balance);
+
+  const userIds = Object.keys(balance);
+  const { data: perfiles } = await supabase
+    .from('profiles')
+    .select('id, full_name, email')
+    .in('id', userIds);
+  const nombres = {};
+  (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Usuario');
+
+  let html = `
+    <div style="background: #fff5f5; border: 2px solid #feb2b2; border-radius: 10px; padding: 12px; margin-bottom: 15px;">
+      <h4 style="color: #c53030; font-size: 1rem; margin-bottom: 8px;">Resumen de Cierre (${formatearFecha(grupo.date_closed)})</h4>
+      <p style="font-size: 0.85rem; color: #4a5568; margin-bottom: 4px;">Total congelado: <strong>${parseFloat(grupo.closed_total || 0).toFixed(2)} ${monedaGrupo}</strong></p>
+  `;
+
+  if (transacciones.length === 0) {
+    html += `<p style="font-size: 0.85rem; color: #38a169; font-weight: 600;">Todo saldado al momento del cierre.</p>`;
+  } else {
+    html += `<ul style="font-size: 0.85rem; color: #4a5568; padding-left: 20px; margin-top: 5px;">`;
+    transacciones.forEach(tr => {
+      const from = nombres[tr.from] || 'Usuario';
+      const to = nombres[tr.to] || 'Usuario';
+      html += `<li>${from} le debe a <strong>${to}</strong>: ${tr.amount.toFixed(2)} ${monedaGrupo}</li>`;
+    });
+    html += `</ul>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
 }
 
 // ==========================================
@@ -1215,39 +1266,14 @@ if (!window.__groupDetailListenersAttached) {
   });
 
   // ==========================================
-  // CERRAR COMPUTO (CON RESUMEN DE CONFIRMACION)
+  // CERRAR COMPUTO (CON CONFIRMACION SIMPLE)
   // ==========================================
   document.getElementById('btn-close-computo')?.addEventListener('click', async () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     if (!groupId) return;
-
-    const { data: g } = await supabase.from('groups').select('currency').eq('id', groupId).single();
-    const moneda = (g?.currency || 'EUR').toUpperCase();
-
-    const infoTotal = await calcularTotalGrupo(groupId, moneda, null, null);
-    const { calcularBalance, simplificarDeudas } = await import('./debtSolver.js');
-    const balance = await calcularBalance(groupId);
-    const transacciones = simplificarDeudas(balance);
-
-    const { data: perfiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Object.keys(balance));
-    const nombres = {};
-    perfiles?.forEach(p => nombres[p.id] = p.full_name || p.email);
-
-    let resumen = `ðŸ“Š RESUMEN DEL GRUPO\n\n`;
-    resumen += `â€¢ Gasto total: ${infoTotal.total.toFixed(2)} ${moneda}\n`;
-    resumen += `â€¢ Tu parte: ${infoTotal.miParte.toFixed(2)} ${moneda}\n\n`;
-
-    if (transacciones.length === 0) {
-      resumen += `âœ… Todo saldado.\n`;
-    } else {
-      resumen += `ðŸ’¸ Deudas a saldar:\n`;
-      transacciones.forEach(t => {
-        resumen += `- ${nombres[t.from] || 'Usuario'} le debe a ${nombres[t.to] || 'Usuario'}: ${t.amount.toFixed(2)} ${moneda}\n`;
-      });
-    }
-
-    if (!confirm(resumen + `\nÂ¿EstÃ¡s seguro de cerrar el cÃ³mputo?`)) return;
-
+    
+    if (!confirm(t('group.computo.close_confirm'))) return;
+    
     await cerrarComputo(groupId);
     await abrirDetalleGrupo(groupId);
     await cargarGrupos();
@@ -1596,7 +1622,7 @@ async function exportarGrupoCSV(groupId) {
 }
 
 // ==========================================
-// 17. EXPORTAR GRUPO A RTF (CON RESUMEN DE CIERRE Y BALANCE)
+// 17. EXPORTAR GRUPO A RTF (CON RESUMEN DE CIERRE)
 // ==========================================
 async function exportarGrupoRTF(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
@@ -1715,7 +1741,7 @@ async function exportarGrupoRTF(groupId) {
 }
 
 // ==========================================
-// 18. GENERAR RTF (CON RESUMEN DE CIERRE)
+// 18. GENERAR RTF (SIN CARACTERES RAROS)
 // ==========================================
 function generarRTFReporte(datos) {
   const {
@@ -1768,7 +1794,7 @@ function generarRTFReporte(datos) {
   }
   r += '\\pard\\par' + nl;
 
-  // === RESUMEN DE CIERRE (NUEVO) ===
+  // === RESUMEN DE CIERRE ===
   if (grupo.date_closed) {
     r += '\\pard\\b\\fs28\\cf1 RESUMEN DE CIERRE (' + esc(grupo.date_closed) + ')\\b0\\fs22\\cf0\\par' + nl;
     
@@ -1820,7 +1846,6 @@ function generarRTFReporte(datos) {
   r += '\\pard\\par' + nl;
 
   // === BALANCE (solo si hay deudas pendientes y el grupo NO estÃ¡ cerrado) ===
-  // Si ya estÃ¡ cerrado, el balance congelado ya saliÃ³ arriba en el resumen.
   if (!grupo.date_closed && balance && Object.keys(balance).length > 0 && transacciones.length > 0) {
     r += '\\pard\\b\\fs28\\cf1 Balance actual\\b0\\fs22\\cf0\\par' + nl;
 
@@ -1857,7 +1882,6 @@ function generarRTFReporte(datos) {
 
     r += '\\pard\\par' + nl;
 
-    // Deudas pendientes
     r += '\\pard\\b\\fs28\\cf1 Deudas pendientes\\b0\\fs22\\cf0\\par' + nl;
     transacciones.forEach(tr => {
       const fromName = nombres[tr.from] || 'Usuario';
