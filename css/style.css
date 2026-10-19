@@ -2058,3 +2058,50 @@ body {
     height: 48px;
   }
 }
+/* ==========================================
+   40. BALANCE INDIVIDUAL
+   ========================================== */
+.balance-subtitulo {
+  font-size: 0.85rem;
+  color: #4a5568;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.balance-individuales {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+}
+
+.balance-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px solid #edf2f7;
+  font-size: 0.9rem;
+}
+
+.balance-row:last-child {
+  border-bottom: none;
+}
+
+.balance-name {
+  color: #2d3748;
+  font-weight: 500;
+}
+
+.balance-amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.balance-deudas {
+  margin-top: 15px;
+}
