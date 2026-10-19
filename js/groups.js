@@ -1018,6 +1018,15 @@ function actualizarBotonCotizacion(grupo) {
 // ==========================================
 // 12. CERRAR COMPUTO (CON SNAPSHOT COMPLETO + DETALLE DE PAGOS)
 // ==========================================
+
+
+
+
+
+
+// ==========================================
+// 12. CERRAR COMPUTO (CON SNAPSHOT + SALDOS CONSISTENTES)
+// ==========================================
 async function cerrarComputo(groupId) {
   const { data: grupoInfo } = await supabase
     .from('groups')
@@ -1027,7 +1036,6 @@ async function cerrarComputo(groupId) {
 
   const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
 
-  // Gastos activos CON fecha y descripcion
   const { data: gastos } = await supabase
     .from('expenses')
     .select('id, amount, currency, exchange_rate, paid_by, description, category, date')
@@ -1036,13 +1044,24 @@ async function cerrarComputo(groupId) {
 
   const gastosArr = gastos || [];
 
-  let total = 0;
-  gastosArr.forEach(g => {
+  // Helper local: monto en moneda del grupo con tasa HISTORICA + log defensivo
+  const montoEnGrupo = (g) => {
     const monto = parseFloat(g.amount) || 0;
     const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
-    const tasa = parseFloat(g.exchange_rate) || 1;
-    total += (monedaGasto === monedaGrupo) ? monto : monto * tasa;
-  });
+    if (monedaGasto === monedaGrupo) return monto;
+
+    const tasaRaw = parseFloat(g.exchange_rate);
+    if (!isFinite(tasaRaw) || tasaRaw <= 0) {
+      console.warn('[cerrarComputo] exchange_rate invalido, usando 1:', {
+        id: g.id, exchange_rate: g.exchange_rate
+      });
+      return monto;
+    }
+    return monto * tasaRaw;
+  };
+
+  let total = 0;
+  gastosArr.forEach(g => { total += montoEnGrupo(g); });
 
   let closedRateUSD = null;
   if (monedaGrupo === 'USD') {
@@ -1082,60 +1101,88 @@ async function cerrarComputo(groupId) {
   const nombres = {};
   (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email || 'Usuario');
 
-  // Consumo por persona
+  // Consumo por persona (con tasa HISTORICA)
   const consumoPorUsuario = {};
   splits.forEach(s => {
     const gasto = gastosArr.find(g => g.id === s.expense_id);
     if (!gasto) return;
-    const monto = parseFloat(s.amount_owed) || 0;
+    const montoS = parseFloat(s.amount_owed) || 0;
     const monedaGasto = (gasto.currency || monedaGrupo).toUpperCase();
-    const tasa = parseFloat(gasto.exchange_rate) || 1;
-    const montoEnGrupo = (monedaGasto === monedaGrupo) ? monto : monto * tasa;
-    consumoPorUsuario[s.user_id] = (consumoPorUsuario[s.user_id] || 0) + montoEnGrupo;
+
+    let montoEnGrupoSplit = montoS;
+    if (monedaGasto !== monedaGrupo) {
+      const tasaRaw = parseFloat(gasto.exchange_rate);
+      const tasa = (isFinite(tasaRaw) && tasaRaw > 0) ? tasaRaw : 1;
+      montoEnGrupoSplit = montoS * tasa;
+    }
+
+    consumoPorUsuario[s.user_id] = (consumoPorUsuario[s.user_id] || 0) + montoEnGrupoSplit;
   });
 
-  // Pagado por persona + detalle de gastos que pago (con fecha)
+  // Pagado por persona + detalle de gastos que pago
   const pagadoPorUsuario = {};
   const pagosDetallePorUsuario = {};
 
   gastosArr.forEach(g => {
     if (!g.paid_by) return;
-    const monto = parseFloat(g.amount) || 0;
-    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
-    const tasa = parseFloat(g.exchange_rate) || 1;
-    const montoEnGrupo = (monedaGasto === monedaGrupo) ? monto : monto * tasa;
+    const enGrupo = montoEnGrupo(g);
+    pagadoPorUsuario[g.paid_by] = (pagadoPorUsuario[g.paid_by] || 0) + enGrupo;
 
-    pagadoPorUsuario[g.paid_by] = (pagadoPorUsuario[g.paid_by] || 0) + montoEnGrupo;
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const montoOriginal = parseFloat(g.amount) || 0;
 
     if (!pagosDetallePorUsuario[g.paid_by]) pagosDetallePorUsuario[g.paid_by] = [];
     pagosDetallePorUsuario[g.paid_by].push({
       fecha: g.date || null,
       descripcion: g.description || '',
       categoria: g.category || 'otros',
-      monto: parseFloat(montoEnGrupo.toFixed(2)),
-      monto_original: parseFloat(monto.toFixed(2)),
+      monto: parseFloat(enGrupo.toFixed(2)),
+      monto_original: parseFloat(montoOriginal.toFixed(2)),
       moneda_original: monedaGasto
     });
   });
 
-  // Ordenar cada lista por fecha ascendente
   Object.values(pagosDetallePorUsuario).forEach(arr => {
     arr.sort((a, b) => (a.fecha || '').localeCompare(b.fecha || ''));
   });
+
+  // ==========================================
+  // FIX #4: saldo = pago - consumio (redondeado y consistente)
+  // ==========================================
+  const personasSnap = Array.from(userIds).map(uid => {
+    const pagoR = parseFloat((pagadoPorUsuario[uid] || 0).toFixed(2));
+    const consumioR = parseFloat((consumoPorUsuario[uid] || 0).toFixed(2));
+    const saldoR = parseFloat((pagoR - consumioR).toFixed(2));
+
+    return {
+      id: uid,
+      nombre: nombres[uid] || 'Usuario',
+      pago: pagoR,
+      consumio: consumioR,
+      saldo: saldoR,
+      pagos_detalle: pagosDetallePorUsuario[uid] || []
+    };
+  });
+
+  // Correccion: la suma de saldos debe ser 0 (o lo mas cercano)
+  if (personasSnap.length > 0) {
+    const sumaSaldos = personasSnap.reduce((s, p) => s + p.saldo, 0);
+    const ajuste = parseFloat((-sumaSaldos).toFixed(2));
+    if (Math.abs(ajuste) >= 0.01) {
+      // Ajustamos al que tenga mayor |saldo|
+      const candidato = personasSnap.reduce((max, p) =>
+        Math.abs(p.saldo) > Math.abs(max.saldo) ? p : max
+      , personasSnap[0]);
+      candidato.saldo = parseFloat((candidato.saldo + ajuste).toFixed(2));
+    }
+  }
 
   const snapshot = {
     moneda: monedaGrupo,
     total: parseFloat(total.toFixed(2)),
     fecha_cierre: hoy,
     cantidad_gastos: gastosArr.length,
-    personas: Array.from(userIds).map(uid => ({
-      id: uid,
-      nombre: nombres[uid] || 'Usuario',
-      pago: parseFloat((pagadoPorUsuario[uid] || 0).toFixed(2)),
-      consumio: parseFloat((consumoPorUsuario[uid] || 0).toFixed(2)),
-      saldo: parseFloat((balance[uid] || 0).toFixed(2)),
-      pagos_detalle: pagosDetallePorUsuario[uid] || []
-    })),
+    personas: personasSnap,
     deudas: transacciones.map(tr => ({
       de: nombres[tr.from] || 'Usuario',
       a: nombres[tr.to] || 'Usuario',
@@ -1143,7 +1190,6 @@ async function cerrarComputo(groupId) {
     }))
   };
 
-  // Texto plano de respaldo
   let textoDeudas = 'Todo saldado al momento del cierre.';
   if (transacciones.length > 0) {
     textoDeudas = transacciones.map(tr =>
@@ -1167,6 +1213,11 @@ async function cerrarComputo(groupId) {
     throw error;
   }
 }
+
+
+
+
+
 
 // ==========================================
 // 13. REABRIR COMPUTO
