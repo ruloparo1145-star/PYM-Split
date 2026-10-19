@@ -7,6 +7,29 @@ let chartHistoryInstance = null;
 let rangoActual = 'active';
 
 // ==========================================
+// Helper: calcular monto en moneda del grupo con tasa HISTORICA
+// ==========================================
+function montoEnMonedaGrupo(g, monedaGrupo) {
+  const monto = parseFloat(g.amount) || 0;
+  const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+  const monedaGrupoUp = monedaGrupo.toUpperCase();
+
+  if (monedaGasto === monedaGrupoUp) return monto;
+
+  const tasaRaw = parseFloat(g.exchange_rate);
+  let tasa;
+  if (!isFinite(tasaRaw) || tasaRaw <= 0) {
+    console.warn('[dashboard] exchange_rate invalido, usando 1:', {
+      id: g.id, exchange_rate: g.exchange_rate
+    });
+    tasa = 1;
+  } else {
+    tasa = tasaRaw;
+  }
+  return monto * tasa;
+}
+
+// ==========================================
 // CARGAR DASHBOARD
 // ==========================================
 export async function cargarDashboard() {
@@ -30,7 +53,6 @@ export async function cargarDashboard() {
   const monedaUsuario = (perfil?.preferred_currency || 'EUR').toUpperCase();
 
   try {
-    // Grupos segun el tab seleccionado
     let queryGrupos = supabase
       .from('groups')
       .select('id, currency');
@@ -40,31 +62,32 @@ export async function cargarDashboard() {
     } else if (rangoActual === 'archived') {
       queryGrupos = queryGrupos.eq('archived', true);
     }
-    // Si es 'all', no filtramos
 
     const { data: grupos } = await queryGrupos;
 
     const groupIds = (grupos || []).map(g => g.id);
     const monedaPorGrupo = {};
-    (grupos || []).forEach(g => monedaPorGrupo[g.id] = g.currency || 'EUR');
+    (grupos || []).forEach(g => monedaPorGrupo[g.id] = (g.currency || 'EUR').toUpperCase());
 
     if (groupIds.length === 0) {
       renderizarVacio(monedaUsuario);
       return;
     }
 
-    // Gastos del rango (todos los gastos activos de esos grupos)
+    // Traemos exchange_rate tambien
     const { data: gastosRango } = await supabase
       .from('expenses')
-      .select('id, description, amount, currency, date, paid_by, group_id, category')
+      .select('id, description, amount, currency, exchange_rate, date, paid_by, group_id, category')
       .in('group_id', groupIds)
       .eq('archived', false)
       .order('created_at', { ascending: false });
 
-    const itemsRango = (gastosRango || []).map(g => ({
-      monto: parseFloat(g.amount),
-      moneda: g.currency || monedaPorGrupo[g.group_id] || 'EUR'
-    }));
+    // FIX #1: convertir con tasa HISTORICA a moneda del grupo, luego a monedaUsuario
+    const itemsRango = (gastosRango || []).map(g => {
+      const monedaGrupo = monedaPorGrupo[g.group_id] || 'EUR';
+      const montoEnGrupo = montoEnMonedaGrupo(g, monedaGrupo);
+      return { monto: montoEnGrupo, moneda: monedaGrupo };
+    });
 
     const resultado = await sumarConvertido(itemsRango, monedaUsuario);
 
@@ -72,12 +95,13 @@ export async function cargarDashboard() {
     const balance = {};
 
     if (gastosRango && gastosRango.length > 0) {
-      // 1. Sumar lo que pago cada uno
+      // 1. Sumar lo que pago cada uno (con tasa HISTORICA a moneda del grupo)
       const sumasPorPersona = {};
       gastosRango.forEach(g => {
-        const moneda = g.currency || monedaPorGrupo[g.group_id] || 'EUR';
+        const monedaGrupo = monedaPorGrupo[g.group_id] || 'EUR';
+        const montoEnGrupo = montoEnMonedaGrupo(g, monedaGrupo);
         if (!sumasPorPersona[g.paid_by]) sumasPorPersona[g.paid_by] = [];
-        sumasPorPersona[g.paid_by].push({ monto: parseFloat(g.amount), moneda });
+        sumasPorPersona[g.paid_by].push({ monto: montoEnGrupo, moneda: monedaGrupo });
       });
 
       for (const [userId, items] of Object.entries(sumasPorPersona)) {
@@ -85,22 +109,38 @@ export async function cargarDashboard() {
         balance[userId] = (balance[userId] || 0) + total;
       }
 
-      // 2. Restar lo que consumio cada uno (splits)
+      // 2. Restar lo que consumio cada uno (splits con tasa HISTORICA)
       const expIds = gastosRango.map(g => g.id);
       const { data: splits } = await supabase
         .from('expense_splits')
         .select('user_id, amount_owed, expense_id')
         .in('expense_id', expIds);
 
+      const grupoPorExpense = {};
       const monedaPorExpense = {};
-      gastosRango.forEach(g => monedaPorExpense[g.id] = g.currency || monedaPorGrupo[g.group_id] || 'EUR');
+      const tasaPorExpense = {};
+      gastosRango.forEach(g => {
+        monedaPorExpense[g.id] = (g.currency || monedaPorGrupo[g.group_id] || 'EUR').toUpperCase();
+        grupoPorExpense[g.id] = monedaPorGrupo[g.group_id] || 'EUR';
+        const tasaRaw = parseFloat(g.exchange_rate);
+        tasaPorExpense[g.id] = (isFinite(tasaRaw) && tasaRaw > 0) ? tasaRaw : 1;
+      });
 
       if (splits && splits.length > 0) {
         const splitsPorPersona = {};
         splits.forEach(s => {
-          const moneda = monedaPorExpense[s.expense_id] || 'EUR';
+          const monedaGasto = monedaPorExpense[s.expense_id] || 'EUR';
+          const monedaGrupo = grupoPorExpense[s.expense_id] || 'EUR';
+          const tasa = tasaPorExpense[s.expense_id] || 1;
+          const montoSplit = parseFloat(s.amount_owed) || 0;
+
+          // amount_owed esta en moneda del gasto. Pasarlo a moneda del grupo.
+          const montoEnGrupo = (monedaGasto === monedaGrupo)
+            ? montoSplit
+            : montoSplit * tasa;
+
           if (!splitsPorPersona[s.user_id]) splitsPorPersona[s.user_id] = [];
-          splitsPorPersona[s.user_id].push({ monto: parseFloat(s.amount_owed), moneda });
+          splitsPorPersona[s.user_id].push({ monto: montoEnGrupo, moneda: monedaGrupo });
         });
 
         for (const [userId, items] of Object.entries(splitsPorPersona)) {
@@ -109,7 +149,7 @@ export async function cargarDashboard() {
         }
       }
 
-      // 3. Aplicar settlements (pagos ya saldados)
+      // 3. Settlements
       const { data: pagos } = await supabase
         .from('settlements')
         .select('from_user, to_user, amount, currency, group_id')
@@ -119,7 +159,7 @@ export async function cargarDashboard() {
         const pagosDesde = {};
         const pagosHacia = {};
         pagos.forEach(p => {
-          const moneda = p.currency || monedaPorGrupo[p.group_id] || 'EUR';
+          const moneda = (p.currency || monedaPorGrupo[p.group_id] || 'EUR').toUpperCase();
           if (!pagosDesde[p.from_user]) pagosDesde[p.from_user] = [];
           if (!pagosHacia[p.to_user]) pagosHacia[p.to_user] = [];
           pagosDesde[p.from_user].push({ monto: parseFloat(p.amount), moneda });
@@ -141,7 +181,6 @@ export async function cargarDashboard() {
     const teDeben = miBalance > 0 ? miBalance : 0;
     const debes = miBalance < 0 ? Math.abs(miBalance) : 0;
 
-    // Label dinamico segun el tab
     const labelTotal = document.getElementById('stat-total-label');
     if (labelTotal) {
       if (rangoActual === 'active') {
@@ -236,20 +275,29 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
   const html = [];
   for (const g of gastos) {
     const icono = CATEGORIAS_ICONOS[g.category] || CATEGORIAS_ICONOS.otros;
-    const monedaOrigen = g.currency || monedaPorGrupo[g.group_id] || 'EUR';
+    const monedaGrupo = monedaPorGrupo[g.group_id] || 'EUR';
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+
+    // Monto en moneda del grupo con tasa HISTORICA
+    const montoEnGrupo = montoEnMonedaGrupo(g, monedaGrupo);
 
     let montoMostrar;
     let subtexto = '';
 
-    if (monedaOrigen === monedaUsuario) {
-      montoMostrar = parseFloat(g.amount).toFixed(2) + ' ' + monedaUsuario;
+    if (monedaGrupo === monedaUsuario) {
+      montoMostrar = montoEnGrupo.toFixed(2) + ' ' + monedaUsuario;
+      if (monedaGasto !== monedaGrupo) {
+        subtexto = `(${parseFloat(g.amount).toFixed(2)} ${monedaGasto})`;
+      }
     } else {
-      const r = await convertirMonto(parseFloat(g.amount), monedaOrigen, monedaUsuario);
+      const r = await convertirMonto(montoEnGrupo, monedaGrupo, monedaUsuario);
       if (r.convertido) {
         montoMostrar = r.monto.toFixed(2) + ' ' + monedaUsuario;
-        subtexto = `(${parseFloat(g.amount).toFixed(2)} ${monedaOrigen})`;
+        if (monedaGasto !== monedaGrupo) {
+          subtexto = `(${parseFloat(g.amount).toFixed(2)} ${monedaGasto})`;
+        }
       } else {
-        montoMostrar = parseFloat(g.amount).toFixed(2) + ' ' + monedaOrigen;
+        montoMostrar = montoEnGrupo.toFixed(2) + ' ' + monedaGrupo;
       }
     }
 
@@ -270,7 +318,7 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
 }
 
 // ==========================================
-// HISTORICO POR MES (siempre con todos los grupos)
+// HISTORICO POR MES
 // ==========================================
 async function cargarHistorico(monedaUsuario) {
   const tableContainer = document.getElementById('history-table');
@@ -282,14 +330,13 @@ async function cargarHistorico(monedaUsuario) {
   const hace12 = new Date(hoy.getFullYear(), hoy.getMonth() - 11, 1);
   const desdeHistorico = hace12.toISOString().split('T')[0];
 
-  // Todos los grupos (activos + archivados)
   const { data: grupos } = await supabase
     .from('groups')
     .select('id, currency');
 
   const groupIds = (grupos || []).map(g => g.id);
   const monedaPorGrupo = {};
-  (grupos || []).forEach(g => monedaPorGrupo[g.id] = g.currency || 'EUR');
+  (grupos || []).forEach(g => monedaPorGrupo[g.id] = (g.currency || 'EUR').toUpperCase());
 
   if (groupIds.length === 0) {
     tableContainer.innerHTML = `<p class="placeholder-text">${t('dashboard.history_empty')}</p>`;
@@ -297,10 +344,10 @@ async function cargarHistorico(monedaUsuario) {
     return;
   }
 
-  // Gastos activos (no archivados) de todos los grupos
+  // FIX #1: traer exchange_rate
   const { data: gastos } = await supabase
     .from('expenses')
-    .select('amount, currency, date, group_id')
+    .select('amount, currency, exchange_rate, date, group_id')
     .in('group_id', groupIds)
     .eq('archived', false)
     .gte('date', desdeHistorico);
@@ -315,9 +362,11 @@ async function cargarHistorico(monedaUsuario) {
   gastos.forEach(g => {
     const mes = (g.date || '').substring(0, 7);
     if (!mes) return;
-    const moneda = g.currency || monedaPorGrupo[g.group_id] || 'EUR';
+    const monedaGrupo = monedaPorGrupo[g.group_id] || 'EUR';
+    const montoEnGrupo = montoEnMonedaGrupo(g, monedaGrupo);
+
     if (!porMes[mes]) porMes[mes] = { items: [], count: 0 };
-    porMes[mes].items.push({ monto: parseFloat(g.amount), moneda });
+    porMes[mes].items.push({ monto: montoEnGrupo, moneda: monedaGrupo });
     porMes[mes].count++;
   });
 
