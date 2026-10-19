@@ -112,6 +112,10 @@ export function simplificarDeudas(balance) {
   return transacciones;
 }
 
+
+
+
+
 export async function mostrarBalance(groupId) {
   const container = document.getElementById('group-balance');
   if (!container) return;
@@ -143,27 +147,68 @@ export async function mostrarBalance(groupId) {
 
   const transacciones = simplificarDeudas(balance);
 
+  // ============================================
+  // BLOQUE 1: BALANCES INDIVIDUALES
+  // ============================================
+  const filasBalance = Object.entries(balance)
+    .filter(([_, monto]) => Math.abs(monto) >= 0.01)
+    .sort((a, b) => b[1] - a[1])  // mayor saldo positivo primero
+    .map(([userId, monto]) => {
+      const nombre = nombres[userId] || t('debt.user');
+      const esPositivo = monto > 0;
+      const signo = esPositivo ? '+' : '-';
+      const color = esPositivo ? '#38a169' : '#e53e3e';
+      return `
+        <div class="balance-row">
+          <span class="balance-name">${nombre}</span>
+          <span class="balance-amount" style="color: ${color}; font-weight: 700;">
+            ${signo}${Math.abs(monto).toFixed(2)} ${monedaGrupo}
+          </span>
+        </div>
+      `;
+    }).join('');
+
+  const bloqueBalances = filasBalance
+    ? `
+      <div class="balance-individuales">
+        <h5 class="balance-subtitulo">${t('group.detail.balance_individual') || 'Balance por persona'}</h5>
+        ${filasBalance}
+      </div>
+    `
+    : '';
+
+  // ============================================
+  // BLOQUE 2: DEUDAS PENDIENTES
+  // ============================================
+  let bloqueDeudas = '';
   if (transacciones.length === 0) {
-    container.innerHTML = `<p class="success-msg" style="text-align: center;">${t('group.detail.balance_settled')}</p>`;
-    return;
+    bloqueDeudas = `<p class="success-msg" style="text-align: center; margin-top: 12px;">${t('group.detail.balance_settled')}</p>`;
+  } else {
+    bloqueDeudas = `
+      <div class="balance-deudas" style="margin-top: 15px;">
+        <h5 class="balance-subtitulo">${t('group.detail.balance_pending') || 'Deudas pendientes'}</h5>
+        ${transacciones.map(tr => `
+          <div class="debt-card">
+            <span class="debt-from">${nombres[tr.from] || t('debt.someone')}</span>
+            <span class="debt-arrow">-></span>
+            <span class="debt-to">${nombres[tr.to] || t('debt.someone')}</span>
+            <span class="debt-amount">${tr.amount.toFixed(2)} ${monedaGrupo}</span>
+            <button class="btn-small btn-settle"
+                    data-group="${groupId}"
+                    data-from="${tr.from}"
+                    data-to="${tr.to}"
+                    data-amount="${tr.amount}">
+              ${t('debt.settle')}
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    `;
   }
 
-  container.innerHTML = transacciones.map(tr => `
-    <div class="debt-card">
-      <span class="debt-from">${nombres[tr.from] || t('debt.someone')}</span>
-      <span class="debt-arrow">-></span>
-      <span class="debt-to">${nombres[tr.to] || t('debt.someone')}</span>
-      <span class="debt-amount">${tr.amount.toFixed(2)} ${monedaGrupo}</span>
-      <button class="btn-small btn-settle"
-              data-group="${groupId}"
-              data-from="${tr.from}"
-              data-to="${tr.to}"
-              data-amount="${tr.amount}">
-        ${t('debt.settle')}
-      </button>
-    </div>
-  `).join('');
+  container.innerHTML = bloqueBalances + bloqueDeudas;
 
+  // Listeners de saldar
   container.querySelectorAll('.btn-settle').forEach(btn => {
     btn.addEventListener('click', async () => {
       const gId = btn.dataset.group;
@@ -193,6 +238,9 @@ export async function mostrarBalance(groupId) {
     });
   });
 }
+
+
+
 
 async function saldarDeuda(groupId, fromUserId, toUserId, amount, monedaGrupo) {
   const { data: { user } } = await supabase.auth.getUser();
