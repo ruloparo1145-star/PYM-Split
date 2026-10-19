@@ -73,6 +73,11 @@ export async function calcularBalance(groupId) {
     });
   }
 
+  // Redondear a 2 decimales para evitar errores de coma flotante
+  Object.keys(balance).forEach(k => {
+    balance[k] = Math.round(balance[k] * 100) / 100;
+  });
+
   return balance;
 }
 
@@ -112,10 +117,6 @@ export function simplificarDeudas(balance) {
   return transacciones;
 }
 
-
-
-
-
 export async function mostrarBalance(groupId) {
   const container = document.getElementById('group-balance');
   if (!container) return;
@@ -147,12 +148,10 @@ export async function mostrarBalance(groupId) {
 
   const transacciones = simplificarDeudas(balance);
 
-  // ============================================
-  // BLOQUE 1: BALANCES INDIVIDUALES
-  // ============================================
+  // --- BALANCES INDIVIDUALES ---
   const filasBalance = Object.entries(balance)
     .filter(([_, monto]) => Math.abs(monto) >= 0.01)
-    .sort((a, b) => b[1] - a[1])  // mayor saldo positivo primero
+    .sort((a, b) => b[1] - a[1])
     .map(([userId, monto]) => {
       const nombre = nombres[userId] || t('debt.user');
       const esPositivo = monto > 0;
@@ -168,25 +167,25 @@ export async function mostrarBalance(groupId) {
       `;
     }).join('');
 
-  const bloqueBalances = filasBalance
-    ? `
+  let bloqueBalances = '';
+  // Mostrar balances individuales SOLO si hay deudas pendientes
+  if (filasBalance && transacciones.length > 0) {
+    bloqueBalances = `
       <div class="balance-individuales">
-        <h5 class="balance-subtitulo">${t('group.detail.balance_individual') || 'Balance por persona'}</h5>
+        <h5 class="balance-subtitulo">${t('group.detail.balance_individual')}</h5>
         ${filasBalance}
       </div>
-    `
-    : '';
+    `;
+  }
 
-  // ============================================
-  // BLOQUE 2: DEUDAS PENDIENTES
-  // ============================================
+  // --- DEUDAS PENDIENTES ---
   let bloqueDeudas = '';
   if (transacciones.length === 0) {
     bloqueDeudas = `<p class="success-msg" style="text-align: center; margin-top: 12px;">${t('group.detail.balance_settled')}</p>`;
   } else {
     bloqueDeudas = `
       <div class="balance-deudas" style="margin-top: 15px;">
-        <h5 class="balance-subtitulo">${t('group.detail.balance_pending') || 'Deudas pendientes'}</h5>
+        <h5 class="balance-subtitulo">${t('group.detail.balance_pending')}</h5>
         ${transacciones.map(tr => `
           <div class="debt-card">
             <span class="debt-from">${nombres[tr.from] || t('debt.someone')}</span>
@@ -238,9 +237,6 @@ export async function mostrarBalance(groupId) {
     });
   });
 }
-
-
-
 
 async function saldarDeuda(groupId, fromUserId, toUserId, amount, monedaGrupo) {
   const { data: { user } } = await supabase.auth.getUser();
