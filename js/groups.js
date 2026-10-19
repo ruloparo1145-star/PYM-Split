@@ -1214,10 +1214,40 @@ if (!window.__groupDetailListenersAttached) {
     }
   });
 
+  // ==========================================
+  // CERRAR COMPUTO (CON RESUMEN DE CONFIRMACION)
+  // ==========================================
   document.getElementById('btn-close-computo')?.addEventListener('click', async () => {
     const groupId = document.getElementById('modal-group-detail').dataset.groupId;
     if (!groupId) return;
-    if (!confirm(t('group.computo.close_confirm'))) return;
+
+    const { data: g } = await supabase.from('groups').select('currency').eq('id', groupId).single();
+    const moneda = (g?.currency || 'EUR').toUpperCase();
+
+    const infoTotal = await calcularTotalGrupo(groupId, moneda, null, null);
+    const { calcularBalance, simplificarDeudas } = await import('./debtSolver.js');
+    const balance = await calcularBalance(groupId);
+    const transacciones = simplificarDeudas(balance);
+
+    const { data: perfiles } = await supabase.from('profiles').select('id, full_name, email').in('id', Object.keys(balance));
+    const nombres = {};
+    perfiles?.forEach(p => nombres[p.id] = p.full_name || p.email);
+
+    let resumen = `ðŸ“Š RESUMEN DEL GRUPO\n\n`;
+    resumen += `â€¢ Gasto total: ${infoTotal.total.toFixed(2)} ${moneda}\n`;
+    resumen += `â€¢ Tu parte: ${infoTotal.miParte.toFixed(2)} ${moneda}\n\n`;
+
+    if (transacciones.length === 0) {
+      resumen += `âœ… Todo saldado.\n`;
+    } else {
+      resumen += `ðŸ’¸ Deudas a saldar:\n`;
+      transacciones.forEach(t => {
+        resumen += `- ${nombres[t.from] || 'Usuario'} le debe a ${nombres[t.to] || 'Usuario'}: ${t.amount.toFixed(2)} ${moneda}\n`;
+      });
+    }
+
+    if (!confirm(resumen + `\nÂ¿EstÃ¡s seguro de cerrar el cÃ³mputo?`)) return;
+
     await cerrarComputo(groupId);
     await abrirDetalleGrupo(groupId);
     await cargarGrupos();
@@ -1422,7 +1452,6 @@ async function exportarGrupoCSV(groupId) {
     splits = splitsData || [];
   }
 
-  // Incluir usuarios de settlements para los nombres
   const { data: settlementsData } = await supabase
     .from('settlements')
     .select('from_user, to_user')
@@ -1567,7 +1596,7 @@ async function exportarGrupoCSV(groupId) {
 }
 
 // ==========================================
-// 17. EXPORTAR GRUPO A RTF (CON BALANCE)
+// 17. EXPORTAR GRUPO A RTF (CON RESUMEN DE CIERRE Y BALANCE)
 // ==========================================
 async function exportarGrupoRTF(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
@@ -1598,7 +1627,6 @@ async function exportarGrupoRTF(groupId) {
     splits = splitsData || [];
   }
 
-  // Incluir usuarios de settlements para los nombres
   const { data: settlementsData } = await supabase
     .from('settlements')
     .select('from_user, to_user')
@@ -1687,7 +1715,7 @@ async function exportarGrupoRTF(groupId) {
 }
 
 // ==========================================
-// 18. GENERAR RTF (CON BALANCE)
+// 18. GENERAR RTF (CON RESUMEN DE CIERRE)
 // ==========================================
 function generarRTFReporte(datos) {
   const {
@@ -1740,12 +1768,28 @@ function generarRTFReporte(datos) {
   }
   r += '\\pard\\par' + nl;
 
-  // === Totales ===
-  r += '\\pard\\b\\fs28\\cf1 Totales\\b0\\fs22\\cf0\\par' + nl;
-  r += '\\pard Total del grupo: \\b ' + esc(totalGrupo.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
-  if (grupo.date_closed && grupo.closed_total) {
-    r += '\\pard Total congelado: \\b ' + esc(parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+  // === RESUMEN DE CIERRE (NUEVO) ===
+  if (grupo.date_closed) {
+    r += '\\pard\\b\\fs28\\cf1 RESUMEN DE CIERRE (' + esc(grupo.date_closed) + ')\\b0\\fs22\\cf0\\par' + nl;
+    
+    if (grupo.closed_total) {
+      r += '\\pard Total final congelado: \\b ' + esc(parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+    }
+
+    if (transacciones && transacciones.length === 0) {
+      r += '\\pard \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
+    } else if (transacciones && transacciones.length > 0) {
+      r += '\\pard Deudas a saldar al momento del cierre:\\par' + nl;
+      transacciones.forEach(tr => {
+        r += '\\pard - ' + esc(nombres[tr.from] || 'Usuario') + ' le debe a ' + esc(nombres[tr.to] || 'Usuario') + ': \\b ' + tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
+      });
+    }
+    r += '\\pard\\par' + nl;
   }
+
+  // === Totales Generales ===
+  r += '\\pard\\b\\fs28\\cf1 Totales Generales\\b0\\fs22\\cf0\\par' + nl;
+  r += '\\pard Total del grupo: \\b ' + esc(totalGrupo.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
   r += '\\pard Mi parte (' + esc(miNombre) + '): \\b ' + esc(miParte.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
   r += '\\pard\\par' + nl;
 
@@ -1775,59 +1819,53 @@ function generarRTFReporte(datos) {
   });
   r += '\\pard\\par' + nl;
 
-  // === BALANCE (solo si hay deudas pendientes) ===
-  if (balance && Object.keys(balance).length > 0) {
-    if (transacciones && transacciones.length > 0) {
-      r += '\\pard\\b\\fs28\\cf1 Balance por persona\\b0\\fs22\\cf0\\par' + nl;
+  // === BALANCE (solo si hay deudas pendientes y el grupo NO estÃ¡ cerrado) ===
+  // Si ya estÃ¡ cerrado, el balance congelado ya saliÃ³ arriba en el resumen.
+  if (!grupo.date_closed && balance && Object.keys(balance).length > 0 && transacciones.length > 0) {
+    r += '\\pard\\b\\fs28\\cf1 Balance actual\\b0\\fs22\\cf0\\par' + nl;
 
-      const filasOrdenadas = Object.entries(balance)
-        .filter(([_, monto]) => Math.abs(monto) >= 0.01)
-        .sort((a, b) => b[1] - a[1]);
+    const filasOrdenadas = Object.entries(balance)
+      .filter(([_, monto]) => Math.abs(monto) >= 0.01)
+      .sort((a, b) => b[1] - a[1]);
 
-      const balAncho1 = 5000;
-      const balAncho2 = 4000;
+    const balAncho1 = 5000;
+    const balAncho2 = 4000;
+
+    r += '\\trowd\\trgaph70\\trleft0';
+    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + balAncho1;
+    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (balAncho1 + balAncho2) + nl;
+    r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
+    r += '\\pard\\intbl\\b\\cf3 Saldo (' + monedaGrupo + ')\\b0\\cf0\\cell ';
+    r += '\\row' + nl;
+
+    let contBal = 0;
+    filasOrdenadas.forEach(([uid, monto]) => {
+      const nombre = nombres[uid] || 'Usuario';
+      const esPositivo = monto > 0;
+      const signo = esPositivo ? '+' : '-';
+      const color = esPositivo ? '\\cf1' : '\\cf7'; // cf1 (Green) / cf7 (Red)
+      const fondo = (contBal % 2 === 1) ? '\\clcbpat5' : '';
 
       r += '\\trowd\\trgaph70\\trleft0';
-      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + balAncho1;
-      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (balAncho1 + balAncho2) + nl;
-      r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
-      r += '\\pard\\intbl\\b\\cf3 Saldo (' + monedaGrupo + ')\\b0\\cf0\\cell ';
+      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + balAncho1;
+      r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (balAncho1 + balAncho2) + nl;
+      r += '\\pard\\intbl ' + esc(nombre) + '\\cell ';
+      r += '\\pard\\intbl\\qr ' + color + '\\b ' + signo + Math.abs(monto).toFixed(2) + '\\b0\\cf0\\cell ';
       r += '\\row' + nl;
+      contBal++;
+    });
 
-      let contBal = 0;
-      filasOrdenadas.forEach(([uid, monto]) => {
-        const nombre = nombres[uid] || 'Usuario';
-        const esPositivo = monto > 0;
-        const signo = esPositivo ? '+' : '-';
-        const color = esPositivo ? '\\cf1' : '\\cf7'; // cf1 (Green) / cf7 (Red)
-        const fondo = (contBal % 2 === 1) ? '\\clcbpat5' : '';
+    r += '\\pard\\par' + nl;
 
-        r += '\\trowd\\trgaph70\\trleft0';
-        r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + balAncho1;
-        r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (balAncho1 + balAncho2) + nl;
-        r += '\\pard\\intbl ' + esc(nombre) + '\\cell ';
-        r += '\\pard\\intbl\\qr ' + color + '\\b ' + signo + Math.abs(monto).toFixed(2) + '\\b0\\cf0\\cell ';
-        r += '\\row' + nl;
-        contBal++;
-      });
-
-      r += '\\pard\\par' + nl;
-
-      // Deudas pendientes
-      r += '\\pard\\b\\fs28\\cf1 Deudas pendientes\\b0\\fs22\\cf0\\par' + nl;
-      transacciones.forEach(tr => {
-        const fromName = nombres[tr.from] || 'Usuario';
-        const toName = nombres[tr.to] || 'Usuario';
-        r += '\\pard ' + esc(fromName) + ' debe a ' + esc(toName) + ': \\b ' +
-             tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
-      });
-      r += '\\pard\\par' + nl;
-
-    } else {
-      r += '\\pard\\b\\fs28\\cf1 Balance\\b0\\fs22\\cf0\\par' + nl;
-      r += '\\pard\\cf1\\b Todo saldado!\\b0\\cf0\\par' + nl;
-      r += '\\pard\\par' + nl;
-    }
+    // Deudas pendientes
+    r += '\\pard\\b\\fs28\\cf1 Deudas pendientes\\b0\\fs22\\cf0\\par' + nl;
+    transacciones.forEach(tr => {
+      const fromName = nombres[tr.from] || 'Usuario';
+      const toName = nombres[tr.to] || 'Usuario';
+      r += '\\pard ' + esc(fromName) + ' debe a ' + esc(toName) + ': \\b ' +
+           tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
+    });
+    r += '\\pard\\par' + nl;
   }
 
   // === Gastos ===
