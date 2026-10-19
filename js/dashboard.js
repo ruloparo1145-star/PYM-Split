@@ -1,6 +1,7 @@
 // js/dashboard.js
 import { supabase } from './supabase.js';
-import { sumarConvertido, formatearMonto } from './currency.js';
+import { sumarConvertido, formatearMonto, convertirMonto } from './currency.js';
+import { t } from './i18n.js';
 
 let chartHistoryInstance = null;
 let rangoActual = 'active';
@@ -71,6 +72,7 @@ export async function cargarDashboard() {
     const balance = {};
 
     if (gastosRango && gastosRango.length > 0) {
+      // 1. Sumar lo que pago cada uno
       const sumasPorPersona = {};
       gastosRango.forEach(g => {
         const moneda = g.currency || monedaPorGrupo[g.group_id] || 'EUR';
@@ -83,6 +85,7 @@ export async function cargarDashboard() {
         balance[userId] = (balance[userId] || 0) + total;
       }
 
+      // 2. Restar lo que consumio cada uno (splits)
       const expIds = gastosRango.map(g => g.id);
       const { data: splits } = await supabase
         .from('expense_splits')
@@ -106,6 +109,7 @@ export async function cargarDashboard() {
         }
       }
 
+      // 3. Aplicar settlements (pagos ya saldados)
       const { data: pagos } = await supabase
         .from('settlements')
         .select('from_user, to_user, amount, currency, group_id')
@@ -141,11 +145,11 @@ export async function cargarDashboard() {
     const labelTotal = document.getElementById('stat-total-label');
     if (labelTotal) {
       if (rangoActual === 'active') {
-        labelTotal.textContent = 'Total gastado en grupos activos';
+        labelTotal.textContent = t('dashboard.total.active');
       } else if (rangoActual === 'archived') {
-        labelTotal.textContent = 'Total gastado en grupos archivados';
+        labelTotal.textContent = t('dashboard.total.archived');
       } else {
-        labelTotal.textContent = 'Total gastado (todos los grupos)';
+        labelTotal.textContent = t('dashboard.total.all');
       }
     }
 
@@ -182,12 +186,12 @@ function actualizarSubtextos(resultado, monedaUsuario) {
 
   if (resultado.noConvertidas.length > 0) {
     const montoExcluido = resultado.montoNoConvertido
-      ? ` (${resultado.montoNoConvertido.toFixed(2)} no incluidos)`
+      ? ` (${resultado.montoNoConvertido.toFixed(2)} ${t('dashboard.not_included')})`
       : '';
-    sub.textContent = `Sin convertir: ${resultado.noConvertidas.join(', ')}${montoExcluido}`;
+    sub.textContent = `${t('dashboard.not_converted')}: ${resultado.noConvertidas.join(', ')}${montoExcluido}`;
     sub.style.color = '#e53e3e';
   } else if (resultado.monedasOrigen.length > 0) {
-    sub.textContent = `Convertido desde ${resultado.monedasOrigen.join(', ')}`;
+    sub.textContent = `${t('dashboard.converted_from')} ${resultado.monedasOrigen.join(', ')}`;
     sub.style.color = '#a0aec0';
   } else {
     sub.textContent = '';
@@ -202,7 +206,7 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
   if (!container) return;
 
   if (!gastos || gastos.length === 0) {
-    container.innerHTML = '<p class="placeholder-text">No hay movimientos.</p>';
+    container.innerHTML = `<p class="placeholder-text">${t('dashboard.recent_empty')}</p>`;
     return;
   }
 
@@ -240,7 +244,6 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
     if (monedaOrigen === monedaUsuario) {
       montoMostrar = parseFloat(g.amount).toFixed(2) + ' ' + monedaUsuario;
     } else {
-      const { convertirMonto } = await import('./currency.js');
       const r = await convertirMonto(parseFloat(g.amount), monedaOrigen, monedaUsuario);
       if (r.convertido) {
         montoMostrar = r.monto.toFixed(2) + ' ' + monedaUsuario;
@@ -255,7 +258,7 @@ async function renderizarUltimos(gastos, groupIds, monedaPorGrupo, monedaUsuario
         <div class="recent-icon">${icono}</div>
         <div class="recent-info">
           <h5>${g.description}</h5>
-          <span>${nombresGrupos[g.group_id] || 'Grupo'} - ${nombres[g.paid_by] || 'Desconocido'}</span>
+          <span>${nombresGrupos[g.group_id] || t('dashboard.group_fallback')} - ${nombres[g.paid_by] || t('expense.detail.unknown')}</span>
           ${subtexto ? `<small class="recent-subtext">${subtexto}</small>` : ''}
         </div>
         <div class="recent-amount">${montoMostrar}</div>
@@ -289,7 +292,7 @@ async function cargarHistorico(monedaUsuario) {
   (grupos || []).forEach(g => monedaPorGrupo[g.id] = g.currency || 'EUR');
 
   if (groupIds.length === 0) {
-    tableContainer.innerHTML = '<p class="placeholder-text">No hay datos historicos.</p>';
+    tableContainer.innerHTML = `<p class="placeholder-text">${t('dashboard.history_empty')}</p>`;
     if (chartHistoryInstance) { chartHistoryInstance.destroy(); chartHistoryInstance = null; }
     return;
   }
@@ -303,7 +306,7 @@ async function cargarHistorico(monedaUsuario) {
     .gte('date', desdeHistorico);
 
   if (!gastos || gastos.length === 0) {
-    tableContainer.innerHTML = '<p class="placeholder-text">No hay datos historicos.</p>';
+    tableContainer.innerHTML = `<p class="placeholder-text">${t('dashboard.history_empty')}</p>`;
     if (chartHistoryInstance) { chartHistoryInstance.destroy(); chartHistoryInstance = null; }
     return;
   }
@@ -342,7 +345,7 @@ async function cargarHistorico(monedaUsuario) {
       data: {
         labels,
         datasets: [{
-          label: 'Gastado',
+          label: t('dashboard.history_chart_label'),
           data,
           backgroundColor: '#2ecc87',
           borderRadius: 6,
@@ -382,13 +385,13 @@ async function cargarHistorico(monedaUsuario) {
       ${resultados.slice().reverse().map(r => `
         <div class="history-row">
           <span class="history-month">${r.label}</span>
-          <span class="history-count">${r.count} gastos</span>
+          <span class="history-count">${t('dashboard.history_expenses_count', { count: r.count })}</span>
           <span class="history-total">${r.total.toFixed(2)} ${monedaUsuario}</span>
         </div>
       `).join('')}
       <div class="history-row history-row-total">
-        <span class="history-month">Total 12 meses</span>
-        <span class="history-count">${gastos.length} gastos</span>
+        <span class="history-month">${t('dashboard.history_total_12m')}</span>
+        <span class="history-count">${t('dashboard.history_expenses_count', { count: gastos.length })}</span>
         <span class="history-total">${totalGeneral.toFixed(2)} ${monedaUsuario}</span>
       </div>
     </div>
@@ -413,22 +416,22 @@ function renderizarVacio(monedaUsuario) {
   const labelTotal = document.getElementById('stat-total-label');
   if (labelTotal) {
     if (rangoActual === 'active') {
-      labelTotal.textContent = 'Total gastado en grupos activos';
+      labelTotal.textContent = t('dashboard.total.active');
     } else if (rangoActual === 'archived') {
-      labelTotal.textContent = 'Total gastado en grupos archivados';
+      labelTotal.textContent = t('dashboard.total.archived');
     } else {
-      labelTotal.textContent = 'Total gastado (todos los grupos)';
+      labelTotal.textContent = t('dashboard.total.all');
     }
   }
 
   const container = document.getElementById('dashboard-recent');
   if (container) {
-    container.innerHTML = '<p class="placeholder-text">No hay movimientos.</p>';
+    container.innerHTML = `<p class="placeholder-text">${t('dashboard.recent_empty')}</p>`;
   }
 
   const table = document.getElementById('history-table');
   if (table) {
-    table.innerHTML = '<p class="placeholder-text">No hay datos historicos.</p>';
+    table.innerHTML = `<p class="placeholder-text">${t('dashboard.history_empty')}</p>`;
   }
 }
 
