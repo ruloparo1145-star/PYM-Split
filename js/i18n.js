@@ -34,7 +34,7 @@ export const TRADUCCIONES = {
     'header.friends': 'Amigos',
     'header.profile': 'Perfil',
     'header.logout': 'Salir',
-
+'header.manual_pdf': 'Manual PDF',
    
     'dashboard.not_converted': 'Sin convertir',
 'dashboard.not_included': 'no incluidos',
@@ -604,7 +604,8 @@ export const TRADUCCIONES = {
     'header.friends': 'Friends',
     'header.profile': 'Profile',
     'header.logout': 'Sign out',
-
+'header.manual_pdf': 'PDF Manual',
+    
    'dashboard.not_converted': 'Not converted',
 'dashboard.not_included': 'not included',
 'dashboard.converted_from': 'Converted from',
