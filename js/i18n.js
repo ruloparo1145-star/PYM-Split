@@ -35,6 +35,13 @@ export const TRADUCCIONES = {
     'header.profile': 'Perfil',
     'header.logout': 'Salir',
 
+   
+    'dashboard.not_converted': 'Sin convertir',
+'dashboard.not_included': 'no incluidos',
+'dashboard.converted_from': 'Convertido desde',
+'dashboard.history_chart_label': 'Gastado',
+'dashboard.group_fallback': 'Grupo',
+    
     // ---------- DASHBOARD ----------
     'dashboard.welcome': 'Hola, {nombre}',
     'dashboard.welcome_sub': 'Bienvenido a tu gestor de gastos',
@@ -598,6 +605,12 @@ export const TRADUCCIONES = {
     'header.profile': 'Profile',
     'header.logout': 'Sign out',
 
+   'dashboard.not_converted': 'Not converted',
+'dashboard.not_included': 'not included',
+'dashboard.converted_from': 'Converted from',
+'dashboard.history_chart_label': 'Spent',
+'dashboard.group_fallback': 'Group',
+    
     // ---------- DASHBOARD ----------
     'dashboard.welcome': 'Hi, {nombre}',
     'dashboard.welcome_sub': 'Welcome to your expense manager',
