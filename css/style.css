@@ -2240,3 +2240,93 @@ body {
   transform: translateY(3px);
   box-shadow: 0 0px 0 transparent;
 }
+/* ==========================================
+   ESTILO 3D PARA BOTONES DENTRO DEL GRUPO
+   ========================================== */
+
+/* Botones de "+ AÃ±adir Gasto" y "+ AÃ±adir Miembro" */
+#btn-add-expense-from-detail,
+#btn-add-member {
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background-color: #2ecc87; /* Verde para que resalte */
+  color: white;
+  box-shadow: 0 3px 0 #209e66, 0 4px 6px rgba(0,0,0,0.15); /* Efecto 3D */
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+#btn-add-expense-from-detail:hover,
+#btn-add-member:hover {
+  background-color: #3ae098;
+}
+
+#btn-add-expense-from-detail:active,
+#btn-add-member:active {
+  transform: translateY(3px); /* Se hunden al hacer clic */
+  box-shadow: 0 0px 0 transparent, 0 1px 2px rgba(0,0,0,0.15);
+}
+
+/* Botones de acciÃ³n del grupo (Reabrir, Exportar, Cerrar cÃ³mputo, etc.) */
+#btn-calculate-today,
+#btn-edit-manual-rate,
+#btn-close-computo,
+#btn-reopen-computo,
+#btn-export-group,
+#btn-export-rtf {
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0; /* Borde sutil */
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background-color: #f8fafc; /* Fondo clarito */
+  color: #4a5568;
+  box-shadow: 0 3px 0 #cbd5e0, 0 4px 6px rgba(0,0,0,0.05); /* Efecto 3D sutil */
+}
+
+#btn-calculate-today:hover,
+#btn-edit-manual-rate:hover,
+#btn-close-computo:hover,
+#btn-reopen-computo:hover,
+#btn-export-group:hover,
+#btn-export-rtf:hover {
+  background-color: #edf2f7;
+}
+
+#btn-calculate-today:active,
+#btn-edit-manual-rate:active,
+#btn-close-computo:active,
+#btn-reopen-computo:active,
+#btn-export-group:active,
+#btn-export-rtf:active {
+  transform: translateY(3px);
+  box-shadow: 0 0px 0 transparent;
+}
+
+/* BotÃ³n inferior de "Ver gastos archivados" y "Ver grÃ¡ficos" */
+#btn-toggle-archived-expenses,
+#btn-toggle-extras {
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background-color: #f8fafc;
+  color: #4a5568;
+  box-shadow: 0 3px 0 #cbd5e0, 0 4px 6px rgba(0,0,0,0.05);
+  width: 100%; /* Que ocupe todo el ancho como estaban */
+}
+
+#btn-toggle-archived-expenses:active,
+#btn-toggle-extras:active {
+  transform: translateY(3px);
+  box-shadow: 0 0px 0 transparent;
+}
