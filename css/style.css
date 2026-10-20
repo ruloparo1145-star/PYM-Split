@@ -2219,3 +2219,24 @@ body {
   top: 3px; /* En lugar de translateY, usamos top para no romper el flexbox */
   box-shadow: 0 0px 0 transparent, 0 1px 2px rgba(0,0,0,0.1);
 }
+/* BotÃ³n Ver HistÃ³rico */
+.btn-ver-grafico {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  background-color: #2d3748; /* Gris oscuro (o el color que tenga tu botÃ³n) */
+  color: white;
+  box-shadow: 0 3px 0 #1a202c, 0 4px 6px rgba(0,0,0,0.15); /* Efecto 3D */
+}
+
+.btn-ver-grafico:hover {
+  background-color: #4a5568;
+}
+
+.btn-ver-grafico:active {
+  transform: translateY(3px);
+  box-shadow: 0 0px 0 transparent;
+}
