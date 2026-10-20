@@ -2,6 +2,25 @@
 import { supabase } from './supabase.js';
 import { t } from './i18n.js';
 
+// ==========================================
+// HELPERS GENERALES
+// ==========================================
+function escaparHTML(valor) {
+  return String(valor ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Fecha LOCAL (YYYY-MM-DD). toISOString() usa UTC y de noche devuelve el dia siguiente.
+function hoyISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+
 export async function calcularBalance(groupId) {
   const balance = {};
 
@@ -21,7 +40,7 @@ export async function calcularBalance(groupId) {
 
   if (gastos) {
     gastos.forEach(g => {
-      const monto = parseFloat(g.amount);
+      const monto = parseFloat(g.amount) || 0; // NaN envenenaba todo el balance
       const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
       const tasa = parseFloat(g.exchange_rate) || 1;
 
@@ -49,7 +68,7 @@ export async function calcularBalance(groupId) {
       if (splits) {
         splits.forEach(s => {
           const info = monedaPorExpense[s.expense_id];
-          const monto = parseFloat(s.amount_owed);
+          const monto = parseFloat(s.amount_owed) || 0;
           let montoConvertido = monto;
           if (info && info.moneda !== monedaGrupo) {
             montoConvertido = monto * info.tasa;
@@ -67,7 +86,7 @@ export async function calcularBalance(groupId) {
 
   if (pagos) {
     pagos.forEach(p => {
-      const monto = parseFloat(p.amount);
+      const monto = parseFloat(p.amount) || 0;
       balance[p.from_user] = (balance[p.from_user] || 0) + monto;
       balance[p.to_user] = (balance[p.to_user] || 0) - monto;
     });
@@ -159,7 +178,7 @@ export async function mostrarBalance(groupId) {
       const color = esPositivo ? '#38a169' : '#e53e3e';
       return `
         <div class="balance-row">
-          <span class="balance-name">${nombre}</span>
+          <span class="balance-name">${escaparHTML(nombre)}</span>
           <span class="balance-amount" style="color: ${color}; font-weight: 700;">
             ${signo}${Math.abs(monto).toFixed(2)} ${monedaGrupo}
           </span>
@@ -188,9 +207,9 @@ export async function mostrarBalance(groupId) {
         <h5 class="balance-subtitulo">${t('group.detail.balance_pending')}</h5>
         ${transacciones.map(tr => `
           <div class="debt-card">
-            <span class="debt-from">${nombres[tr.from] || t('debt.someone')}</span>
+            <span class="debt-from">${escaparHTML(nombres[tr.from]) || t('debt.someone')}</span>
             <span class="debt-arrow">-></span>
-            <span class="debt-to">${nombres[tr.to] || t('debt.someone')}</span>
+            <span class="debt-to">${escaparHTML(nombres[tr.to]) || t('debt.someone')}</span>
             <span class="debt-amount">${tr.amount.toFixed(2)} ${monedaGrupo}</span>
             <button class="btn-small btn-settle"
                     data-group="${groupId}"
@@ -222,6 +241,8 @@ export async function mostrarBalance(groupId) {
 
       if (!confirm(confirmMsg)) return;
 
+      btn.disabled = true; // evita doble click = settlement duplicado
+
       try {
         await saldarDeuda(gId, fromId, toId, amount, monedaGrupo);
         await mostrarBalance(gId);
@@ -232,6 +253,7 @@ export async function mostrarBalance(groupId) {
           await cargarHistorial(gId);
         }
       } catch (error) {
+        btn.disabled = false;
         alert(t('debt.settle_error', { mensaje: error.message }));
       }
     });
@@ -250,7 +272,7 @@ async function saldarDeuda(groupId, fromUserId, toUserId, amount, monedaGrupo) {
       to_user: toUserId,
       amount: amount,
       currency: monedaGrupo || 'EUR',
-      date: new Date().toISOString().split('T')[0]
+      date: hoyISO()
     }]);
 
   if (error) throw error;
