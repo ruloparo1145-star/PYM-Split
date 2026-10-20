@@ -2291,7 +2291,6 @@ async function exportarGrupoRTF(groupId) {
 // ==========================================
 
 
-
 function generarRTFReporte(datos) {
   const {
     grupo, monedaGrupo, monedaUsuario, mostrarExtra, gastos, splits, nombres,
@@ -2344,10 +2343,10 @@ function generarRTFReporte(datos) {
   r += '\\pard\\par' + nl;
 
   if (grupo.date_closed) {
-    r += '\\pard\\b\\fs28\\cf1 RESUMEN DE CIERRE (' + esc(grupo.date_closed) + ')\\b0\\fs22\\cf0\\par' + nl;
+    r += '\\pard\\ql\\b\\fs28\\cf1 RESUMEN DE CIERRE (' + esc(grupo.date_closed) + ')\\b0\\fs22\\cf0\\par' + nl;
 
     if (grupo.closed_total != null) {
-      r += '\\pard Total final congelado: \\b ' + esc(parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+      r += '\\pard\\ql Total final congelado: \\b ' + esc(parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
     }
 
     if (grupo.closed_summary_json && typeof grupo.closed_summary_json === 'object') {
@@ -2356,17 +2355,17 @@ function generarRTFReporte(datos) {
       const deudasSnap = snap.deudas || [];
 
       if (personasSnap.length > 0) {
-        r += '\\pard\\b Detalle por persona\\b0\\par' + nl;
+        r += '\\pard\\ql\\b Detalle por persona\\b0\\par' + nl;
 
         const p1 = 2500, p2 = 1400, p3 = 1600, p4 = 2500;
         const acum = [p1, p1+p2, p1+p2+p3, p1+p2+p3+p4];
         const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
 
-        r += '\\trowd\\trgaph70\\trleft0\\trhdr';
+        r += '\\trowd\\trgaph70\\trleft0';
         acum.forEach(x => { r += borde + '\\clcbpat4\\cellx' + x; });
         r += nl;
         ['Persona', 'Pago', 'Consumo Real', 'Estado Final'].forEach(h => {
-          r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
+          r += '\\pard\\intbl\\ql\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
         });
         r += '\\row' + nl;
 
@@ -2399,10 +2398,10 @@ function generarRTFReporte(datos) {
           r += '\\trowd\\trgaph70\\trleft0';
           acum.forEach(x => { r += borde + fondo + '\\cellx' + x; });
           r += nl;
-          r += '\\pard\\intbl ' + esc(p.nombre) + '\\cell ';
+          r += '\\pard\\intbl\\ql ' + esc(p.nombre) + '\\cell ';
           r += '\\pard\\intbl\\qr ' + esc((parseFloat(p.pago) || 0).toFixed(2)) + '\\cell ';
           r += '\\pard\\intbl\\qr ' + esc((parseFloat(p.consumio) || 0).toFixed(2)) + '\\cell ';
-          r += '\\pard\\intbl\\qc ' + colorEstado + '\\b ' + esc(estadoStr) + '\\b0\\cf0\\cell ';
+          r += '\\pard\\intbl\\ql ' + colorEstado + '\\b ' + esc(estadoStr) + '\\b0\\cf0\\cell ';
           r += '\\row' + nl;
           contP++;
         });
@@ -2410,40 +2409,40 @@ function generarRTFReporte(datos) {
       }
 
       if (deudasSnap.length === 0) {
-        r += '\\pard \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
+        r += '\\pard\\ql \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
       } else {
-        r += '\\pard\\b Deudas al momento del cierre\\b0\\par' + nl;
+        r += '\\pard\\ql\\b Deudas al momento del cierre\\b0\\par' + nl;
         deudasSnap.forEach(d => {
-          r += '\\pard - ' + esc(d.de) + ' le debe transferir a ' + esc(d.a) + ': \\b ' +
+          r += '\\pard\\ql - ' + esc(d.de) + ' le debe transferir a ' + esc(d.a) + ': \\b ' +
                (parseFloat(d.monto) || 0).toFixed(2) + ' ' + esc(snap.moneda || monedaGrupo) + '\\b0\\par' + nl;
         });
       }
     } else {
       if (grupo.closed_summary_text && grupo.closed_summary_text !== 'Todo saldado al momento del cierre.') {
-        r += '\\pard Deudas al momento del cierre:\\par' + nl;
+        r += '\\pard\\ql Deudas al momento del cierre:\\par' + nl;
         grupo.closed_summary_text.split(';').forEach(linea => {
-          if (linea.trim()) r += '\\pard - ' + esc(linea.trim()) + '\\par' + nl;
+          if (linea.trim()) r += '\\pard\\ql - ' + esc(linea.trim()) + '\\par' + nl;
         });
       } else if (transacciones && transacciones.length === 0) {
-        r += '\\pard \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
+        r += '\\pard\\ql \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
       } else if (transacciones && transacciones.length > 0) {
-        r += '\\pard Deudas a saldar al momento del cierre:\\par' + nl;
+        r += '\\pard\\ql Deudas a saldar al momento del cierre:\\par' + nl;
         transacciones.forEach(tr => {
-          r += '\\pard - ' + esc(nombres[tr.from] || 'Usuario') + ' le debe a ' + esc(nombres[tr.to] || 'Usuario') + ': \\b ' + tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
+          r += '\\pard\\ql - ' + esc(nombres[tr.from] || 'Usuario') + ' le debe a ' + esc(nombres[tr.to] || 'Usuario') + ': \\b ' + tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
         });
       } else {
-        r += '\\pard \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
+        r += '\\pard\\ql \\cf1\\b Todo saldado al momento del cierre.\\b0\\cf0\\par' + nl;
       }
     }
     r += '\\pard\\par' + nl;
   }
 
-  r += '\\pard\\b\\fs28\\cf1 Totales Generales\\b0\\fs22\\cf0\\par' + nl;
-  r += '\\pard Total del grupo: \\b ' + esc(totalGrupo.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
-  r += '\\pard Mi parte (' + esc(miNombre) + '): \\b ' + esc(miParte.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+  r += '\\pard\\ql\\b\\fs28\\cf1 Totales Generales\\b0\\fs22\\cf0\\par' + nl;
+  r += '\\pard\\ql Total del grupo: \\b ' + esc(totalGrupo.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
+  r += '\\pard\\ql Mi parte (' + esc(miNombre) + '): \\b ' + esc(miParte.toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
   r += '\\pard\\par' + nl;
 
-  r += '\\pard\\b\\fs28\\cf1 Participacion por persona\\b0\\fs22\\cf0\\par' + nl;
+  r += '\\pard\\ql\\b\\fs28\\cf1 Participacion por persona\\b0\\fs22\\cf0\\par' + nl;
 
   const anchoCol1 = 5000;
   const anchoCol2 = 4000;
@@ -2451,8 +2450,8 @@ function generarRTFReporte(datos) {
   r += '\\trowd\\trgaph70\\trleft0';
   r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + anchoCol1;
   r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (anchoCol1 + anchoCol2) + nl;
-  r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
-  r += '\\pard\\intbl\\b\\cf3 Consumo\\b0\\cf0\\cell ';
+  r += '\\pard\\intbl\\ql\\b\\cf3 Persona\\b0\\cf0\\cell ';
+  r += '\\pard\\intbl\\ql\\b\\cf3 Consumo\\b0\\cf0\\cell ';
   r += '\\row' + nl;
 
   let cont = 0;
@@ -2461,7 +2460,7 @@ function generarRTFReporte(datos) {
     r += '\\trowd\\trgaph70\\trleft0';
     r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + anchoCol1;
     r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (anchoCol1 + anchoCol2) + nl;
-    r += '\\pard\\intbl ' + esc(nombres[uid] || 'Usuario') + '\\cell ';
+    r += '\\pard\\intbl\\ql ' + esc(nombres[uid] || 'Usuario') + '\\cell ';
     r += '\\pard\\intbl\\qr ' + esc((totalesPorUsuario[uid] || 0).toFixed(2) + ' ' + monedaGrupo) + '\\cell ';
     r += '\\row' + nl;
     cont++;
@@ -2469,7 +2468,7 @@ function generarRTFReporte(datos) {
   r += '\\pard\\par' + nl;
 
   if (!grupo.date_closed && balance && Object.keys(balance).length > 0 && transacciones.length > 0) {
-    r += '\\pard\\b\\fs28\\cf1 Balance actual\\b0\\fs22\\cf0\\par' + nl;
+    r += '\\pard\\ql\\b\\fs28\\cf1 Balance actual\\b0\\fs22\\cf0\\par' + nl;
 
     const filasOrdenadas = Object.entries(balance)
       .filter(([_, monto]) => Math.abs(monto) >= 0.01)
@@ -2481,8 +2480,8 @@ function generarRTFReporte(datos) {
     r += '\\trowd\\trgaph70\\trleft0';
     r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + balAncho1;
     r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6\\clcbpat4\\cellx' + (balAncho1 + balAncho2) + nl;
-    r += '\\pard\\intbl\\b\\cf3 Persona\\b0\\cf0\\cell ';
-    r += '\\pard\\intbl\\b\\cf3 Saldo (' + monedaGrupo + ')\\b0\\cf0\\cell ';
+    r += '\\pard\\intbl\\ql\\b\\cf3 Persona\\b0\\cf0\\cell ';
+    r += '\\pard\\intbl\\ql\\b\\cf3 Saldo (' + monedaGrupo + ')\\b0\\cf0\\cell ';
     r += '\\row' + nl;
 
     let contBal = 0;
@@ -2496,7 +2495,7 @@ function generarRTFReporte(datos) {
       r += '\\trowd\\trgaph70\\trleft0';
       r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + balAncho1;
       r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (balAncho1 + balAncho2) + nl;
-      r += '\\pard\\intbl ' + esc(nombre) + '\\cell ';
+      r += '\\pard\\intbl\\ql ' + esc(nombre) + '\\cell ';
       r += '\\pard\\intbl\\qr ' + color + '\\b ' + signo + Math.abs(monto).toFixed(2) + '\\b0\\cf0\\cell ';
       r += '\\row' + nl;
       contBal++;
@@ -2504,29 +2503,28 @@ function generarRTFReporte(datos) {
 
     r += '\\pard\\par' + nl;
 
-    r += '\\pard\\b\\fs28\\cf1 Deudas pendientes\\b0\\fs22\\cf0\\par' + nl;
+    r += '\\pard\\ql\\b\\fs28\\cf1 Deudas pendientes\\b0\\fs22\\cf0\\par' + nl;
     transacciones.forEach(tr => {
       const fromName = nombres[tr.from] || 'Usuario';
       const toName = nombres[tr.to] || 'Usuario';
-      r += '\\pard ' + esc(fromName) + ' debe a ' + esc(toName) + ': \\b ' +
+      r += '\\pard\\ql ' + esc(fromName) + ' debe a ' + esc(toName) + ': \\b ' +
            tr.amount.toFixed(2) + ' ' + monedaGrupo + '\\b0\\par' + nl;
     });
     r += '\\pard\\par' + nl;
   }
 
   // === Gastos ===
-  r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
+  r += '\\pard\\ql\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
 
-  // Ajustamos el ancho de las columnas al no tener el Split
   let cols = mostrarExtra 
-    ? [1200, 3000, 1500, 2000, 1200, 1500] // 6 columnas: Fecha, Desc, Cat, Pago, Grupo, Perfil
-    : [1500, 3500, 1500, 2000, 1500];       // 5 columnas sin moneda de perfil
+    ? [1000, 2400, 1200, 1500, 1100, 1300, 2200]
+    : [1200, 2800, 1400, 1800, 800, 2800];
   
   let cellX = 0;
   const anchosAcum = [];
   cols.forEach(w => { cellX += w; anchosAcum.push(cellX); });
 
-  const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
+  const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brds\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
 
   r += '\\trowd\\trgaph70\\trleft0\\trhdr';
   anchosAcum.forEach((x) => {
@@ -2540,7 +2538,7 @@ function generarRTFReporte(datos) {
   }
 
   headersGastos.forEach(h => {
-    r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
+    r += '\\pard\\intbl\\ql\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
   });
   r += '\\row' + nl;
 
@@ -2559,17 +2557,16 @@ function generarRTFReporte(datos) {
     });
     r += nl;
 
-    r += '\\pard\\intbl ' + esc(g.date || '') + '\\cell ';
-    r += '\\pard\\intbl ' + esc(g.description || '') + '\\cell ';
-    r += '\\pard\\intbl ' + esc(g.category || 'otros') + '\\cell ';
-    r += '\\pard\\intbl ' + esc(nombres[g.paid_by] || 'Usuario') + '\\cell ';
+    r += '\\pard\\intbl\\ql ' + esc(g.date || '') + '\\cell ';
+    r += '\\pard\\intbl\\ql ' + esc(g.description || '') + '\\cell ';
+    r += '\\pard\\intbl\\ql ' + esc(g.category || 'otros') + '\\cell ';
+    r += '\\pard\\intbl\\ql ' + esc(nombres[g.paid_by] || 'Usuario') + '\\cell ';
     r += '\\pard\\intbl\\qr ' + esc(montoEnGrupo.toFixed(2)) + (g.archived ? ' (arch)' : '') + '\\cell ';
     
     if (mostrarExtra) {
       r += '\\pard\\intbl\\qr \\cf2 ' + esc(g.montoEnUsuario.toFixed(2)) + '\\cf0\\cell '; 
     }
 
-    // Se eliminÃ³ el Split de la fila
     r += '\\row' + nl;
     cont++;
   });
@@ -2579,7 +2576,6 @@ function generarRTFReporte(datos) {
 
   return r;
 }
-
 
 
 // ==========================================
