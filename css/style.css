@@ -2380,3 +2380,28 @@ body {
   transform: translateY(3px);
   box-shadow: 0 0px 0 transparent;
 }
+/* ==========================================
+   BOTÃ“N VER GASTOS ARCHIVADOS (OSCURO Y 3D)
+   ========================================== */
+
+#btn-toggle-archived-expenses {
+  background-color: #2d3748 !important; /* Gris muy oscuro */
+  color: white !important;
+  border: none !important;
+  font-weight: 600;
+  padding: 12px 15px;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: 0 4px 0 #1a202c, 0 5px 8px rgba(0,0,0,0.15); /* Efecto 3D */
+}
+
+#btn-toggle-archived-expenses:hover {
+  background-color: #4a5568 !important;
+}
+
+#btn-toggle-archived-expenses:active {
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 transparent;
+}
