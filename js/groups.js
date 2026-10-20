@@ -6,6 +6,35 @@ import { t, tCategoria, aplicarTraducciones } from './i18n.js';
 let mostrarArchivados = false;
 let monedaPreferidaCache = null;
 
+// ==========================================
+// HELPERS GENERALES
+// ==========================================
+function escaparHTML(valor) {
+  return String(valor ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Fecha LOCAL en formato YYYY-MM-DD.
+// toISOString() usa UTC: de noche devuelve el dia siguiente.
+function hoyISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const dia = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${dia}`;
+}
+
+// Formatea una tasa sin perder precision cuando es chica (ej: 1 ARS = 0.00092 EUR)
+function formatearTasa(n) {
+  if (!isFinite(n) || n <= 0) return '';
+  const decimales = n >= 1 ? 4 : 8;
+  return n.toFixed(decimales).replace(/\.?0+$/, '');
+}
+
 async function getMonedaPreferida() {
   if (monedaPreferidaCache) return monedaPreferidaCache;
 
@@ -18,8 +47,10 @@ async function getMonedaPreferida() {
     .eq('id', user.id)
     .single();
 
-  monedaPreferidaCache = (perfil?.preferred_currency || 'EUR').toUpperCase();
-  return monedaPreferidaCache;
+  const moneda = (perfil?.preferred_currency || 'EUR').toUpperCase();
+  // Solo cachear si realmente se obtuvo el perfil (evita cachear 'EUR' por un error transitorio)
+  if (perfil) monedaPreferidaCache = moneda;
+  return moneda;
 }
 
 // ==========================================
@@ -43,15 +74,22 @@ function formatearRangoFechas(inicio, fin) {
 // ==========================================
 // CALCULAR TOTAL DE UN GRUPO + MI PARTE
 // ==========================================
-async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed) {
+async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed, userId = null) {
   const { data: gastos } = await supabase
     .from('expenses')
     .select('id, amount, currency, exchange_rate')
     .eq('group_id', groupId)
     .eq('archived', false);
 
+  const congelado = !!(dateClosed && closedTotal != null);
+
   if (!gastos || gastos.length === 0) {
-    return { total: 0, miParte: 0, count: 0, congelado: false };
+    return {
+      total: congelado ? (parseFloat(closedTotal) || 0) : 0,
+      miParte: 0,
+      count: 0,
+      congelado
+    };
   }
 
   let total = 0;
@@ -71,16 +109,21 @@ async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed)
     }
   });
 
-  const { data: { user } } = await supabase.auth.getUser();
+  // Si ya nos pasaron el userId evitamos un getUser() (llamada de red) por cada grupo
+  let uid = userId;
+  if (!uid) {
+    const { data: { user } } = await supabase.auth.getUser();
+    uid = user ? user.id : null;
+  }
   let miParte = 0;
 
-  if (user) {
+  if (uid) {
     const expIds = gastos.map(g => g.id);
     const { data: splits } = await supabase
       .from('expense_splits')
       .select('amount_owed, expense_id')
       .in('expense_id', expIds)
-      .eq('user_id', user.id);
+      .eq('user_id', uid);
 
     (splits || []).forEach(s => {
       const info = monedaPorGasto[s.expense_id];
@@ -95,15 +138,13 @@ async function calcularTotalGrupo(groupId, monedaGrupo, closedTotal, dateClosed)
     });
   }
 
-  const totalFinal = (dateClosed && closedTotal != null)
-    ? parseFloat(closedTotal)
-    : total;
+  const totalFinal = congelado ? parseFloat(closedTotal) : total;
 
   return {
     total: totalFinal,
     miParte,
     count: gastos.length,
-    congelado: !!(dateClosed && closedTotal != null)
+    congelado
   };
 }
 
@@ -165,7 +206,8 @@ export async function cargarGrupos() {
         grupo.id,
         monedaGrupo,
         grupo.closed_total,
-        grupo.date_closed
+        grupo.date_closed,
+        user.id
       );
 
       let miParteConvertida = null;
@@ -205,7 +247,7 @@ export async function cargarGrupos() {
       return `
         <div class="group-card ${grupo.archived ? 'archived' : ''}" data-id="${grupo.id}">
           <div class="group-info">
-            <h4>${grupo.name}</h4>
+            <h4>${escaparHTML(grupo.name)}</h4>
             <span>${(grupo.type || 'otro').toUpperCase()} / ${grupo.monedaGrupo}</span>
             ${rango ? `<span class="group-dates">${rango}</span>` : ''}
             ${totalesHTML}
@@ -214,7 +256,7 @@ export async function cargarGrupos() {
           </div>
           <div class="group-actions">
             ${grupo.archived 
-              ? `<button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${grupo.name}" title="${t('group.action.delete_title')}">&#128465;</button>
+              ? `<button class="btn-small btn-delete" data-id="${grupo.id}" data-name="${escaparHTML(grupo.name)}" title="${t('group.action.delete_title')}">&#128465;</button>
                  <button class="btn-small btn-restore" data-id="${grupo.id}" title="${t('group.action.restore_title')}">&#8634;</button>` 
               : `<button class="btn-small btn-archive" data-id="${grupo.id}" title="${t('group.action.archive_title')}">&#128230;</button>`
             }
@@ -266,7 +308,7 @@ export async function cargarGrupos() {
 
   } catch (error) {
     console.error('Error detallado:', error);
-    groupsList.innerHTML = `<p class="error-msg">${t('group.action.load_error', { mensaje: error.message || t('group.action.db_error') })}</p>`;
+    groupsList.innerHTML = `<p class="error-msg">${t('group.action.load_error', { mensaje: escaparHTML(error.message) || t('group.action.db_error') })}</p>`;
   }
 }
 
@@ -383,15 +425,17 @@ export async function crearGrupo(nombre, tipo, moneda) {
 
   if (groupError) throw groupError;
 
-  try {
-    await supabase
-      .from('group_members')
-      .insert([{
-        group_id: groupData.id,
-        user_id: user.id
-      }]);
-  } catch (e) {
-    console.warn('No se pudo agregar al creador como miembro:', e);
+  // Supabase NO lanza excepciones: devuelve { error }. Se mantiene tolerante
+  // (puede haber un trigger que ya agregue al creador) pero ahora si se loguea.
+  const { error: memberError } = await supabase
+    .from('group_members')
+    .insert([{
+      group_id: groupData.id,
+      user_id: user.id
+    }]);
+
+  if (memberError) {
+    console.warn('No se pudo agregar al creador como miembro:', memberError);
   }
 
   return groupData;
@@ -411,6 +455,11 @@ export function initGroupModal() {
     modal.classList.remove('hidden');
     errorMsg.textContent = '';
     form.reset();
+
+    // form.reset() no dispara 'change': ocultar manualmente el campo de moneda personalizada
+    document.getElementById('group-currency-custom-wrap')?.classList.add('hidden');
+    const customErrorReset = document.getElementById('group-currency-custom-error');
+    if (customErrorReset) customErrorReset.style.display = 'none';
 
     const resultadoAPI = document.getElementById('group-test-api-result');
     if (resultadoAPI) {
@@ -791,7 +840,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
             </span>
           `;
         } else if (p.saldo < 0) {
-          const deuda = deudas.find(d => d.de === p.nombre);
+          const deuda = deudas.find(d => d.de_id ? d.de_id === p.id : d.de === p.nombre);
           let aQuienNombre = deuda ? deuda.a : null;
           let aQuienId = deuda ? deuda.a_id : null;
 
@@ -808,13 +857,13 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           estadoHTML = `
             <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
               <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;font-size:0.75rem;font-weight:600; text-align:center;">
-                 Debe pagar a ${aQuienNombre}: ${Math.abs(p.saldo).toFixed(2)}
+                 Debe pagar a ${escaparHTML(aQuienNombre)}: ${Math.abs(p.saldo).toFixed(2)}
               </span>
               <button class="btn-settle-summary" 
                       data-group="${groupId}" 
                       data-from="${p.id}" 
                       data-to-id="${aQuienId || ''}"
-                      data-to-name="${aQuienNombre}"
+                      data-to-name="${escaparHTML(aQuienNombre)}"
                       data-amount="${Math.abs(p.saldo)}"
                       style="background:#e53e3e; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:0.7rem; cursor:pointer;">
                 Saldar deuda
@@ -833,11 +882,11 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           <tr>
             <td style="padding: 6px 8px; border: 1px solid #fed7d7;">
               ${tieneDetalle
-                ? `<button type="button" class="btn-toggle-pagos" data-target="${detalleId}" data-name="${p.nombre}"
+                ? `<button type="button" class="btn-toggle-pagos" data-target="${detalleId}" data-name="${escaparHTML(p.nombre)}"
                      style="background:none;border:none;padding:0;color:#3182ce;cursor:pointer;font-size:0.8rem;text-decoration:underline;">
-                     &#9654; ${p.nombre}
+                     &#9654; ${escaparHTML(p.nombre)}
                    </button>`
-                : p.nombre
+                : escaparHTML(p.nombre)
               }
             </td>
             <td style="padding: 6px 8px; text-align: right; border: 1px solid #fed7d7;">${fmt(p.pago)}</td>
@@ -853,7 +902,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
             <tr id="${detalleId}" class="fila-detalle-pagos" style="display:none;">
               <td colspan="4" style="padding: 8px 12px; border: 1px solid #fed7d7; background: #fffafa;">
                 <div style="font-size: 0.75rem; color: #4a5568;">
-                  <strong style="display:block;margin-bottom:6px;">Facturas pagadas por ${p.nombre}:</strong>
+                  <strong style="display:block;margin-bottom:6px;">Facturas pagadas por ${escaparHTML(p.nombre)}:</strong>
                   <table style="width:100%;border-collapse:collapse;font-size:0.75rem;">
                     <thead>
                       <tr style="background:#fefcbf;">
@@ -872,7 +921,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
             html += `
               <tr>
                 <td style="padding:4px 6px;border:1px solid #fef3c7;white-space:nowrap;">${fmtFecha(d.fecha)}</td>
-                <td style="padding:4px 6px;border:1px solid #fef3c7;">${d.descripcion || '-'}</td>
+                <td style="padding:4px 6px;border:1px solid #fef3c7;">${escaparHTML(d.descripcion) || '-'}</td>
                 <td style="padding:4px 6px;text-align:right;border:1px solid #fef3c7;font-weight:600;">${fmt(d.monto)}</td>
                 <td style="padding:4px 6px;text-align:right;border:1px solid #fef3c7;color:#718096;">${montoOrig}</td>
               </tr>
@@ -900,7 +949,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
         if (!target) return;
         const visible = target.style.display !== 'none';
         target.style.display = visible ? 'none' : '';
-        btn.innerHTML = `${visible ? '&#9654;' : '&#9660;'} ${btn.dataset.name}`;
+        btn.innerHTML = `${visible ? '&#9654;' : '&#9660;'} ${escaparHTML(btn.dataset.name)}`;
       });
     });
 
@@ -913,6 +962,8 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
         const amount = parseFloat(btn.dataset.amount);
 
         if (!confirm(`Â¿Confirmas que se pagaron ${amount.toFixed(2)} ${snap.moneda}?`)) return;
+
+        btn.disabled = true; // evita doble click = doble settlement
 
         try {
           let targetToId = toId;
@@ -947,7 +998,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
             to_user: targetToId,
             amount: amount,
             currency: snap.moneda,
-            date: new Date().toISOString().split('T')[0]
+            date: hoyISO()
           }]);
 
           if (error) throw error;
@@ -963,12 +1014,29 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           await cargarDashboard();
 
         } catch (err) {
+          btn.disabled = false;
           alert("Error al saldar: " + err.message);
         }
       });
     });
 
     return;
+  }
+
+  // Cierre viejo sin snapshot JSON: mostrar el texto resumen si existe.
+  // (Antes quedaba el HTML del grupo anterior visible.)
+  if (grupo.closed_summary_text) {
+    container.innerHTML = `
+      <div style="background: #fff5f5; border: 2px solid #feb2b2; border-radius: 10px; padding: 14px; margin-bottom: 15px;">
+        <h4 style="color: #c53030; font-size: 1rem; margin-bottom: 10px;">
+          &#128204; Resumen de Cierre (${formatearFecha(grupo.date_closed)})
+        </h4>
+        <p style="font-size: 0.85rem; color: #4a5568;">${escaparHTML(grupo.closed_summary_text)}</p>
+      </div>
+    `;
+  } else {
+    container.innerHTML = '';
+    container.classList.add('hidden');
   }
 }
 
@@ -1123,7 +1191,7 @@ async function cerrarComputo(groupId) {
   gastosArr.forEach(g => { total += montoEnGrupo(g); });
 
   let closedRateUSD = monedaGrupo === 'USD' ? 1 : (await obtenerTasa(monedaGrupo, 'USD') || null);
-  const hoy = new Date().toISOString().split('T')[0];
+  const hoy = hoyISO();
 
   // --- Balance + deudas ---
   const { calcularBalance, simplificarDeudas } = await import('./debtSolver.js');
@@ -1199,7 +1267,7 @@ async function cerrarComputo(groupId) {
     const pagoR = parseFloat((pagadoPorUsuario[uid] || 0).toFixed(2));
     const consumioR = parseFloat((consumoPorUsuario[uid] || 0).toFixed(2));
     
-    // EL FIX ESTÃ ACÃ: Usar el balance real (que ya resta los pagos) en lugar de pago - consumo
+    // FIX: usar el balance real (que ya resta los pagos) en lugar de pago - consumo
     const saldoR = parseFloat((balance[uid] || 0).toFixed(2));
     
     const pagado = Math.abs(saldoR) < 0.01;
@@ -1235,9 +1303,14 @@ async function cerrarComputo(groupId) {
     .select('from_user, to_user, date, created_at')
     .eq('group_id', groupId);
 
+  // Usar el pago MAS RECIENTE de cada persona (antes tomaba el primero que apareciera)
+  const settlementsOrdenados = [...(settlements || [])].sort((a, b) =>
+    String(b.date || b.created_at || '').localeCompare(String(a.date || a.created_at || ''))
+  );
+
   personasSnap.forEach(p => {
     if (p.pagado) {
-      const miPago = (settlements || []).find(s => s.from_user === p.id || s.to_user === p.id);
+      const miPago = settlementsOrdenados.find(s => s.from_user === p.id || s.to_user === p.id);
       if (miPago) {
         p.fecha_pago = miPago.date || miPago.created_at;
       }
@@ -1253,6 +1326,8 @@ async function cerrarComputo(groupId) {
     deudas: transacciones.map(tr => ({
       de: nombres[tr.from] || 'Usuario',
       a: nombres[tr.to] || 'Usuario',
+      de_id: tr.from,
+      a_id: tr.to,
       monto: parseFloat(tr.amount.toFixed(2))
     }))
   };
@@ -1290,6 +1365,7 @@ async function reabrirComputo(groupId) {
     .update({
       date_closed: null,
       closed_total: null,
+      closed_rate_usd: null,
       closed_summary_text: null,
       closed_summary_json: null
     })
@@ -1363,6 +1439,7 @@ async function abrirCalculadora(groupId, groupName) {
 
     let miParteHistorico = 0;
     let miParteHoy = 0;
+    const tasasHoyCache = {}; // evita pedir la misma tasa una vez por gasto
 
     for (const g of gastos) {
       const monto = splitPorExpense[g.id];
@@ -1377,7 +1454,10 @@ async function abrirCalculadora(groupId, groupName) {
       } else {
         miParteHistorico += monto * tasaGuardada;
 
-        const tasaHoy = await obtenerTasa(monedaGasto, monedaGrupo);
+        if (!(monedaGasto in tasasHoyCache)) {
+          tasasHoyCache[monedaGasto] = await obtenerTasa(monedaGasto, monedaGrupo);
+        }
+        const tasaHoy = tasasHoyCache[monedaGasto];
         if (tasaHoy !== null) {
           miParteHoy += monto * tasaHoy;
         } else {
@@ -1450,7 +1530,7 @@ async function abrirCalculadora(groupId, groupName) {
 
     body.innerHTML = `
       <p style="text-align: center; color: #718096; margin-bottom: 20px;">
-        ${t('group.calc.group', { nombre: groupName })}
+        ${t('group.calc.group', { nombre: escaparHTML(groupName) })}
       </p>
 
       ${avisoHistorico}
@@ -1687,13 +1767,13 @@ if (!window.__groupDetailListenersAttached) {
     let rateMostrar = '';
     if (rateUSD && rateUSD > 0) {
       if (monedaUsuario === 'USD') {
-        rateMostrar = (1 / rateUSD).toFixed(2);
+        rateMostrar = formatearTasa(1 / rateUSD);
       } else {
         const tasa = await obtenerTasa(monedaUsuario, 'USD');
         if (tasa !== null) {
-          rateMostrar = (tasa / rateUSD).toFixed(2);
+          rateMostrar = formatearTasa(tasa / rateUSD);
         } else {
-          rateMostrar = (1 / rateUSD).toFixed(2);
+          rateMostrar = formatearTasa(1 / rateUSD);
         }
       }
     }
@@ -1724,7 +1804,7 @@ if (!window.__groupDetailListenersAttached) {
     if (!groupId || !input) return;
 
     const valor = parseFloat(input.value);
-    if (isNaN(valor) || valor < 0) {
+    if (isNaN(valor) || valor <= 0) {
       errorMsg.textContent = t('group.rate.invalid');
       return;
     }
@@ -1907,7 +1987,7 @@ async function exportarGrupoCSV(groupId) {
   lineas.push(['Hasta', grupo.date_end || '-']);
   lineas.push(['Cerrado', grupo.date_closed ? 'SI (' + grupo.date_closed + ')' : 'NO']);
   lineas.push(['Total del grupo', totalGrupo.toFixed(2) + ' ' + monedaGrupo]);
-  if (grupo.date_closed && grupo.closed_total) {
+  if (grupo.date_closed && grupo.closed_total != null) {
     lineas.push(['Total congelado', parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo]);
   }
   lineas.push(['Mi parte (' + miNombre + ')', miParte.toFixed(2) + ' ' + monedaGrupo]);
@@ -1930,8 +2010,8 @@ async function exportarGrupoCSV(groupId) {
       
       let estadoStr = 'Pendiente';
       if (pagado) {
-        if (diferenciaOriginal < -0.01) estadoStr = `Pagó: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
-        else if (diferenciaOriginal > 0.01) estadoStr = `Cobró: ${diferenciaOriginal.toFixed(2)}`;
+        if (diferenciaOriginal < -0.01) estadoStr = `PagÃ³: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
+        else if (diferenciaOriginal > 0.01) estadoStr = `CobrÃ³: ${diferenciaOriginal.toFixed(2)}`;
         else estadoStr = 'Saldado';
       } else if (p.saldo < 0) {
         estadoStr = `Debe pagar: ${Math.abs(p.saldo).toFixed(2)}`;
@@ -2057,8 +2137,13 @@ async function exportarGrupoCSV(groupId) {
 
   const csv = lineas.map(fila =>
     fila.map(celda => {
-      const s = String(celda ?? '');
-      if (s.includes(';') || s.includes('"') || s.includes('\n')) {
+      let s = String(celda ?? '');
+      // Evitar inyeccion de formulas en Excel/Sheets: textos de usuario que empiecen
+      // con = + - @ se prefijan con comilla. Numeros (ej. -12.50) y el guion "-" quedan igual.
+      if (/^[=+\-@\t\r]/.test(s) && s !== '-' && !/^-?\d+(\.\d+)?$/.test(s)) {
+        s = "'" + s;
+      }
+      if (s.includes(';') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
         return '"' + s.replace(/"/g, '""') + '"';
       }
       return s;
@@ -2067,7 +2152,7 @@ async function exportarGrupoCSV(groupId) {
 
   const nombreArchivo = 'grupo-' +
     (grupo.name || 'sin-nombre').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() +
-    '-' + new Date().toISOString().split('T')[0] + '.csv';
+    '-' + hoyISO() + '.csv';
 
   const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -2078,7 +2163,7 @@ async function exportarGrupoCSV(groupId) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000); // revocar de inmediato puede cancelar la descarga
 }
 
 // ==========================================
@@ -2186,7 +2271,7 @@ async function exportarGrupoRTF(groupId) {
 
   const nombreArchivo = 'grupo-' +
     (grupo.name || 'sin-nombre').replace(/[^a-zA-Z0-9]/g, '-').toLowerCase() +
-    '-' + new Date().toISOString().split('T')[0] + '.rtf';
+    '-' + hoyISO() + '.rtf';
 
   const blob = new Blob([rtf], { type: 'application/rtf' });
   const url = URL.createObjectURL(blob);
@@ -2197,7 +2282,7 @@ async function exportarGrupoRTF(groupId) {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(() => URL.revokeObjectURL(url), 1000); // revocar de inmediato puede cancelar la descarga
 }
 
 // ==========================================
@@ -2223,7 +2308,7 @@ function generarRTFReporte(datos) {
       else if (c === 125) res += '\\}';
       else if (c === 10)  res += '\\line ';
       else if (c === 13)  res += '';
-      else if (c > 127)   res += '\\u' + c + '?';
+      else if (c > 127)   res += '\\u' + (c > 32767 ? c - 65536 : c) + '?'; // \uN es entero con signo de 16 bits
       else                res += s[i];
     }
     return res;
@@ -2258,7 +2343,7 @@ function generarRTFReporte(datos) {
   if (grupo.date_closed) {
     r += '\\pard\\b\\fs28\\cf1 RESUMEN DE CIERRE (' + esc(grupo.date_closed) + ')\\b0\\fs22\\cf0\\par' + nl;
 
-    if (grupo.closed_total) {
+    if (grupo.closed_total != null) {
       r += '\\pard Total final congelado: \\b ' + esc(parseFloat(grupo.closed_total).toFixed(2) + ' ' + monedaGrupo) + '\\b0\\par' + nl;
     }
 
@@ -2292,8 +2377,8 @@ function generarRTFReporte(datos) {
           let colorEstado = '\\cf7'; // rojo por defecto
           
           if (pagado) {
-            if (diferenciaOriginal < -0.01) estadoStr = `Pagó: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
-            else if (diferenciaOriginal > 0.01) estadoStr = `Cobró: ${diferenciaOriginal.toFixed(2)}`;
+            if (diferenciaOriginal < -0.01) estadoStr = `PagÃ³: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
+            else if (diferenciaOriginal > 0.01) estadoStr = `CobrÃ³: ${diferenciaOriginal.toFixed(2)}`;
             else estadoStr = 'Saldado';
             colorEstado = '\\cf1'; // verde
           } else if (p.saldo < 0) {
@@ -2418,7 +2503,7 @@ function generarRTFReporte(datos) {
     const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
     r += '\\trowd\\trgaph70\\trleft0';
     r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + anchoCol1;
-    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brds\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (anchoCol1 + anchoCol2) + nl;
+    r += '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6' + fondo + '\\cellx' + (anchoCol1 + anchoCol2) + nl;
     r += '\\pard\\intbl ' + esc(nombres[uid] || 'Usuario') + '\\cell ';
     r += '\\pard\\intbl\\qr ' + esc((totalesPorUsuario[uid] || 0).toFixed(2) + ' ' + monedaGrupo) + '\\cell ';
     r += '\\row' + nl;
@@ -2507,7 +2592,7 @@ function generarRTFReporte(datos) {
       const montoS = parseFloat(s.amount_owed) || 0;
       const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
       return nombre + ': ' + montoSEnGrupo.toFixed(2);
-    }).join('\\line ');
+    }).join('\n'); // esc() convierte \n en \line (antes se escapaba y salia "\line" literal)
 
     const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
 
