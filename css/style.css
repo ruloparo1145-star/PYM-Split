@@ -2330,3 +2330,53 @@ body {
   transform: translateY(3px);
   box-shadow: 0 0px 0 transparent;
 }
+/* ==========================================
+   ESTILO 3D PARA BOTONES DE ACCIÃ“N (REABRIR Y EXPORTAR)
+   ========================================== */
+
+/* Estilo base para los 3 botones */
+#btn-reopen-computo,
+#btn-export-group,
+#btn-export-rtf {
+  font-size: 0.85rem;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px; /* Espacio entre el icono y el texto */
+}
+
+/* 1. BotÃ³n Reabrir (Azul) */
+#btn-reopen-computo {
+  background-color: #3182ce;
+  box-shadow: 0 3px 0 #2b6cb0, 0 4px 6px rgba(0,0,0,0.15);
+}
+#btn-reopen-computo:hover {
+  background-color: #4299e1;
+}
+#btn-reopen-computo:active {
+  transform: translateY(3px);
+  box-shadow: 0 0px 0 transparent;
+}
+
+/* 2. Botones Exportar RTF y CSV (Verde azulado) */
+#btn-export-group,
+#btn-export-rtf {
+  background-color: #319795;
+  box-shadow: 0 3px 0 #285e61, 0 4px 6px rgba(0,0,0,0.15);
+}
+#btn-export-group:hover,
+#btn-export-rtf:hover {
+  background-color: #38b2ac;
+}
+#btn-export-group:active,
+#btn-export-rtf:active {
+  transform: translateY(3px);
+  box-shadow: 0 0px 0 transparent;
+}
