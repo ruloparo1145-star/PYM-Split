@@ -831,6 +831,8 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           const deuda = deudas.find(d => d.de_id ? d.de_id === p.id : d.de === p.nombre);
           let aQuienNombre = deuda ? deuda.a : null;
           let aQuienId = deuda ? deuda.a_id : null;
+          // Monto de ESTA deuda (no el saldo total, que puede repartirse entre varios acreedores)
+          let montoDeuda = deuda ? (parseFloat(deuda.monto) || Math.abs(p.saldo)) : Math.abs(p.saldo);
 
           if (!aQuienNombre) {
             const contraparte = personas.find(other => Math.abs(other.saldo - Math.abs(p.saldo)) < 0.01 && other.saldo > 0);
@@ -845,14 +847,14 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           estadoHTML = `
             <div style="display:flex; flex-direction:column; gap:4px; align-items:center;">
               <span style="display:inline-block;padding:4px 8px;border-radius:6px;background:#fff5f5;color:#c53030;border:1px solid #feb2b2;font-size:0.75rem;font-weight:600; text-align:center;">
-                 Debe pagar a ${escaparHTML(aQuienNombre)}: ${Math.abs(p.saldo).toFixed(2)}
+                 Debe pagar a ${escaparHTML(aQuienNombre)}: ${montoDeuda.toFixed(2)}
               </span>
               <button class="btn-settle-summary" 
                       data-group="${groupId}" 
                       data-from="${p.id}" 
                       data-to-id="${aQuienId || ''}"
                       data-to-name="${escaparHTML(aQuienNombre)}"
-                      data-amount="${Math.abs(p.saldo)}"
+                      data-amount="${montoDeuda}"
                       style="background:#e53e3e; color:white; border:none; padding:4px 8px; border-radius:6px; font-size:0.7rem; cursor:pointer;">
                 Saldar deuda
               </button>
@@ -994,7 +996,7 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
           const { mostrarBalance } = await import('./debtSolver.js');
           await mostrarBalance(gId);
           
-          await cerrarComputo(gId);
+          await cerrarComputo(gId, grupo.date_closed);
           await abrirDetalleGrupo(gId);
           await cargarGrupos();
           
@@ -1165,7 +1167,7 @@ function actualizarBotonCotizacion(grupo) {
 // ==========================================
 // 12. CERRAR COMPUTO
 // ==========================================
-async function cerrarComputo(groupId) {
+async function cerrarComputo(groupId, fechaCierreOriginal = null) {
   const { data: grupoInfo } = await supabase
     .from('groups')
     .select('currency')
@@ -1313,7 +1315,7 @@ async function cerrarComputo(groupId) {
   const snapshot = {
     moneda: monedaGrupo,
     total: parseFloat(total.toFixed(2)),
-    fecha_cierre: hoy,
+    fecha_cierre: fechaCierreOriginal || hoy,
     cantidad_gastos: gastosArr.length,
     personas: personasSnap,
     deudas: transacciones.map(tr => ({
@@ -1335,7 +1337,7 @@ async function cerrarComputo(groupId) {
   const { error } = await supabase
     .from('groups')
     .update({
-      date_closed: hoy,
+      date_closed: fechaCierreOriginal || hoy,
       closed_total: parseFloat(total.toFixed(2)),
       closed_rate_usd: closedRateUSD,
       closed_summary_text: textoDeudas,
@@ -1962,6 +1964,7 @@ async function exportarGrupoCSV(groupId) {
   const miParte = user ? (totalesPorUsuario[user.id] || 0) : 0;
   const miNombre = user ? (nombres[user.id] || 'Yo') : 'Yo';
 
+  if (!user) throw new Error('Not authenticated');
   const { data: perfil } = await supabase.from('profiles').select('preferred_currency').eq('id', user.id).single();
   const monedaUsuario = (perfil?.preferred_currency || monedaGrupo).toUpperCase();
 
@@ -2525,12 +2528,12 @@ function generarRTFReporte(datos) {
 
   r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
 
-  let cols = [1000, 2600, 1200, 1600, 1200, 1200, 2200]; 
+  let cols = [1000, 2600, 1200, 1600, 1400, 2800];
   let cellX = 0;
   const anchosAcum = [];
   cols.forEach(w => { cellX += w; anchosAcum.push(cellX); });
 
-  const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brds\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
+  const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
 
   r += '\\trowd\\trgaph70\\trleft0\\trhdr';
   anchosAcum.forEach((x) => {
@@ -2538,7 +2541,7 @@ function generarRTFReporte(datos) {
   });
   r += nl;
   
-  const headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Monto (Perfil)', 'Split'];
+  const headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Split'];
   headersGastos.forEach(h => {
     r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
   });
@@ -2572,7 +2575,6 @@ function generarRTFReporte(datos) {
     r += '\\pard\\intbl ' + esc(g.category || 'otros') + '\\cell ';
     r += '\\pard\\intbl ' + esc(nombres[g.paid_by] || 'Usuario') + '\\cell ';
     r += '\\pard\\intbl\\qr ' + esc(montoEnGrupo.toFixed(2)) + (g.archived ? ' (arch)' : '') + '\\cell ';
-    r += '\\pard\\intbl\\qr \\cf2 ' + esc(montoEnGrupo.toFixed(2)) + '\\cf0\\cell '; 
     r += '\\pard\\intbl ' + esc(splitStr) + '\\cell ';
     r += '\\row' + nl;
     cont++;
