@@ -690,19 +690,9 @@ async function abrirDetalleGrupo(groupId) {
   await actualizarBadgeArchivados(groupId);
 }
 
-
-
-
-
-
-
-
-
 // ==========================================
 // 8b. MOSTRAR RESUMEN DE CIERRE
 // ==========================================
-
-
 async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   const container = document.getElementById('group-closed-summary');
   if (!container) return;
@@ -982,8 +972,6 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   }
 }
 
-
-
 // ==========================================
 // 9. ACTUALIZAR INFO DEL GRUPO
 // ==========================================
@@ -1103,15 +1091,9 @@ function actualizarBotonCotizacion(grupo) {
   }
 }
 
-
-
-
 // ==========================================
-// 12. CERRAR COMPUTO (CON SNAPSHOT COMPLETO)
+// 12. CERRAR COMPUTO
 // ==========================================
-
-
-
 async function cerrarComputo(groupId) {
   const { data: grupoInfo } = await supabase
     .from('groups')
@@ -1298,8 +1280,6 @@ async function cerrarComputo(groupId) {
     throw error;
   }
 }
-
-
 
 // ==========================================
 // 13. REABRIR COMPUTO
@@ -1942,25 +1922,47 @@ async function exportarGrupoCSV(groupId) {
     const deudasSnap = snap.deudas || [];
 
     lineas.push(['DETALLE DE CIERRE']);
-    lineas.push(['Persona', 'Pago', 'Consumo Real', 'Saldo', 'Moneda']);
+    lineas.push(['Persona', 'Pago', 'Consumo Real', 'Estado Final', 'Fecha de Pago', 'Moneda']);
+    
     personasSnap.forEach(p => {
+      const pagado = Math.abs(p.saldo) < 0.01;
+      const diferenciaOriginal = p.pago - p.consumio;
+      
+      let estadoStr = 'Pendiente';
+      if (pagado) {
+        if (diferenciaOriginal < -0.01) estadoStr = `PagÃ³: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
+        else if (diferenciaOriginal > 0.01) estadoStr = `CobrÃ³: ${diferenciaOriginal.toFixed(2)}`;
+        else estadoStr = 'Saldado';
+      } else if (p.saldo < 0) {
+        estadoStr = `Debe pagar: ${Math.abs(p.saldo).toFixed(2)}`;
+      } else {
+        estadoStr = `Debe cobrar: ${Math.abs(p.saldo).toFixed(2)}`;
+      }
+
+      let fechaPagoStr = '-';
+      if (pagado && p.fecha_pago) {
+        const [y, m, d] = p.fecha_pago.split('T')[0].split('-');
+        fechaPagoStr = `${d}/${m}/${y}`;
+      }
+
       lineas.push([
         p.nombre,
         (parseFloat(p.pago) || 0).toFixed(2),
         (parseFloat(p.consumio) || 0).toFixed(2),
-        (parseFloat(p.saldo) || 0).toFixed(2),
+        estadoStr,
+        fechaPagoStr,
         snap.moneda || monedaGrupo
       ]);
     });
     lineas.push([]);
 
-    // Detalle de pagos por persona (con fecha)
+    // Detalle de pagos por persona (facturas)
     const hayDetalle = personasSnap.some(p => Array.isArray(p.pagos_detalle) && p.pagos_detalle.length > 0);
     if (hayDetalle) {
-      lineas.push(['PAGOS POR PERSONA (con fecha)']);
+      lineas.push(['FACTURAS PAGADAS POR PERSONA']);
       lineas.push([
         'Persona',
-        'Fecha',
+        'Fecha Factura',
         'Descripcion',
         'Monto en ' + (snap.moneda || monedaGrupo),
         'Monto original',
@@ -2268,14 +2270,14 @@ function generarRTFReporte(datos) {
       if (personasSnap.length > 0) {
         r += '\\pard\\b Detalle por persona\\b0\\par' + nl;
 
-        const p1 = 3000, p2 = 1600, p3 = 1800, p4 = 1600, p5 = 1800;
-        const acum = [p1, p1+p2, p1+p2+p3, p1+p2+p3+p4, p1+p2+p3+p4+p5];
+        const p1 = 2500, p2 = 1400, p3 = 1600, p4 = 2500;
+        const acum = [p1, p1+p2, p1+p2+p3, p1+p2+p3+p4];
         const borde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
 
         r += '\\trowd\\trgaph70\\trleft0\\trhdr';
         acum.forEach(x => { r += borde + '\\clcbpat4\\cellx' + x; });
         r += nl;
-        ['Persona', 'PagÃ³', 'Consumo Real', 'Diferencia', 'Saldo Provisorio'].forEach(h => {
+        ['Persona', 'Pago', 'Consumo Real', 'Estado Final'].forEach(h => {
           r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
         });
         r += '\\row' + nl;
@@ -2283,10 +2285,28 @@ function generarRTFReporte(datos) {
         let contP = 0;
         personasSnap.forEach(p => {
           const fondo = (contP % 2 === 1) ? '\\clcbpat5' : '';
-          const saldo = parseFloat(p.saldo) || 0;
-          const colorSaldo = saldo > 0.01 ? '\\cf1' : saldo < -0.01 ? '\\cf7' : '\\cf0';
-          const signo = saldo > 0 ? '+' : '';
-          const estado = Math.abs(saldo) < 0.01 ? 'Pagado' : 'Pendiente';
+          const pagado = Math.abs(p.saldo) < 0.01;
+          const diferenciaOriginal = p.pago - p.consumio;
+          
+          let estadoStr = 'Pendiente';
+          let colorEstado = '\\cf7'; // rojo por defecto
+          
+          if (pagado) {
+            if (diferenciaOriginal < -0.01) estadoStr = `PagÃ³: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
+            else if (diferenciaOriginal > 0.01) estadoStr = `CobrÃ³: ${diferenciaOriginal.toFixed(2)}`;
+            else estadoStr = 'Saldado';
+            colorEstado = '\\cf1'; // verde
+          } else if (p.saldo < 0) {
+            estadoStr = `Debe pagar: ${Math.abs(p.saldo).toFixed(2)}`;
+          } else {
+            estadoStr = `Debe cobrar: ${Math.abs(p.saldo).toFixed(2)}`;
+            colorEstado = '\\cf1';
+          }
+
+          if (pagado && p.fecha_pago) {
+            const [y, m, d] = p.fecha_pago.split('T')[0].split('-');
+            estadoStr += ` (${d}/${m}/${y})`;
+          }
 
           r += '\\trowd\\trgaph70\\trleft0';
           acum.forEach(x => { r += borde + fondo + '\\cellx' + x; });
@@ -2294,17 +2314,16 @@ function generarRTFReporte(datos) {
           r += '\\pard\\intbl ' + esc(p.nombre) + '\\cell ';
           r += '\\pard\\intbl\\qr ' + esc((parseFloat(p.pago) || 0).toFixed(2)) + '\\cell ';
           r += '\\pard\\intbl\\qr ' + esc((parseFloat(p.consumio) || 0).toFixed(2)) + '\\cell ';
-          r += '\\pard\\intbl\\qr ' + colorSaldo + '\\b ' + signo + Math.abs(saldo).toFixed(2) + '\\b0\\cf0\\cell ';
-          r += '\\pard\\intbl\\qc ' + esc(estado) + '\\cell ';
+          r += '\\pard\\intbl\\qc ' + colorEstado + '\\b ' + esc(estadoStr) + '\\b0\\cf0\\cell ';
           r += '\\row' + nl;
           contP++;
         });
         r += '\\pard\\par' + nl;
 
-        // Detalle de pagos por persona (con fecha)
+        // Detalle de pagos por persona (facturas)
         const hayDetalle = personasSnap.some(p => Array.isArray(p.pagos_detalle) && p.pagos_detalle.length > 0);
         if (hayDetalle) {
-          r += '\\pard\\b Pagos por persona (con fecha)\\b0\\par' + nl;
+          r += '\\pard\\b Facturas pagadas por persona\\b0\\par' + nl;
 
           const pcols = [2800, 1300, 3500, 1600, 1600];
           let px = 0;
