@@ -198,7 +198,7 @@ export async function cargarDashboard() {
 
     actualizarSubtextos(resultado, monedaUsuario);
 
-    const ultimos = (gastosRango || []).slice(0, 5);
+    const ultimos = (gastosRango || []).slice(0, 2);
     await renderizarUltimos(ultimos, groupIds, monedaPorGrupo, monedaUsuario);
 
     await cargarHistorico(monedaUsuario);
