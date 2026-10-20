@@ -1957,31 +1957,31 @@ async function exportarGrupoCSV(groupId) {
     lineas.push([]);
 
     // Detalle de pagos por persona (facturas)
-    const hayDetalle = personasSnap.some(p => Array.isArray(p.pagos_detalle) && p.pagos_detalle.length > 0);
-    if (hayDetalle) {
-      lineas.push(['FACTURAS PAGADAS POR PERSONA']);
-      lineas.push([
-        'Persona',
-        'Fecha Factura',
-        'Descripcion',
-        'Monto en ' + (snap.moneda || monedaGrupo),
-        'Monto original',
-        'Moneda original'
-      ]);
-      personasSnap.forEach(p => {
-        (p.pagos_detalle || []).forEach(d => {
-          lineas.push([
-            p.nombre,
-            d.fecha || '',
-            d.descripcion || '',
-            (parseFloat(d.monto) || 0).toFixed(2),
-            (parseFloat(d.monto_original) || 0).toFixed(2),
-            d.moneda_original || snap.moneda || monedaGrupo
-          ]);
-        });
-      });
-      lineas.push([]);
-    }
+  //  const hayDetalle = personasSnap.some(p => Array.isArray(p.pagos_detalle) && p.pagos_detalle.length > 0);
+  //  if (hayDetalle) {
+   //   lineas.push(['FACTURAS PAGADAS POR PERSONA']);
+   //   lineas.push([
+    //    'Persona',
+     //   'Fecha Factura',
+      //  'Descripcion',
+       // 'Monto en ' + (snap.moneda || monedaGrupo),
+      //  'Monto original',
+      //  'Moneda original'
+     // ]);
+     // personasSnap.forEach(p => {
+     //   (p.pagos_detalle || []).forEach(d => {
+     //     lineas.push([
+     //       p.nombre,
+     //       d.fecha || '',
+      //      d.descripcion || '',
+      //      (parseFloat(d.monto) || 0).toFixed(2),
+      //      (parseFloat(d.monto_original) || 0).toFixed(2),
+      //      d.moneda_original || snap.moneda || monedaGrupo
+      //    ]);
+    //    });
+   //   });
+   //   lineas.push([]);
+ //   }
 
     lineas.push(['DEUDAS AL MOMENTO DEL CIERRE']);
     if (deudasSnap.length === 0) {
