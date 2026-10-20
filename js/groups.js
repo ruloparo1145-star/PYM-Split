@@ -1040,9 +1040,16 @@ async function mostrarResumenCierre(grupo, groupId, monedaGrupo) {
   }
 }
 
+
+
+
+
+
 // ==========================================
 // 9. ACTUALIZAR INFO DEL GRUPO
 // ==========================================
+
+
 function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = null, monedaUsuario = null) {
   const badgesContainer = document.getElementById('group-info-badges');
   if (!badgesContainer) return;
@@ -1063,9 +1070,23 @@ function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = 
 
   const sinGastos = infoTotal.count === 0;
 
-  let conversionHTML = '';
+  // ACÃ AGREGAMOS LA CONVERSIÃ“N DEL TOTAL GENERAL
+  let totalConvertidoHTML = '';
+  // Si la moneda del usuario es distinta a la del grupo, y hay gastos
+  if (monedaUsuario && monedaUsuario !== monedaGrupo && infoTotal.total > 0) {
+    // Calculamos la conversiÃ³n (usando la misma lÃ³gica de miParte)
+    // Lo hacemos de forma asÃ­ncrona antes de pintar el HTML, o pasÃ¡ndolo como parÃ¡metro.
+    // Para no romper la estructura, vamos a usar el tipo de cambio que ya trajo `abrirDetalleGrupo` 
+    // o hacer un cÃ¡lculo rÃ¡pido si tenemos la tasa.
+  }
+
+  // Para que funcione sin hacer otra llamada a la API, cambiamos el llamado en abrirDetalleGrupo
+  // Pero para mantener esta funciÃ³n simple, acÃ¡ mostramos los valores tal cual, 
+  // y agregamos un "placeholder" que se llena desde abrirDetalleGrupo.
+
+  let conversionMiParteHTML = '';
   if (miParteConvertida != null) {
-    conversionHTML = `<p class="group-total-conv">~${miParteConvertida.toFixed(2)} ${monedaUsuario}</p>`;
+    conversionMiParteHTML = `<p class="group-total-conv" style="color: #3182ce; font-size: 0.85rem; margin-top: 4px;">~${miParteConvertida.toFixed(2)} ${monedaUsuario}</p>`;
   }
 
   const labelTotal = cerrado ? t('group.detail.total_final') : t('group.detail.total_trip');
@@ -1078,6 +1099,10 @@ function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = 
           <p class="group-total-value">
             ${sinGastos ? '0.00' : infoTotal.total.toFixed(2)} ${monedaGrupo}
           </p>
+          <!-- ACÃ VA EL TOTAL CONVERTIDO -->
+          ${(monedaUsuario && monedaUsuario !== monedaGrupo && infoTotal.total > 0) 
+            ? `<p class="group-total-conv" id="total-grupo-convertido" style="color: #3182ce; font-size: 0.85rem; margin-top: 4px;">Calculando...</p>` 
+            : ''}
           ${!sinGastos ? `<p class="group-total-count">(${t('group.list.expenses_count', { count: infoTotal.count })})</p>` : ''}
         </div>
         <div class="group-total-divider"></div>
@@ -1086,7 +1111,7 @@ function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = 
           <p class="group-total-value group-total-value-mia">
             ${infoTotal.miParte.toFixed(2)} ${monedaGrupo}
           </p>
-          ${conversionHTML}
+          ${conversionMiParteHTML}
         </div>
       </div>
     </div>
@@ -1114,7 +1139,23 @@ function actualizarInfoGrupo(grupo, infoTotal, monedaGrupo, miParteConvertida = 
   }
 
   badgesContainer.innerHTML = html;
+
+  // ACÃ CALCULAMOS EL TOTAL CONVERTIDO DE FORMA ASÃNCRONA
+  if (monedaUsuario && monedaUsuario !== monedaGrupo && infoTotal.total > 0) {
+    import('./currency.js').then(async ({ convertirMonto }) => {
+      const r = await convertirMonto(infoTotal.total, monedaGrupo, monedaUsuario);
+      const el = document.getElementById('total-grupo-convertido');
+      if (el) {
+        if (r.convertido) {
+          el.textContent = `~${r.monto.toFixed(2)} ${monedaUsuario}`;
+        } else {
+          el.textContent = `(Sin cotizaciÃ³n a ${monedaUsuario})`;
+        }
+      }
+    });
+  }
 }
+
 
 // ==========================================
 // 10. ACTUALIZAR BOTONES DE COMPUTO
