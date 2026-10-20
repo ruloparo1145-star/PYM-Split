@@ -2263,9 +2263,13 @@ async function exportarGrupoRTF(groupId) {
 // ==========================================
 // 18. GENERAR RTF
 // ==========================================
+
+
+
+
 function generarRTFReporte(datos) {
   const {
-    grupo, monedaGrupo, gastos, splits, nombres,
+    grupo, monedaGrupo, monedaUsuario, mostrarExtra, gastos, splits, nombres,
     totalGrupo, totalesPorUsuario, participantes,
     miParte, miNombre, balance, transacciones
   } = datos;
@@ -2378,47 +2382,6 @@ function generarRTFReporte(datos) {
           contP++;
         });
         r += '\\pard\\par' + nl;
-
-        const hayDetalle = personasSnap.some(p => Array.isArray(p.pagos_detalle) && p.pagos_detalle.length > 0);
-        if (hayDetalle) {
-          r += '\\pard\\b Facturas pagadas por persona\\b0\\par' + nl;
-
-          const pcols = [2800, 1300, 3500, 1600, 1600];
-          let px = 0;
-          const pacum = [];
-          pcols.forEach(w => { px += w; pacum.push(px); });
-          const pborde = '\\clbrdrt\\brdrs\\brdrw10\\brdrcf6\\clbrdrl\\brdrs\\brdrw10\\brdrcf6\\clbrdrb\\brdrs\\brdrw10\\brdrcf6\\clbrdrr\\brdrs\\brdrw10\\brdrcf6';
-
-          r += '\\trowd\\trgaph70\\trleft0\\trhdr';
-          pacum.forEach(x => { r += pborde + '\\clcbpat4\\cellx' + x; });
-          r += nl;
-          ['Persona', 'Fecha', 'Descripcion', 'Monto (' + (snap.moneda || monedaGrupo) + ')', 'Original'].forEach(h => {
-            r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
-          });
-          r += '\\row' + nl;
-
-          let pcont = 0;
-          personasSnap.forEach(p => {
-            (p.pagos_detalle || []).forEach(d => {
-              const fondo = (pcont % 2 === 1) ? '\\clcbpat5' : '';
-              const montoOrig = (d.moneda_original && d.moneda_original !== snap.moneda)
-                ? `${(parseFloat(d.monto_original) || 0).toFixed(2)} ${d.moneda_original}`
-                : '';
-
-              r += '\\trowd\\trgaph70\\trleft0';
-              pacum.forEach(x => { r += pborde + fondo + '\\cellx' + x; });
-              r += nl;
-              r += '\\pard\\intbl ' + esc(p.nombre) + '\\cell ';
-              r += '\\pard\\intbl ' + esc(d.fecha || '') + '\\cell ';
-              r += '\\pard\\intbl ' + esc(d.descripcion || '') + '\\cell ';
-              r += '\\pard\\intbl\\qr ' + (parseFloat(d.monto) || 0).toFixed(2) + '\\cell ';
-              r += '\\pard\\intbl\\qr ' + esc(montoOrig) + '\\cell ';
-              r += '\\row' + nl;
-              pcont++;
-            });
-          });
-          r += '\\pard\\par' + nl;
-        }
       }
 
       if (deudasSnap.length === 0) {
@@ -2526,9 +2489,13 @@ function generarRTFReporte(datos) {
     r += '\\pard\\par' + nl;
   }
 
+  // === Gastos ===
   r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
 
-  let cols = [1000, 2600, 1200, 1600, 1400, 2800];
+  let cols = mostrarExtra 
+    ? [1000, 2400, 1200, 1500, 1100, 1300, 2200]
+    : [1200, 2800, 1400, 1800, 800, 2800];
+  
   let cellX = 0;
   const anchosAcum = [];
   cols.forEach(w => { cellX += w; anchosAcum.push(cellX); });
@@ -2541,7 +2508,11 @@ function generarRTFReporte(datos) {
   });
   r += nl;
   
-  const headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Split'];
+  let headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Split'];
+  if (mostrarExtra) {
+    headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Monto (' + monedaUsuario + ')', 'Split'];
+  }
+
   headersGastos.forEach(h => {
     r += '\\pard\\intbl\\b\\cf3 ' + esc(h) + '\\b0\\cf0\\cell ';
   });
@@ -2575,6 +2546,11 @@ function generarRTFReporte(datos) {
     r += '\\pard\\intbl ' + esc(g.category || 'otros') + '\\cell ';
     r += '\\pard\\intbl ' + esc(nombres[g.paid_by] || 'Usuario') + '\\cell ';
     r += '\\pard\\intbl\\qr ' + esc(montoEnGrupo.toFixed(2)) + (g.archived ? ' (arch)' : '') + '\\cell ';
+    
+    if (mostrarExtra) {
+      r += '\\pard\\intbl\\qr \\cf2 ' + esc(g.montoEnUsuario.toFixed(2)) + '\\cf0\\cell '; 
+    }
+
     r += '\\pard\\intbl ' + esc(splitStr) + '\\cell ';
     r += '\\row' + nl;
     cont++;
@@ -2585,6 +2561,9 @@ function generarRTFReporte(datos) {
 
   return r;
 }
+
+
+
 
 // ==========================================
 // 19. INVALIDAR CACHE DE MONEDA PREFERIDA
