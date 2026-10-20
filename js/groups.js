@@ -2144,6 +2144,8 @@ async function exportarGrupoCSV(groupId) {
 // ==========================================
 // 17. EXPORTAR GRUPO A RTF
 // ==========================================
+
+
 async function exportarGrupoRTF(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
     .from('groups')
@@ -2229,10 +2231,33 @@ async function exportarGrupoRTF(groupId) {
   const miParte = user ? (totalesPorUsuario[user.id] || 0) : 0;
   const miNombre = user ? (nombres[user.id] || 'Yo') : 'Yo';
 
+  // NUEVO: Obtener moneda del usuario y calcular conversiones para el RTF
+  const { data: perfilRTF } = await supabase.from('profiles').select('preferred_currency').eq('id', user.id).single();
+  const monedaUsuario = (perfilRTF?.preferred_currency || monedaGrupo).toUpperCase();
+  const mostrarExtra = monedaUsuario !== monedaGrupo;
+
+  const gastosConConversion = [];
+  for (const g of gastosArr) {
+    const monedaGasto = (g.currency || monedaGrupo).toUpperCase();
+    const tasa = parseFloat(g.exchange_rate) || 1;
+    const monto = parseFloat(g.amount) || 0;
+    const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+    
+    let montoEnUsuario = montoEnGrupo;
+    if (mostrarExtra) {
+      const { convertirMonto } = await import('./currency.js');
+      const res = await convertirMonto(montoEnGrupo, monedaGrupo, monedaUsuario);
+      if (res.convertido) montoEnUsuario = res.monto;
+    }
+    gastosConConversion.push({ ...g, montoEnUsuario });
+  }
+
   const rtf = generarRTFReporte({
     grupo,
     monedaGrupo,
-    gastos: gastosArr,
+    monedaUsuario,
+    mostrarExtra,
+    gastos: gastosConConversion, // Pasamos los gastos con la conversiÃ³n hecha
     splits,
     nombres,
     totalGrupo,
@@ -2259,6 +2284,8 @@ async function exportarGrupoRTF(groupId) {
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+
 
 // ==========================================
 // 18. GENERAR RTF
