@@ -2408,4 +2408,49 @@ body {
 /* ==========================================
    BOTÃ“N VER GRÃFICOS E HISTORIAL (OSCURO Y 3D)
    ========================================== */
+/* ==========================================
+   BOTÃ“N VER GRÃFICOS E HISTORIAL (OSCURO Y 3D)
+   ========================================== */
 
+#btn-toggle-extras {
+  background-color: #2d3748 !important; /* Gris muy oscuro */
+  color: white !important;
+  border: none !important;
+  font-weight: 600;
+  padding: 12px 15px;
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.1s ease;
+  box-shadow: 0 4px 0 #1a202c, 0 5px 8px rgba(0,0,0,0.15); /* Efecto 3D */
+}
+
+#btn-toggle-extras:hover {
+  background-color: #4a5568 !important;
+}
+
+#btn-toggle-extras:active {
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 transparent;
+}
+/* ==========================================
+   LIMITAR ALTURA DE LA LISTA DE GRUPOS
+   ========================================== */
+
+#groups-list {
+  max-height: 400px; /* PodÃ©s ajustar este nÃºmero (ej. 300px o 500px) */
+  overflow-y: auto;  /* Agrega scroll interno si hay muchos grupos */
+  padding-right: 5px; /* Un pequeÃ±o espacio para que la barra de scroll no pise el contenido */
+}
+
+/* Estilo opcional para que la barra de scroll se vea finita y moderna */
+#groups-list::-webkit-scrollbar {
+  width: 6px;
+}
+#groups-list::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 4px;
+}
+#groups-list::-webkit-scrollbar-track {
+  background: transparent;
+}
