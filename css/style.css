@@ -2131,3 +2131,50 @@ body {
     padding-right: 10px !important;
   }
 }
+/* ==========================================
+   ESTILO 3D PARA BOTONES DE GRUPOS
+   ========================================== */
+
+#btn-toggle-archived, 
+#btn-new-group {
+  font-size: 0.95rem; /* Hace la letra un poco mÃ¡s grande */
+  padding: 10px 18px; /* Hace el botÃ³n mÃ¡s grande */
+  border-radius: 10px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: all 0.1s ease; /* AnimaciÃ³n rÃ¡pida para el clic */
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
+/* BotÃ³n "+ Nuevo" (Verde) */
+#btn-new-group {
+  background-color: #2ecc87;
+  color: white;
+  /* Efecto 3D: Sombra interna abajo y sombra externa */
+  box-shadow: 0 5px 0 #209e66, 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* BotÃ³n "Archivados" (Amarillo) */
+#btn-toggle-archived {
+  background-color: #fefcbf !important; /* Forzamos el color amarillo claro */
+  color: #b7791f !important; /* Forzamos el texto marrÃ³n */
+  /* Efecto 3D para el botÃ³n amarillo */
+  box-shadow: 0 5px 0 #d6b85a, 0 6px 8px rgba(0,0,0,0.15);
+}
+
+/* Efecto al pasar el mouse por arriba (brillan un poquito) */
+#btn-new-group:hover {
+  background-color: #3ae098;
+}
+#btn-toggle-archived:hover {
+  background-color: #ffffd6 !important;
+}
+
+/* Efecto al hacer CLIC (se hunden) */
+#btn-new-group:active, 
+#btn-toggle-archived:active {
+  transform: translateY(5px); /* Baja 5 pÃ­xeles */
+  box-shadow: 0 0px 0 transparent, 0 1px 2px rgba(0,0,0,0.15); /* Pierde la sombra de abajo */
+}
