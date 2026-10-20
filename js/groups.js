@@ -2292,7 +2292,6 @@ async function exportarGrupoRTF(groupId) {
 
 
 
-
 function generarRTFReporte(datos) {
   const {
     grupo, monedaGrupo, monedaUsuario, mostrarExtra, gastos, splits, nombres,
@@ -2518,9 +2517,10 @@ function generarRTFReporte(datos) {
   // === Gastos ===
   r += '\\pard\\b\\fs28\\cf1 Gastos\\b0\\fs22\\cf0\\par' + nl;
 
+  // Ajustamos el ancho de las columnas al no tener el Split
   let cols = mostrarExtra 
-    ? [1000, 2400, 1200, 1500, 1100, 1300, 2200]
-    : [1200, 2800, 1400, 1800, 800, 2800];
+    ? [1200, 3000, 1500, 2000, 1200, 1500] // 6 columnas: Fecha, Desc, Cat, Pago, Grupo, Perfil
+    : [1500, 3500, 1500, 2000, 1500];       // 5 columnas sin moneda de perfil
   
   let cellX = 0;
   const anchosAcum = [];
@@ -2534,9 +2534,9 @@ function generarRTFReporte(datos) {
   });
   r += nl;
   
-  let headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Split'];
+  let headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')'];
   if (mostrarExtra) {
-    headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Monto (' + monedaUsuario + ')', 'Split'];
+    headersGastos = ['Fecha', 'Descripcion', 'Categoria', 'Quien pago', 'Monto (' + monedaGrupo + ')', 'Monto (' + monedaUsuario + ')'];
   }
 
   headersGastos.forEach(h => {
@@ -2550,14 +2550,6 @@ function generarRTFReporte(datos) {
     const tasa = parseFloat(g.exchange_rate) || 1;
     const monto = parseFloat(g.amount) || 0;
     const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
-
-    const gastoSplits = splits.filter(s => s.expense_id === g.id);
-    const splitStr = gastoSplits.map(s => {
-      const nombre = nombres[s.user_id] || 'Usuario';
-      const montoS = parseFloat(s.amount_owed) || 0;
-      const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
-      return nombre + ': ' + montoSEnGrupo.toFixed(2);
-    }).join('\n');
 
     const fondo = (cont % 2 === 1) ? '\\clcbpat5' : '';
 
@@ -2577,7 +2569,7 @@ function generarRTFReporte(datos) {
       r += '\\pard\\intbl\\qr \\cf2 ' + esc(g.montoEnUsuario.toFixed(2)) + '\\cf0\\cell '; 
     }
 
-    r += '\\pard\\intbl ' + esc(splitStr) + '\\cell ';
+    // Se eliminÃ³ el Split de la fila
     r += '\\row' + nl;
     cont++;
   });
@@ -2587,7 +2579,6 @@ function generarRTFReporte(datos) {
 
   return r;
 }
-
 
 
 
