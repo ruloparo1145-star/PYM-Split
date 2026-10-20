@@ -1120,6 +1120,9 @@ function actualizarBotonCotizacion(grupo) {
 // ==========================================
 // 12. CERRAR COMPUTO (CON SNAPSHOT COMPLETO)
 // ==========================================
+
+
+
 async function cerrarComputo(groupId) {
   const { data: grupoInfo } = await supabase
     .from('groups')
@@ -1224,7 +1227,9 @@ async function cerrarComputo(groupId) {
   const personasSnap = Array.from(userIds).map(uid => {
     const pagoR = parseFloat((pagadoPorUsuario[uid] || 0).toFixed(2));
     const consumioR = parseFloat((consumoPorUsuario[uid] || 0).toFixed(2));
-    const saldoR = parseFloat((pagoR - consumioR).toFixed(2));
+    
+    // EL FIX ESTÃ ACÃ: Usar el balance real (que ya resta los pagos) en lugar de pago - consumo
+    const saldoR = parseFloat((balance[uid] || 0).toFixed(2));
     
     const pagado = Math.abs(saldoR) < 0.01;
 
@@ -1235,7 +1240,7 @@ async function cerrarComputo(groupId) {
       consumio: consumioR,
       saldo: saldoR,
       pagado: pagado,
-      fecha_pago: pagado ? hoy : null, // Si estÃ¡ pagado, por ahora le ponemos hoy, luego se ajusta
+      fecha_pago: pagado ? hoy : null, 
       pagos_detalle: pagosDetallePorUsuario[uid] || []
     };
   });
@@ -1253,7 +1258,7 @@ async function cerrarComputo(groupId) {
     }
   }
 
-  // === NUEVO: Buscar settlements para poner la fecha real del pago ===
+  // Buscar la fecha real del pago para los que ya saldaron
   const { data: settlements } = await supabase
     .from('settlements')
     .select('from_user, to_user, date, created_at')
@@ -1261,7 +1266,6 @@ async function cerrarComputo(groupId) {
 
   personasSnap.forEach(p => {
     if (p.pagado) {
-      // Si estÃ¡ pagado, buscar si hizo algÃºn settlement en este grupo
       const miPago = (settlements || []).find(s => s.from_user === p.id || s.to_user === p.id);
       if (miPago) {
         p.fecha_pago = miPago.date || miPago.created_at;
@@ -1305,7 +1309,6 @@ async function cerrarComputo(groupId) {
     throw error;
   }
 }
-
 
 
 
