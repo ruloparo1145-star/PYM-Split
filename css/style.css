@@ -2178,3 +2178,44 @@ body {
   transform: translateY(5px); /* Baja 5 pÃ­xeles */
   box-shadow: 0 0px 0 transparent, 0 1px 2px rgba(0,0,0,0.15); /* Pierde la sombra de abajo */
 }
+/* ==========================================
+   ESTILO 3D PARA EL MENÃš SUPERIOR
+   ========================================== */
+
+/* Aplicamos a los botones del header que NO son el de salir */
+.header-right .btn-small,
+.header-right .btn-logout {
+  padding: 8px 16px; /* Un poquito mÃ¡s grandes */
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.1s ease;
+  cursor: pointer;
+  position: relative;
+  top: 0;
+}
+
+/* Efecto 3D para los botones transparentes (Manual, ?, Amigos, Perfil) */
+.header-right .btn-small {
+  /* Mantiene tu fondo semitransparente, pero le sumamos una sombra abajo */
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+/* Efecto 3D para el botÃ³n Salir (Rojo) */
+.header-right .btn-logout {
+  box-shadow: 0 3px 0 #b91c1c, 0 4px 6px rgba(0,0,0,0.2); /* Sombra roja oscura */
+}
+
+/* Efecto al pasar el mouse */
+.header-right .btn-small:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+.header-right .btn-logout:hover {
+  background-color: #ef4444; /* Un rojo un poco mÃ¡s brillante */
+}
+
+/* Efecto al hacer CLIC (se hunden) */
+.header-right .btn-small:active,
+.header-right .btn-logout:active {
+  top: 3px; /* En lugar de translateY, usamos top para no romper el flexbox */
+  box-shadow: 0 0px 0 transparent, 0 1px 2px rgba(0,0,0,0.1);
+}
