@@ -2105,3 +2105,29 @@ body {
 .balance-deudas {
   margin-top: 15px;
 }
+@media (min-width: 768px) {
+  /* Lo que ya tenÃ­as */
+  .modal-detail-content {
+    max-width: 850px !important;
+    width: 90% !important;
+  }
+
+  /* NUEVO: Obligar a que el resumen de cierre ocupe el 100% del ancho disponible */
+  #group-closed-summary {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* NUEVO: Asegurar que la tabla interna tambiÃ©n se expanda */
+  #group-closed-summary > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* Opcional: achicar los mÃ¡rgenes del contenedor gris para que no deje espacios en blanco */
+  .modal-scrollable {
+    padding-left: 10px !important;
+    padding-right: 10px !important;
+  }
+}
