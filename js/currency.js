@@ -15,6 +15,18 @@ const MONEDAS_DOLARAPI = ['ARS', 'USD', 'EUR', 'BRL', 'CLP', 'UYU'];
 
 const CACHE_PREFIX = 'pym_tasa_';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 horas
+const FETCH_TIMEOUT_MS = 8000;
+
+// fetch con timeout: sin esto, una API colgada dejaba la UI esperando indefinidamente
+async function fetchConTimeout(url, ms = FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await fetch(url, { signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 // ==========================================
 // OBTENER TIPO DE CAMBIO (con cache y fallback)
@@ -31,7 +43,7 @@ export async function obtenerTasa(desde, hasta) {
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       const { tasa, timestamp } = JSON.parse(cached);
-      if (Date.now() - timestamp < CACHE_TTL_MS) {
+      if (Date.now() - timestamp < CACHE_TTL_MS && typeof tasa === 'number' && tasa > 0) {
         return tasa;
       }
     }
@@ -41,7 +53,7 @@ export async function obtenerTasa(desde, hasta) {
   if (MONEDAS_FRANKFURTER.includes(desde) && MONEDAS_FRANKFURTER.includes(hasta)) {
     try {
       const url = `https://api.frankfurter.app/latest?from=${desde}&to=${hasta}`;
-      const resp = await fetch(url);
+      const resp = await fetchConTimeout(url);
       if (resp.ok) {
         const data = await resp.json();
         const tasa = data.rates?.[hasta];
@@ -56,7 +68,7 @@ export async function obtenerTasa(desde, hasta) {
   }
 
   // Intentar 2: DolarAPI (para ARS y otras monedas latinoamericanas)
-  if (MONEDAS_DOLARAPI.includes(desde) || MONEDAS_DOLARAPI.includes(hasta)) {
+  if (MONEDAS_DOLARAPI.includes(desde) && MONEDAS_DOLARAPI.includes(hasta)) { // con || se hacian pedidos de red inutiles (ej. CLP -> JPY)
     try {
       const tasa = await obtenerTasaDolarAPI(desde, hasta);
       if (tasa !== null) {
@@ -103,8 +115,10 @@ async function obtenerTasaDolarAPI(desde, hasta) {
   }
 
   // Caso 2: ninguna es ARS pero ambas estan en DolarAPI
-  const cotDesde = await getCotizacionDolarAPI(desde);
-  const cotHasta = await getCotizacionDolarAPI(hasta);
+  const [cotDesde, cotHasta] = await Promise.all([
+    getCotizacionDolarAPI(desde),
+    getCotizacionDolarAPI(hasta)
+  ]);
 
   if (cotDesde === null || cotHasta === null) return null;
 
@@ -117,13 +131,13 @@ async function obtenerTasaDolarAPI(desde, hasta) {
 async function getCotizacionDolarAPI(moneda) {
   try {
     if (moneda === 'USD') {
-      const resp = await fetch('https://dolarapi.com/v1/dolares/oficial');
+      const resp = await fetchConTimeout('https://dolarapi.com/v1/dolares/oficial');
       if (!resp.ok) return null;
       const data = await resp.json();
       return parseFloat(data.venta) || null;
     }
 
-    const resp = await fetch('https://dolarapi.com/v1/cotizaciones');
+    const resp = await fetchConTimeout('https://dolarapi.com/v1/cotizaciones');
     if (!resp.ok) return null;
     const data = await resp.json();
 
