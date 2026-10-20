@@ -446,11 +446,13 @@ export async function guardarGasto(descripcion, monto, groupId, paidBy) {
 // ==========================================
 // 6. CARGAR GASTOS DE UN GRUPO
 // ==========================================
+
+
+
+
 export async function cargarGastosDelGrupo(groupId) {
   const listContainer = document.getElementById('group-expenses-list');
 
-  // Leer el filtro directo del select: groups.js lo resetea (value = '') sin disparar 'change',
-  // y la variable quedaba con el filtro del grupo anterior.
   const selectFiltro = document.getElementById('filter-category');
   if (selectFiltro) filtroCategoriaActual = selectFiltro.value;
 
@@ -481,6 +483,27 @@ export async function cargarGastosDelGrupo(groupId) {
     return;
   }
 
+  // 1. Datos del grupo y del usuario (para conversiÃ³n)
+  const [{ data: grupoInfo }, { data: { user } }] = await Promise.all([
+    supabase.from('groups').select('currency').eq('id', groupId).single(),
+    supabase.auth.getUser()
+  ]);
+
+  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
+  
+  let monedaUsuario = monedaGrupo;
+  if (user) {
+    const { data: perfil } = await supabase
+      .from('profiles')
+      .select('preferred_currency')
+      .eq('id', user.id)
+      .single();
+    if (perfil?.preferred_currency) {
+      monedaUsuario = perfil.preferred_currency.toUpperCase();
+    }
+  }
+
+  // 2. Nombres de quienes pagaron
   const paidByIds = [...new Set(gastosFiltrados.map(g => g.paid_by))];
   const { data: perfiles } = await supabase
     .from('profiles')
@@ -490,15 +513,8 @@ export async function cargarGastosDelGrupo(groupId) {
   const nombres = {};
   (perfiles || []).forEach(p => nombres[p.id] = p.full_name || p.email);
 
-  const { data: grupoInfo } = await supabase
-    .from('groups')
-    .select('currency')
-    .eq('id', groupId)
-    .single();
-
-  const monedaGrupo = (grupoInfo?.currency || 'EUR').toUpperCase();
-
-  listContainer.innerHTML = gastosFiltrados.map(g => {
+  // 3. Armamos el HTML con conversiones asÃ­ncronas
+  const htmlCards = await Promise.all(gastosFiltrados.map(async g => {
     const cat = getCategoria(g.category);
     const monto = parseFloat(g.amount);
     const monedaGasto = (g.currency || 'EUR').toUpperCase();
@@ -507,12 +523,37 @@ export async function cargarGastosDelGrupo(groupId) {
     let montoMostrar;
     let subtexto = '';
 
+    // LÃ³gica de monedas por gasto
     if (monedaGasto === monedaGrupo) {
       montoMostrar = `${monto.toFixed(2)} ${monedaGrupo}`;
     } else {
-      const convertido = monto * tasa;
-      montoMostrar = `${convertido.toFixed(2)} ${monedaGrupo}`;
+      const convertidoGrupo = monto * tasa;
+      montoMostrar = `${convertidoGrupo.toFixed(2)} ${monedaGrupo}`;
       subtexto = `(${monto.toFixed(2)} ${monedaGasto})`;
+    }
+
+    // Si la moneda del usuario es distinta a la del grupo, calculamos la conversiÃ³n extra
+    let subtextoUsuario = '';
+    if (monedaUsuario !== monedaGrupo) {
+      // Convertimos desde la moneda del GRUPO a la moneda del USUARIO
+      const montoEnGrupo = monedaGasto === monedaGrupo ? monto : monto * tasa;
+      // Usamos import dinÃ¡mico para no sobrecargar la carga inicial
+      const { convertirMonto } = await import('./currency.js');
+      const r = await convertirMonto(montoEnGrupo, monedaGrupo, monedaUsuario);
+      if (r.convertido) {
+        subtextoUsuario = `~${r.monto.toFixed(2)} ${monedaUsuario}`;
+      }
+    }
+
+    // Armamos los subtextos
+    let subtextosHTML = '';
+    if (subtexto || subtextoUsuario) {
+      subtextosHTML = `
+        <div style="display:flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; margin-top: 2px;">
+          ${subtexto ? `<small class="expense-subtext" style="color: #a0aec0;">${subtexto}</small>` : ''}
+          ${subtextoUsuario ? `<small class="expense-subtext" style="color: #3182ce; font-weight: 600;">${subtextoUsuario}</small>` : ''}
+        </div>
+      `;
     }
 
     return `
@@ -522,13 +563,15 @@ export async function cargarGastosDelGrupo(groupId) {
           <h5>${escaparHTML(g.description)}</h5>
           <span>${t('expense.list.paid_by', { nombre: escaparHTML(nombres[g.paid_by]) || t('expense.detail.unknown'), fecha: g.date })}</span>
         </div>
-        <div class="expense-amount">
+        <div class="expense-amount" style="text-align: right;">
           ${montoMostrar}
-          ${subtexto ? `<small class="expense-subtext">${subtexto}</small>` : ''}
+          ${subtextosHTML}
         </div>
       </div>
     `;
-  }).join('');
+  }));
+
+  listContainer.innerHTML = htmlCards.join('');
 
   listContainer.querySelectorAll('.clickable-expense').forEach(card => {
     card.addEventListener('click', () => {
@@ -536,6 +579,9 @@ export async function cargarGastosDelGrupo(groupId) {
     });
   });
 }
+
+
+
 
 // ==========================================
 // 6b. CARGAR GASTOS ARCHIVADOS
