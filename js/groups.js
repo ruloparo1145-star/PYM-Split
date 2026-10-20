@@ -1883,6 +1883,9 @@ if (!window.__groupDetailListenersAttached) {
 // ==========================================
 // 16. EXPORTAR GRUPO A CSV
 // ==========================================
+
+
+
 async function exportarGrupoCSV(groupId) {
   const { data: grupo, error: errGrupo } = await supabase
     .from('groups')
@@ -2073,8 +2076,8 @@ async function exportarGrupoCSV(groupId) {
     'Moneda original',
     'Monto en ' + monedaGrupo,
     'Monto en ' + monedaUsuario,
-    'Archivado',
-    'Split (persona: monto ' + monedaGrupo + ')'
+    'Archivado'
+    // Columna Split eliminada
   ]);
 
   for (const g of gastosArr) {
@@ -2090,14 +2093,6 @@ async function exportarGrupoCSV(groupId) {
       if (r.convertido) montoEnUsuario = r.monto;
     }
 
-    const gastoSplits = splits.filter(s => s.expense_id === g.id);
-    const splitStr = gastoSplits.map(s => {
-      const nombre = nombres[s.user_id] || 'Usuario';
-      const montoS = parseFloat(s.amount_owed) || 0;
-      const montoSEnGrupo = monedaGasto === monedaGrupo ? montoS : montoS * tasa;
-      return `${nombre}: ${montoSEnGrupo.toFixed(2)}`;
-    }).join(' | ');
-
     lineas.push([
       g.date || '',
       g.description || '',
@@ -2107,8 +2102,8 @@ async function exportarGrupoCSV(groupId) {
       monedaGasto,
       montoEnGrupo.toFixed(2),
       montoEnUsuario.toFixed(2),
-      g.archived ? 'SI' : 'NO',
-      splitStr
+      g.archived ? 'SI' : 'NO'
+      // Split eliminado
     ]);
   }
 
@@ -2140,6 +2135,10 @@ async function exportarGrupoCSV(groupId) {
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+
+
+
 
 // ==========================================
 // 17. EXPORTAR GRUPO A RTF
