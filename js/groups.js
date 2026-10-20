@@ -1930,8 +1930,8 @@ async function exportarGrupoCSV(groupId) {
       
       let estadoStr = 'Pendiente';
       if (pagado) {
-        if (diferenciaOriginal < -0.01) estadoStr = `PagÃ³: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
-        else if (diferenciaOriginal > 0.01) estadoStr = `CobrÃ³: ${diferenciaOriginal.toFixed(2)}`;
+        if (diferenciaOriginal < -0.01) estadoStr = `Pagó: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
+        else if (diferenciaOriginal > 0.01) estadoStr = `Cobró: ${diferenciaOriginal.toFixed(2)}`;
         else estadoStr = 'Saldado';
       } else if (p.saldo < 0) {
         estadoStr = `Debe pagar: ${Math.abs(p.saldo).toFixed(2)}`;
@@ -2292,8 +2292,8 @@ function generarRTFReporte(datos) {
           let colorEstado = '\\cf7'; // rojo por defecto
           
           if (pagado) {
-            if (diferenciaOriginal < -0.01) estadoStr = `PagÃ³: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
-            else if (diferenciaOriginal > 0.01) estadoStr = `CobrÃ³: ${diferenciaOriginal.toFixed(2)}`;
+            if (diferenciaOriginal < -0.01) estadoStr = `Pagó: ${Math.abs(diferenciaOriginal).toFixed(2)}`;
+            else if (diferenciaOriginal > 0.01) estadoStr = `Cobró: ${diferenciaOriginal.toFixed(2)}`;
             else estadoStr = 'Saldado';
             colorEstado = '\\cf1'; // verde
           } else if (p.saldo < 0) {
